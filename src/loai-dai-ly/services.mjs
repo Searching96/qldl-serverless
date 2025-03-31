@@ -1,6 +1,6 @@
   // src/loai-dai-ly/service.js
 
-  import { query } from './database.js';
+  import { query } from './database.mjs';
   import { v4 as uuidv4 } from 'uuid';
 
 

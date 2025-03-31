@@ -8,7 +8,7 @@ service: loai-dai-ly
 provider:
   name: aws
   runtime: nodejs22.x
-  timeout: 45
+  timeout: 29
   environment:
     DATABASE_REGION: ${env:DB_REGION}
     DATABASE_USER: ${env:DB_USER} # Configure your database credentials as environment variables
@@ -17,16 +17,48 @@ provider:
     DATABASE_PORT: ${env:DB_PORT}
   httpApi:
     cors: true
-    # Optional: increase timeout if needed
-    timeout: 30
+  # Add IAM configuration here
+  iam:
+    role:
+      statements:
+        # Add basic Lambda permissions
+        - Effect: Allow
+          Action:
+            - logs:CreateLogGroup
+            - logs:CreateLogStream
+            - logs:PutLogEvents
+          Resource: 'arn:aws:logs:*:*:*'
+      # Add the Aurora DSQL managed policy
+      managedPolicies:
+        - 'arn:aws:iam::aws:policy/AmazonAuroraDSQLFullAccess'
 
-custom: 
-  webpack:
-    webpackIncludeModules: true
+# package:
+#   patterns:
+#     - '!**'             # Exclude everything
+#     - 'handler.mjs'      # Include the handler file
+#     - 'services.mjs'     # Include the services file
+#     - 'database.mjs'
+#     - 'src/loai-dai-ly/**' # Include everything in this directory
+
+layers:
+  Dependencies:
+    path: ../../lambda-aurora-dsql # required, path to layer contents on disk
+    name: ${sls:stage}-layerName # optional, Deployed Lambda layer name
+    description: Package for postgres, dsql-signer and uuid # optional, Description to publish to AWS
+    compatibleRuntimes: # optional, a list of runtimes this layer is compatible with
+      - nodejs22.x
+    compatibleArchitectures: # optional, a list of architectures this layer is compatible with
+      - x86_64
+    # allowedAccounts: # optional, a list of AWS account IDs allowed to access this layer.
+    #   - '*'
+    # note: uncommenting this will give all AWS users access to this layer unconditionally.
+    retain: false
 
 functions:
   createldl:
     handler: handler.createldl
+    layers:
+      - !Ref DependenciesLambdaLayer
     events:
       - httpApi:
           path: /loai-dai-ly
@@ -34,6 +66,8 @@ functions:
   
   getallldl:
     handler: handler.getallldl
+    layers:
+    - !Ref DependenciesLambdaLayer
     events:
       - httpApi:
           path: /loai-dai-ly
@@ -41,6 +75,8 @@ functions:
   
   getldlbyid:
     handler: handler.getldlbyid
+    layers:
+    - !Ref DependenciesLambdaLayer
     events:
       - httpApi:
           path: /loai-dai-ly/{maLoaiDaiLy}
@@ -48,6 +84,8 @@ functions:
   
   updateldl:
     handler: handler.updateldl
+    layers:
+    - !Ref DependenciesLambdaLayer
     events:
       - httpApi:
           path: /loai-dai-ly/{maLoaiDaiLy}
@@ -55,6 +93,8 @@ functions:
   
   deleteldl:
     handler: handler.deleteldl
+    layers:
+    - !Ref DependenciesLambdaLayer
     events:
       - httpApi:
           path: /loai-dai-ly/{maLoaiDaiLy}

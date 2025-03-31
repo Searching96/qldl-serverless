@@ -1,6 +1,6 @@
 // src/loai-dai-ly/handler.js
 
-import LoaiDaiLyService from './services.js';
+import LoaiDaiLyService from './services.mjs';
 
 const loaiDaiLyService = new LoaiDaiLyService();
 
