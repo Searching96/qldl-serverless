@@ -1,0 +1,8 @@
+{
+  "httpMethod": "POST",
+  "path": "/daily",
+  "body": "{\"ten\":\"Test Agent\",\"dienthoai\":\"0987654321\",\"diachi\":\"123 Test Address\",\"email\":\"test@example.com\",\"maloaidaily\":\"a1b2c3d4-...\",\"maquan\":\"q1w2e3r4-...\",\"ngaytiepnhan\":\"2025-03-27\"}",
+  "headers": {
+    "Content-Type": "application/json"
+  }
+}

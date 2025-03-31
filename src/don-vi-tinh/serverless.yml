@@ -1,0 +1,50 @@
+# "org" ensures this Service is used with the correct Serverless Framework Access Key.
+org: doancnpm
+# "app" enables Serverless Framework Dashboard features and sharing them with other Services.
+app: quan-ly-dai-ly
+# "service" is the name of this project. This will also be added to your AWS resource names.
+service: don-vi-tinh
+
+provider:
+  name: aws
+  runtime: nodejs22.x
+  environment:
+    DATABASE_REGION: ${env:DB_REGION}
+    DATABASE_USER: ${env:DB_USER} # Configure your database credentials as environment variables
+    DATABASE_HOST: ${env:DB_HOST}
+    DATABASE_NAME: ${env:DB_NAME}
+    DATABASE_PORT: ${env:DB_PORT}
+
+custom: 
+  webpack:
+    webpackIncludeModules: true
+
+functions:
+  createdvt:
+    handler: handler.createdvt
+    timeout: 45
+    events:
+      - http:
+          path: /donvitinh
+          method: post
+  readdvt:
+    handler: handler.readdvt
+    timeout: 45
+    events:
+      - http:
+          path: /donvitinh/{maDonViTinh}
+          method: get
+  updatedvt:
+    handler: handler.updatedvt
+    timeout: 45
+    events:
+      - http:
+          path: /donvitinh/{maDonViTinh}
+          method: put
+  deletedvt:
+    handler: handler.deletedvt
+    timeout: 45
+    events:
+      - http:
+          path: /donvitinh/{maDonViTinh}
+          method: delete
