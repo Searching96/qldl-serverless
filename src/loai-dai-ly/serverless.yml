@@ -15,6 +15,10 @@ provider:
     DATABASE_HOST: ${env:DB_HOST}
     DATABASE_NAME: ${env:DB_NAME}
     DATABASE_PORT: ${env:DB_PORT}
+  httpApi:
+    cors: true
+    # Optional: increase timeout if needed
+    timeout: 30
 
 custom: 
   webpack:
@@ -24,35 +28,34 @@ functions:
   createldl:
     handler: handler.createldl
     events:
-      - http:
-          path: /ldl
+      - httpApi:
+          path: /loai-dai-ly
           method: post
-          cors: true
+  
   getallldl:
     handler: handler.getallldl
     events:
-      - http:
-          path: /ldl
+      - httpApi:
+          path: /loai-dai-ly
           method: get
-          cors: true
+  
   getldlbyid:
     handler: handler.getldlbyid
     events:
-      - http:
-          path: /ldl/{maLoaiDaiLy}
+      - httpApi:
+          path: /loai-dai-ly/{maLoaiDaiLy}
           method: get
-          cors: true
+  
   updateldl:
     handler: handler.updateldl
     events:
-      - http:
-          path: /ldl/{maLoaiDaiLy}
+      - httpApi:
+          path: /loai-dai-ly/{maLoaiDaiLy}
           method: put
-          cors: true
+  
   deleteldl:
     handler: handler.deleteldl
     events:
-      - http:
-          path: /ldl/{maLoaiDaiLy}
+      - httpApi:
+          path: /loai-dai-ly/{maLoaiDaiLy}
           method: delete
-          cors: true

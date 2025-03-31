@@ -9,7 +9,8 @@ const headers = {
     'Access-Control-Allow-Origin': '*',
 };
 
-export const createldl = async (event) => {
+export const createldl = async (event, context) => {
+    context.callbackWaitsForEmptyEventLoop = false;
     try {
         const { tenLoaiDaiLy } = JSON.parse(event.body);
         const maLoaiDaiLy = await loaiDaiLyService.createLoaiDaiLy(tenLoaiDaiLy);
@@ -29,7 +30,8 @@ export const createldl = async (event) => {
     }
 };
 
-export const getallldl = async (event) => {
+export const getallldl = async (event, context) => {
+    context.callbackWaitsForEmptyEventLoop = false;
     try {
         const LoaiDaiLy = await loaiDaiLyService.getAllLoaiDaiLy();
         if (!LoaiDaiLy) {
@@ -39,7 +41,7 @@ export const getallldl = async (event) => {
                 body: JSON.stringify({ message: 'Không tìm thấy loại đại lý nào.' }),
             };
         }
-        console.log('Tra cứu loại đại lý thành công:', LoaiDaiLy);
+        console.log('Tra cứu loại đại lý thành công:', JSON.stringify(LoaiDaiLy));
         return {
             statusCode: 200,
             headers,
@@ -55,7 +57,8 @@ export const getallldl = async (event) => {
     }
 };
 
-export const getldlbyid = async (event) => {
+export const getldlbyid = async (event, context) => {
+    context.callbackWaitsForEmptyEventLoop = false;
     try {
         const { maLoaiDaiLy } = event.pathParameters;
         const LoaiDaiLy = await loaiDaiLyService.getLoaiDaiLy(maLoaiDaiLy);
@@ -82,7 +85,8 @@ export const getldlbyid = async (event) => {
     }
 };
 
-export const updateldl = async (event) => {
+export const updateldl = async (event, context) => {
+    context.callbackWaitsForEmptyEventLoop = false;
     try {
         const { maLoaiDaiLy } = event.pathParameters;
         const { tenLoaiDaiLy } = JSON.parse(event.body);
@@ -102,7 +106,8 @@ export const updateldl = async (event) => {
     }
 };
 
-export const deleteldl = async (event) => {
+export const deleteldl = async (event, context) => {
+    context.callbackWaitsForEmptyEventLoop = false;
     try {
         const { maLoaiDaiLy } = event.pathParameters;
         await loaiDaiLyService.deleteLoaiDaiLy(maLoaiDaiLy);
