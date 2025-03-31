@@ -1,0 +1,58 @@
+# "org" ensures this Service is used with the correct Serverless Framework Access Key.
+org: doancnpm
+# "app" enables Serverless Framework Dashboard features and sharing them with other Services.
+app: quan-ly-dai-ly
+# "service" is the name of this project. This will also be added to your AWS resource names.
+service: loai-dai-ly
+
+provider:
+  name: aws
+  runtime: nodejs22.x
+  timeout: 45
+  environment:
+    DATABASE_REGION: ${env:DB_REGION}
+    DATABASE_USER: ${env:DB_USER} # Configure your database credentials as environment variables
+    DATABASE_HOST: ${env:DB_HOST}
+    DATABASE_NAME: ${env:DB_NAME}
+    DATABASE_PORT: ${env:DB_PORT}
+
+custom: 
+  webpack:
+    webpackIncludeModules: true
+
+functions:
+  createldl:
+    handler: handler.createldl
+    events:
+      - http:
+          path: /ldl
+          method: post
+          cors: true
+  getallldl:
+    handler: handler.getallldl
+    events:
+      - http:
+          path: /ldl
+          method: get
+          cors: true
+  getldlbyid:
+    handler: handler.getldlbyid
+    events:
+      - http:
+          path: /ldl/{maLoaiDaiLy}
+          method: get
+          cors: true
+  updateldl:
+    handler: handler.updateldl
+    events:
+      - http:
+          path: /ldl/{maLoaiDaiLy}
+          method: put
+          cors: true
+  deleteldl:
+    handler: handler.deleteldl
+    events:
+      - http:
+          path: /ldl/{maLoaiDaiLy}
+          method: delete
+          cors: true
