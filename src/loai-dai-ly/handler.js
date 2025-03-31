@@ -30,41 +30,30 @@ export const createldl = async (event) => {
 };
 
 export const getallldl = async (event) => {
-    return {
-      statusCode: 200,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-      },
-      body: JSON.stringify({ message: 'Test successful' }),
-    };
-  };
-
-// export const getallldl = async (event) => {
-//     try {
-//         const LoaiDaiLy = await loaiDaiLyService.getAllLoaiDaiLy();
-//         if (!LoaiDaiLy) {
-//             return {
-//                 statusCode: 404,
-//                 headers,
-//                 body: JSON.stringify({ message: 'Không tìm thấy loại đại lý nào.' }),
-//             };
-//         }
-//         console.log('Tra cứu loại đại lý thành công:', LoaiDaiLy);
-//         return {
-//             statusCode: 200,
-//             headers,
-//             body: JSON.stringify(LoaiDaiLy),
-//         };
-//     } catch (error) {
-//         console.error('Lỗi khi tra cứu loại đại lý: ', error);
-//         return {
-//             statusCode: 500,
-//             headers,
-//             body: JSON.stringify({ message: 'Lỗi khi tra cứu loại đại lý: ', error: error.message }),
-//         };
-//     }
-// };
+    try {
+        const LoaiDaiLy = await loaiDaiLyService.getAllLoaiDaiLy();
+        if (!LoaiDaiLy) {
+            return {
+                statusCode: 404,
+                headers,
+                body: JSON.stringify({ message: 'Không tìm thấy loại đại lý nào.' }),
+            };
+        }
+        console.log('Tra cứu loại đại lý thành công:', LoaiDaiLy);
+        return {
+            statusCode: 200,
+            headers,
+            body: JSON.stringify(LoaiDaiLy),
+        };
+    } catch (error) {
+        console.error('Lỗi khi tra cứu loại đại lý: ', error);
+        return {
+            statusCode: 500,
+            headers,
+            body: JSON.stringify({ message: 'Lỗi khi tra cứu loại đại lý: ', error: error.message }),
+        };
+    }
+};
 
 export const getldlbyid = async (event) => {
     try {
