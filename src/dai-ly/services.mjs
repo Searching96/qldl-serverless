@@ -1,0 +1,141 @@
+// src/dai-ly/service.js
+
+import { query } from './database.mjs';
+import { v4 as uuidv4 } from 'uuid';
+
+class DaiLyService {
+  async getAllDaiLy() {
+    const queryString = `
+      SELECT 
+        d.*,
+        q.TenQuan,
+        l.TenLoaiDaiLy
+      FROM 
+        inventory.DAILY d
+      LEFT JOIN 
+        inventory.QUAN q ON d.MaQuan = q.MaQuan
+      LEFT JOIN 
+        inventory.LOAIDAILY l ON d.MaLoaiDaiLy = l.MaLoaiDaiLy
+      WHERE 
+        d.DeletedAt IS NULL`;
+    const result = await query(queryString);
+    return result.rows;
+  }
+  
+  async getDaiLy(maDaiLy) {
+    const queryString = `
+      SELECT 
+        d.*,
+        q.TenQuan,
+        l.TenLoaiDaiLy
+      FROM 
+        inventory.DAILY d
+      LEFT JOIN 
+        inventory.QUAN q ON d.MaQuan = q.MaQuan
+      LEFT JOIN 
+        inventory.LOAIDAILY l ON d.MaLoaiDaiLy = l.MaLoaiDaiLy
+      WHERE 
+        d.MaDaiLy = $1 AND d.DeletedAt IS NULL`;
+    const result = await query(queryString, [maDaiLy]);
+    if (result.rowCount === 0) {
+      throw new Error('Không tìm thấy đại lý.');
+    }
+    return result.rows[0];
+  }
+  
+  validateRequiredFields(data, requiredFields) {
+    const missingFields = [];
+    for (const field of requiredFields) {
+      if (!data[field]) {
+        missingFields.push(field);
+      }
+    }
+    return missingFields;
+  }
+  
+  async createDaiLy({ tendaily, sodienthoai, diachi, email, maloaidaily, maquan, ngaytiepnhan }) {
+    console.log('Inside createDaiLy service with data:', { tendaily, sodienthoai, diachi, email, maloaidaily, maquan, ngaytiepnhan });
+    
+    const requiredFields = ['tendaily', 'sodienthoai', 'diachi', 'email', 'maloaidaily', 'maquan', 'ngaytiepnhan'];
+    const data = { tendaily, sodienthoai, diachi, email, maloaidaily, maquan, ngaytiepnhan };
+    const missingFields = this.validateRequiredFields(data, requiredFields);
+    
+    if (missingFields.length > 0) {
+      throw new Error(`Thiếu các trường bắt buộc: ${missingFields.join(', ')}`);
+    }
+  
+    const loaidailyCheckQuery = 'SELECT 1 FROM inventory.LOAIDAILY WHERE MaLoaiDaiLy = $1 AND DeletedAt IS NULL';
+    const loaidailyCheck = await query(loaidailyCheckQuery, [maloaidaily]);
+    if (loaidailyCheck.rowCount === 0) {
+      throw new Error(`Mã loại đại lý ${maloaidaily} không tồn tại hoặc đã bị xóa`);
+    }
+  
+    const quanCheckQuery = 'SELECT 1 FROM inventory.QUAN WHERE MaQuan = $1 AND DeletedAt IS NULL';
+    const quanCheck = await query(quanCheckQuery, [maquan]);
+    if (quanCheck.rowCount === 0) {
+      throw new Error(`Mã quận ${maquan} không tồn tại hoặc đã bị xóa`);
+    }
+  
+    const maDaiLy = uuidv4();
+    const queryString = 'INSERT INTO inventory.DAILY (MaDaiLy, TenDaiLy, SoDienThoai, DiaChi, Email, MaLoaiDaiLy, MaQuan, NgayTiepNhan, DeletedAt) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NULL)';
+    console.log('Executing query:', queryString, [maDaiLy, tendaily, sodienthoai, diachi, email, maloaidaily, maquan, ngaytiepnhan]);
+    await query(queryString, [maDaiLy, tendaily, sodienthoai, diachi, email, maloaidaily, maquan, ngaytiepnhan]);
+    console.log('Query executed successfully, maDaiLy:', maDaiLy);
+    return { maDaiLy };
+  }
+  
+  async updateDaiLy(maDaiLy, { tendaily, sodienthoai, diachi, email, maloaidaily, maquan, ngaytiepnhan }) {
+    console.log('Inside updateDaiLy service with maDaiLy:', maDaiLy, 'and data:', { tendaily, sodienthoai, diachi, email, maloaidaily, maquan, ngaytiepnhan });
+    
+    if (maloaidaily) {
+      const loaidailyCheckQuery = 'SELECT 1 FROM inventory.LOAIDAILY WHERE MaLoaiDaiLy = $1 AND DeletedAt IS NULL';
+      const loaidailyCheck = await query(loaidailyCheckQuery, [maloaidaily]);
+      if (loaidailyCheck.rowCount === 0) {
+        throw new Error(`Mã loại đại lý ${maloaidaily} không tồn tại hoặc đã bị xóa`);
+      }
+    }
+    if (maquan) {
+      const quanCheckQuery = 'SELECT 1 FROM inventory.QUAN WHERE MaQuan = $1 AND DeletedAt IS NULL';
+      const quanCheck = await query(quanCheckQuery, [maquan]);
+      if (quanCheck.rowCount === 0) {
+        throw new Error(`Mã quận ${maquan} không tồn tại hoặc đã bị xóa`);
+      }
+    }
+  
+    const updates = [];
+    const values = [];
+    let paramIndex = 1;
+    if (tendaily) { updates.push(`TenDaiLy = $${paramIndex++}`); values.push(tendaily); }
+    if (sodienthoai) { updates.push(`SoDienThoai = $${paramIndex++}`); values.push(sodienthoai); }
+    if (diachi) { updates.push(`DiaChi = $${paramIndex++}`); values.push(diachi); }
+    if (email) { updates.push(`Email = $${paramIndex++}`); values.push(email); }
+    if (maloaidaily) { updates.push(`MaLoaiDaiLy = $${paramIndex++}`); values.push(maloaidaily); }
+    if (maquan) { updates.push(`MaQuan = $${paramIndex++}`); values.push(maquan); }
+    if (ngaytiepnhan) { updates.push(`NgayTiepNhan = $${paramIndex++}`); values.push(ngaytiepnhan); }
+    if (updates.length === 0) {
+      throw new Error('Không có trường nào để cập nhật.');
+    }
+  
+    values.push(maDaiLy);
+    const queryString = `UPDATE inventory.DAILY SET ${updates.join(', ')} WHERE MaDaiLy = $${paramIndex} AND DeletedAt IS NULL`;
+    console.log('Executing query:', queryString, values);
+    const result = await query(queryString, values);
+    if (result.rowCount === 0) {
+      throw new Error('Không tìm thấy đại lý.');
+    }
+    console.log('Update successful for maDaiLy:', maDaiLy);
+  }
+  
+  async deleteDaiLy(maDaiLy) {
+    console.log('Inside deleteDaiLy service with maDaiLy:', maDaiLy);
+    const queryString = 'UPDATE inventory.DAILY SET DeletedAt = NOW() WHERE MaDaiLy = $1 AND DeletedAt IS NULL';
+    console.log('Executing query:', queryString, [maDaiLy]);
+    const result = await query(queryString, [maDaiLy]);
+    if (result.rowCount === 0) {
+      throw new Error('Không tìm thấy đại lý.');
+    }
+    console.log('Delete successful for maDaiLy:', maDaiLy);
+  }
+}
+
+export default DaiLyService;
