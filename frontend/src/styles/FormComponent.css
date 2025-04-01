@@ -1,0 +1,37 @@
+.form-layout {
+    width: 100%;
+    display: grid;
+    grid:
+        "leftHeader header rightHeader" auto
+        "leftSide body rightSide" auto
+        "footer footer footer" auto
+        / auto auto auto;
+    gap: 8px;
+  }
+.rightHeader {
+    grid-area: rightHeader;
+}
+
+.leftHeader {
+    grid-area: leftHeader;
+}
+
+.header {
+    grid-area: header;
+}
+
+.leftSide {
+    grid-area: leftSide;
+}
+
+.body {
+    grid-area: body;
+}
+
+.rightSide {
+    grid-area: rightSide;
+}
+
+.footer {
+    grid-area: footer;
+}
