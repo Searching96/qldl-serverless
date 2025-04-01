@@ -8,43 +8,85 @@ service: don-vi-tinh
 provider:
   name: aws
   runtime: nodejs22.x
+  region: ${env:AWS_REGION}
+  stage: ${opt:stage, 'dev'}
+  timeout: 29
   environment:
     DATABASE_REGION: ${env:DB_REGION}
     DATABASE_USER: ${env:DB_USER} # Configure your database credentials as environment variables
     DATABASE_HOST: ${env:DB_HOST}
     DATABASE_NAME: ${env:DB_NAME}
     DATABASE_PORT: ${env:DB_PORT}
+  httpApi:
+    disableDefaultEndpoint: true
+    cors: true
+  iam:
+    role:
+      statements:
+        # Add basic Lambda permissions
+        - Effect: Allow
+          Action:
+            - logs:CreateLogGroup
+            - logs:CreateLogStream
+            - logs:PutLogEvents
+          Resource: 'arn:aws:logs:*:*:*'
+      # Add the Aurora DSQL managed policy
+      managedPolicies:
+        - 'arn:aws:iam::aws:policy/AmazonAuroraDSQLFullAccess'
 
-custom: 
-  webpack:
-    webpackIncludeModules: true
+layers:
+  Dependencies:
+    path: ../../lambda-aurora-dsql # required, path to layer contents on disk
+    name: ${sls:stage}-layerName # optional, Deployed Lambda layer name
+    description: Package for postgres, dsql-signer and uuid # optional, Description to publish to AWS
+    compatibleRuntimes: # optional, a list of runtimes this layer is compatible with
+      - nodejs22.x
+    compatibleArchitectures: # optional, a list of architectures this layer is compatible with
+      - x86_64
+    retain: false
 
 functions:
   createdvt:
     handler: handler.createdvt
-    timeout: 45
+    layers:
+      - !Ref DependenciesLambdaLayer
     events:
-      - http:
-          path: /donvitinh
+      - httpApi:
+          path: /
           method: post
-  readdvt:
-    handler: handler.readdvt
-    timeout: 45
+  
+  getalldvt:
+    handler: handler.getalldvt
+    layers:
+      - !Ref DependenciesLambdaLayer
     events:
-      - http:
-          path: /donvitinh/{maDonViTinh}
+      - httpApi:
+          path: /
           method: get
+  
+  getdvtbyid:
+    handler: handler.getdvtbyid
+    layers:
+      - !Ref DependenciesLambdaLayer
+    events:
+      - httpApi:
+          path: /{maDonViTinh}
+          method: get
+  
   updatedvt:
     handler: handler.updatedvt
-    timeout: 45
+    layers:
+      - !Ref DependenciesLambdaLayer
     events:
-      - http:
-          path: /donvitinh/{maDonViTinh}
+      - httpApi:
+          path: /{maDonViTinh}
           method: put
+  
   deletedvt:
     handler: handler.deletedvt
-    timeout: 45
+    layers:
+      - !Ref DependenciesLambdaLayer
     events:
-      - http:
-          path: /donvitinh/{maDonViTinh}
+      - httpApi:
+          path: /{maDonViTinh}
           method: delete

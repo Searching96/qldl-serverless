@@ -3,7 +3,7 @@ org: doancnpm
 # "app" enables Serverless Framework Dashboard features and sharing them with other Services.
 app: quan-ly-dai-ly
 # "service" is the name of this project. This will also be added to your AWS resource names.
-service: dai-ly
+service: quan
 
 provider:
   name: aws
@@ -20,46 +20,32 @@ provider:
   httpApi:
     disableDefaultEndpoint: true
     cors: true
-  # Add IAM configuration here
   iam:
     role:
       statements:
-        # Add basic Lambda permissions
         - Effect: Allow
           Action:
             - logs:CreateLogGroup
             - logs:CreateLogStream
             - logs:PutLogEvents
           Resource: 'arn:aws:logs:*:*:*'
-      # Add the Aurora DSQL managed policy
       managedPolicies:
         - 'arn:aws:iam::aws:policy/AmazonAuroraDSQLFullAccess'
 
-# package:
-#   patterns:
-#     - '!**'             # Exclude everything
-#     - 'handler.mjs'      # Include the handler file
-#     - 'services.mjs'     # Include the services file
-#     - 'database.mjs'
-#     - 'src/dai-ly/**' # Include everything in this directory
-
 layers:
   Dependencies:
-    path: ../../lambda-aurora-dsql # required, path to layer contents on disk
-    name: ${sls:stage}-layerName # optional, Deployed Lambda layer name
-    description: Package for postgres, dsql-signer and uuid # optional, Description to publish to AWS
-    compatibleRuntimes: # optional, a list of runtimes this layer is compatible with
+    path: ../../lambda-aurora-dsql
+    name: ${sls:stage}-layerName
+    description: Package for postgres, dsql-signer and uuid
+    compatibleRuntimes:
       - nodejs22.x
-    compatibleArchitectures: # optional, a list of architectures this layer is compatible with
+    compatibleArchitectures:
       - x86_64
-    # allowedAccounts: # optional, a list of AWS account IDs allowed to access this layer.
-    #   - '*'
-    # note: uncommenting this will give all AWS users access to this layer unconditionally.
     retain: false
 
 functions:
-  createdl:
-    handler: handler.createdl
+  createquan:
+    handler: handler.createquan
     layers:
       - !Ref DependenciesLambdaLayer
     events:
@@ -67,8 +53,8 @@ functions:
           path: /
           method: post
   
-  getalldl:
-    handler: handler.getalldl
+  getallquan:
+    handler: handler.getallquan
     layers:
     - !Ref DependenciesLambdaLayer
     events:
@@ -76,29 +62,29 @@ functions:
           path: /
           method: get
   
-  getdlbyid:
-    handler: handler.getdlbyid
+  getquanbyid:
+    handler: handler.getquanbyid
     layers:
     - !Ref DependenciesLambdaLayer
     events:
       - httpApi:
-          path: /{maDaiLy}
+          path: /{maQuan}
           method: get
   
-  updatedl:
-    handler: handler.updatedl
+  updatequan:
+    handler: handler.updatequan
     layers:
-    - !Ref DependenciesLambdaLayer
+      - !Ref DependenciesLambdaLayer
     events:
       - httpApi:
-          path: /{maDaiLy}
+          path: /{maQuan}
           method: put
   
-  deletedl:
-    handler: handler.deletedl
+  deletequan:
+    handler: handler.deletequan
     layers:
-    - !Ref DependenciesLambdaLayer
+      - !Ref DependenciesLambdaLayer
     events:
       - httpApi:
-          path: /{maDaiLy}
+          path: /{maQuan}
           method: delete

@@ -8,6 +8,8 @@ service: loai-dai-ly
 provider:
   name: aws
   runtime: nodejs22.x
+  region: ${env:AWS_REGION}
+  stage: ${opt:stage, 'dev'}
   timeout: 29
   environment:
     DATABASE_REGION: ${env:DB_REGION}
@@ -16,6 +18,7 @@ provider:
     DATABASE_NAME: ${env:DB_NAME}
     DATABASE_PORT: ${env:DB_PORT}
   httpApi:
+    disableDefaultEndpoint: true
     cors: true
   # Add IAM configuration here
   iam:
@@ -61,7 +64,7 @@ functions:
       - !Ref DependenciesLambdaLayer
     events:
       - httpApi:
-          path: /loai-dai-ly
+          path: /
           method: post
   
   getallldl:
@@ -70,7 +73,7 @@ functions:
     - !Ref DependenciesLambdaLayer
     events:
       - httpApi:
-          path: /loai-dai-ly
+          path: /
           method: get
   
   getldlbyid:
@@ -79,7 +82,7 @@ functions:
     - !Ref DependenciesLambdaLayer
     events:
       - httpApi:
-          path: /loai-dai-ly/{maLoaiDaiLy}
+          path: /{maLoaiDaiLy}
           method: get
   
   updateldl:
@@ -88,7 +91,7 @@ functions:
     - !Ref DependenciesLambdaLayer
     events:
       - httpApi:
-          path: /loai-dai-ly/{maLoaiDaiLy}
+          path: /{maLoaiDaiLy}
           method: put
   
   deleteldl:
@@ -97,5 +100,5 @@ functions:
     - !Ref DependenciesLambdaLayer
     events:
       - httpApi:
-          path: /loai-dai-ly/{maLoaiDaiLy}
+          path: /{maLoaiDaiLy}
           method: delete
