@@ -102,6 +102,21 @@ class DaiLyService {
       throw new Error(`Mã quận ${maquan} không tồn tại hoặc đã bị xóa`);
     }
     const idQuan = quanCheck.rows[0].idquan;
+    // Check if the total number of DaiLy in the specified Quan exceeds the limit
+    const quanLimitQuery = `
+      SELECT COUNT(*) AS total_daily, t.SoLuongDaiLyToiDa
+      FROM inventory.DAILY d
+      JOIN inventory.THAMSO t ON TRUE
+      WHERE d.IDQuan = $1 AND d.DeletedAt IS NULL
+      GROUP BY t.SoLuongDaiLyToiDa`;
+    const quanLimitResult = await query(quanLimitQuery, [idQuan]);
+
+    if (quanLimitResult.rowCount > 0) {
+      const { total_daily, soluongdailytoida } = quanLimitResult.rows[0];
+      if (total_daily >= soluongdailytoida) {
+      throw new Error(`Số lượng đại lý trong quận đã đạt giới hạn tối đa (${soluongdailytoida}).`);
+      }
+    }
 
     // Use provided MaDaiLy or generate new one
     if (!madaily) {
