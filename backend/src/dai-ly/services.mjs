@@ -196,7 +196,7 @@ class DaiLyService {
     const queryString = `
       UPDATE inventory.DAILY 
       SET ${updates.join(', ')} 
-      WHERE MaDaiLy = $${paramIndex} AND DeletedAt IS NULL
+      WHERE IDDaiLy = $${paramIndex} AND DeletedAt IS NULL
       RETURNING MaDaiLy as madaily`;
       
     console.log('Executing query:', queryString, values);

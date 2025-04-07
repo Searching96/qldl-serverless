@@ -60,8 +60,8 @@ export const getalldl = async (event, context) => {
 export const getdlbyid = async (event, context) => {
     context.callbackWaitsForEmptyEventLoop = false;
     try {
-        const { madaily } = event.pathParameters;
-        const DaiLy = await daiLyService.getDaiLy(madaily);
+        const { maDaiLy } = event.pathParameters; // Changed from madaily to maDaiLy to match API Gateway
+        const DaiLy = await daiLyService.getDaiLy(maDaiLy);
         if (!DaiLy) {
             return {
                 statusCode: 404,
@@ -88,10 +88,10 @@ export const getdlbyid = async (event, context) => {
 export const updatedl = async (event, context) => {
     context.callbackWaitsForEmptyEventLoop = false;
     try {
-        const { madaily } = event.pathParameters;
+        const { maDaiLy } = event.pathParameters; // Changed from madaily to maDaiLy
         const { tendaily, diachi, sodienthoai, email, maquan, maloaidaily, ngaytiepnhan } = JSON.parse(event.body);
-        await daiLyService.updateDaiLy(madaily, { tendaily, diachi, sodienthoai, email, maquan, maloaidaily, ngaytiepnhan });
-        console.log('Cập nhật đại lý thành công:', madaily);
+        await daiLyService.updateDaiLy(maDaiLy, { tendaily, diachi, sodienthoai, email, maquan, maloaidaily, ngaytiepnhan });
+        console.log('Cập nhật đại lý thành công:', maDaiLy);
         return {
             statusCode: 200,
             headers,
@@ -110,8 +110,10 @@ export const updatedl = async (event, context) => {
 export const deletedl = async (event, context) => {
     context.callbackWaitsForEmptyEventLoop = false;
     try {
-        const { madaily } = event.pathParameters;
-        await daiLyService.deleteDaiLy(madaily);
+        const { maDaiLy } = event.pathParameters; // Changed from madaily to maDaiLy to match API Gateway
+        console.log('Event object:', JSON.stringify(event, null, 2));
+        console.log('Xóa đại lý với ID:', maDaiLy);
+        await daiLyService.deleteDaiLy(maDaiLy);
         return {
             statusCode: 200,
             headers,
