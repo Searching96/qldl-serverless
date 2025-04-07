@@ -3,7 +3,7 @@ org: doancnpm
 # "app" enables Serverless Framework Dashboard features and sharing them with other Services.
 app: quan-ly-dai-ly
 # "service" is the name of this project. This will also be added to your AWS resource names.
-service: tham-so
+service: id-tracker
 
 provider:
   name: aws
@@ -41,7 +41,7 @@ provider:
 #     - 'handler.mjs'      # Include the handler file
 #     - 'services.mjs'     # Include the services file
 #     - 'database.mjs'
-#     - 'src/loai-dai-ly/**' # Include everything in this directory
+#     - 'src/dai-ly/**' # Include everything in this directory
 
 layers:
   Dependencies:
@@ -57,30 +57,63 @@ layers:
     # note: uncommenting this will give all AWS users access to this layer unconditionally.
     retain: false
 
-functions:
-  createts:
-    handler: handler.createts
-    layers:
-      - !Ref DependenciesLambdaLayer
-    events:
-      - httpApi:
-          path: /
-          method: post
-  
-  getlastts:
-    handler: handler.getlastts
-    layers:
-    - !Ref DependenciesLambdaLayer
-    events:
-      - httpApi:
-          path: /
-          method: get
+# ...existing code...
 
-  deletets:
-    handler: handler.deletets
+functions:
+  getlatestmadl:
+    handler: handler.getlatestmadl
     layers:
     - !Ref DependenciesLambdaLayer
     events:
       - httpApi:
-          path: /{maThamSo}
-          method: delete
+          path: /madl
+          method: get
+  getlatestmadvt:
+    handler: handler.getlatestmadvt
+    layers:
+    - !Ref DependenciesLambdaLayer
+    events:
+      - httpApi:
+          path: /madvt
+          method: get
+  getlatestmaldl:
+    handler: handler.getlatestmaldl
+    layers:
+    - !Ref DependenciesLambdaLayer
+    events:
+      - httpApi:
+          path: /maldl
+          method: get
+  getlatestmaquan:
+    handler: handler.getlatestmaquan
+    layers:
+    - !Ref DependenciesLambdaLayer
+    events:
+      - httpApi:
+          path: /maquan
+          method: get
+  getlatestmamh:
+    handler: handler.getlatestmamh
+    layers:
+    - !Ref DependenciesLambdaLayer
+    events:
+      - httpApi:
+          path: /mamh
+          method: get
+  getlatestmapt:
+    handler: handler.getlatestmapt
+    layers:
+    - !Ref DependenciesLambdaLayer
+    events:
+      - httpApi:
+          path: /mapt
+          method: get
+  getlatestmapx:
+    handler: handler.getlatestmapx
+    layers:
+    - !Ref DependenciesLambdaLayer
+    events:
+      - httpApi:
+          path: /mapx
+          method: get
+  

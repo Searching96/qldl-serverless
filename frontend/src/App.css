@@ -1,5 +1,9 @@
 .App {
   text-align: center;
+  width: 100%;
+  max-width: 100%;
+  padding: 0;
+  margin: 0;
 }
 
 .App-logo {
@@ -22,6 +26,7 @@
   justify-content: center;
   font-size: calc(10px + 2vmin);
   color: white;
+  width: 100%;
 }
 
 .App-link {
@@ -35,4 +40,12 @@
   to {
     transform: rotate(360deg);
   }
+}
+
+/* Ensure all containers take full width */
+.container-fluid {
+  width: 100%;
+  max-width: 100%;
+  padding-left: 0;
+  padding-right: 0;
 }

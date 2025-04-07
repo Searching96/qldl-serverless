@@ -132,7 +132,7 @@ export const searchdl = async (event, context) => {
     try {
         const searchParams = event.queryStringParameters || {};
         const results = await daiLyService.searchDaiLy(searchParams);
-        
+
         if (!results || results.length === 0) {
             return {
                 statusCode: 200,
@@ -140,7 +140,7 @@ export const searchdl = async (event, context) => {
                 body: JSON.stringify({ message: 'Không tìm thấy đại lý nào phù hợp với tiêu chí tìm kiếm.', data: [] }),
             };
         }
-        
+
         console.log('Tìm kiếm đại lý thành công, số kết quả:', results.length);
         return {
             statusCode: 200,

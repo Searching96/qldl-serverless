@@ -47,4 +47,10 @@ export const createDonViTinh = (data) => fetchData('/donvitinh/', 'POST', data);
 export const updateDonViTinh = (maDonViTinh, data) => fetchData(`/donvitinh/${maDonViTinh}`, 'PUT', data);
 export const deleteDonViTinh = (maDonViTinh) => fetchData(`/donvitinh/${maDonViTinh}`, 'DELETE');
 
-// ... (Add API functions for other entities based on your routes.mjs)
+export const getLatestMaDaiLy = () => fetchData('/id/madl');
+export const getLatestMaDonViTinh = () => fetchData('/id/madvt');
+export const getLatestMaLoaiDaiLy = () => fetchData('/id/maldl');
+export const getLatestMaQuan = () => fetchData('/idmaphieuxuat/maquan');
+export const getLatestMaMatHang = () => fetchData('/idmaphieuxuat/mamh');
+export const getLatestMaPhieuThu = () => fetchData('/idmaphieuxuat/mapt');
+export const getLatestMaPhieuXuat = () => fetchData('/idmaphieuxuat/mapx');

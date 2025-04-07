@@ -2,34 +2,38 @@
     width: 100%;
     display: grid;
     grid:
-        "leftHeader header rightHeader" auto
-        "leftSide body rightSide" auto
-        "footer footer footer" auto
-        / auto auto auto;
+        "header" auto
+        "body" auto
+        "footer" auto
+        / auto;
     gap: 8px;
-  }
-.rightHeader {
-    grid-area: rightHeader;
-}
-
-.leftHeader {
-    grid-area: leftHeader;
 }
 
 .header {
     grid-area: header;
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
 }
 
-.leftSide {
-    grid-area: leftSide;
-}
-
+/* Add styles for horizontal layout within body */
 .body {
     grid-area: body;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    gap: 12px;
 }
 
-.rightSide {
-    grid-area: rightSide;
+.header .left,
+.header .leftcenter,
+.header .rightcenter,
+.header .right,
+.body .left, 
+.body .center, 
+.body .right {
+    flex: 1;
+    min-width: 0; /* Prevent overflow issues */
 }
 
 .footer {

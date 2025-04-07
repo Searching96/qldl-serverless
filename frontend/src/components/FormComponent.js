@@ -1,16 +1,17 @@
 import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { Button, Form, Card } from "react-bootstrap";
+import { v4 as uuidv4 } from 'uuid';
 import "../styles/FormComponent.css";
 
-export const FormComponent = ({ onSubmit, dsQuan, dsLoaiDaiLy, onSearch, selectedDaily }) => {
-    const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm();
+export const FormComponent = ({ selectedDaily, onSubmit, dsQuan, dsLoaiDaiLy, nextDailyId }) => {
+    const { register, handleSubmit, setValue, reset, formState: { errors } } = useForm();
     const [editId, setEditId] = useState(null);
+    const [newId, setNewId] = useState(null);
 
-    // Load selectedDaily data into form when it changes
     useEffect(() => {
         if (selectedDaily) {
-            console.log("Loading daily for edit:", selectedDaily);
+            // Set form values for editing
             setValue("tendaily", selectedDaily.tendaily);
             setValue("diachi", selectedDaily.diachi);
             setValue("sodienthoai", selectedDaily.sodienthoai);
@@ -20,8 +21,23 @@ export const FormComponent = ({ onSubmit, dsQuan, dsLoaiDaiLy, onSearch, selecte
 
             // Make sure to store the ID
             setEditId(selectedDaily.madaily);
+            setNewId(null);
         }
-    }, [selectedDaily, setValue]);
+        else {
+            // Use the ID from ID-tracker or generate a UUID as fallback
+            setNewId(nextDailyId || uuidv4());
+            setEditId(null);
+            setValue("madaily", nextDailyId || uuidv4());
+            
+            // Reset other fields
+            setValue("tendaily", "");
+            setValue("diachi", "");
+            setValue("sodienthoai", "");
+            setValue("email", "");
+            setValue("maquan", "");
+            setValue("maloaidaily", "");
+        }
+    }, [selectedDaily, setValue, nextDailyId]);
 
     const submitHandler = (data) => {
         // Find the objects for display purposes
@@ -30,7 +46,7 @@ export const FormComponent = ({ onSubmit, dsQuan, dsLoaiDaiLy, onSearch, selecte
 
         // Create payload to send to API
         const payload = {
-            madaily: editId, // Use stored editId, will be null for new entries
+            madaily: editId || newId || nextDailyId || uuidv4(), // Use editId for updates, newId or nextDailyId for new entries
             tendaily: data.tendaily,
             diachi: data.diachi,
             sodienthoai: data.sodienthoai,
@@ -50,6 +66,9 @@ export const FormComponent = ({ onSubmit, dsQuan, dsLoaiDaiLy, onSearch, selecte
     const resetForm = () => {
         reset();
         setEditId(null);
+        // Set to next ID from tracker when resetting
+        setNewId(nextDailyId || uuidv4());
+        setValue("madaily", nextDailyId || uuidv4());
     };
 
     return (
@@ -59,7 +78,19 @@ export const FormComponent = ({ onSubmit, dsQuan, dsLoaiDaiLy, onSearch, selecte
                 <Card.Body>
                     <Form onSubmit={handleSubmit(submitHandler)}>
                         <section className="form-layout">
-                            <div className="leftHeader">
+                            <div className="header">
+                            <div className="left">
+                                <Form.Group className="mb-3">
+                                    <Form.Label>Mã đại lý</Form.Label>
+                                    <Form.Control
+                                        type="text"
+                                        placeholder="Mã đại lý"
+                                        value={editId || newId || ""}
+                                        readOnly />
+                                    {errors.madaily && <span className="text-danger">{errors.madaily.message}</span>}
+                                </Form.Group>
+                            </div>
+                            <div className="leftcenter">
                                 <Form.Group className="mb-3">
                                     <Form.Label>Tên đại lý</Form.Label>
                                     <Form.Control
@@ -69,7 +100,7 @@ export const FormComponent = ({ onSubmit, dsQuan, dsLoaiDaiLy, onSearch, selecte
                                     {errors.tendaily && <span className="text-danger">{errors.tendaily.message}</span>}
                                 </Form.Group>
                             </div>
-                            <div className="header">
+                            <div className="rightcenter">
                                 <Form.Group className="mb-3">
                                     <Form.Label>Loại đại lý</Form.Label>
                                     <Form.Select
@@ -84,7 +115,7 @@ export const FormComponent = ({ onSubmit, dsQuan, dsLoaiDaiLy, onSearch, selecte
                                     {errors.maloaidaily && <span className="text-danger">{errors.maloaidaily.message}</span>}
                                 </Form.Group>
                             </div>
-                            <div className="rightHeader">
+                            <div className="right">
                                 <Form.Group className="mb-3">
                                     <Form.Label>Quận</Form.Label>
                                     <Form.Select
@@ -99,41 +130,44 @@ export const FormComponent = ({ onSubmit, dsQuan, dsLoaiDaiLy, onSearch, selecte
                                     {errors.maquan && <span className="text-danger">{errors.maquan.message}</span>}
                                 </Form.Group>
                             </div>
-                            <div className="leftSide">
-                                <Form.Group className="mb-3">
-                                    <Form.Label>Số điện thoại</Form.Label>
-                                    <Form.Control
-                                        type="text"
-                                        placeholder="Nhập số điện thoại"
-                                        {...register("sodienthoai", { required: "Số điện thoại là bắt buộc" })} />
-                                    {errors.sodienthoai && <span className="text-danger">{errors.sodienthoai.message}</span>}
-                                </Form.Group>
                             </div>
                             <div className="body">
-                                <Form.Group className="mb-3">
-                                    <Form.Label>Email</Form.Label>
-                                    <Form.Control
-                                        type="email"
-                                        placeholder="Nhập email"
-                                        {...register("email", {
-                                            required: "Email là bắt buộc",
-                                            pattern: {
-                                                value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                                                message: "Email không hợp lệ"
-                                            }
-                                        })} />
-                                    {errors.email && <span className="text-danger">{errors.email.message}</span>}
-                                </Form.Group>
-                            </div>
-                            <div className="rightSide">
-                                <Form.Group className="mb-3">
-                                    <Form.Label>Ngày tiếp nhận</Form.Label>
-                                    <Form.Control
-                                        type="date"
-                                        defaultValue={new Date().toISOString().split("T")[0]}
-                                        {...register("ngaytiepnhan", { required: "Ngày tiếp nhận là bắt buộc" })} />
-                                    {errors.ngaytiepnhan && <span className="text-danger">{errors.ngaytiepnhan.message}</span>}
-                                </Form.Group>
+                                <div className="left">
+                                    <Form.Group className="mb-3">
+                                        <Form.Label>Số điện thoại</Form.Label>
+                                        <Form.Control
+                                            type="text"
+                                            placeholder="Nhập số điện thoại"
+                                            {...register("sodienthoai", { required: "Số điện thoại là bắt buộc" })} />
+                                        {errors.sodienthoai && <span className="text-danger">{errors.sodienthoai.message}</span>}
+                                    </Form.Group>
+                                </div>
+                                <div className="center">
+                                    <Form.Group className="mb-3">
+                                        <Form.Label>Email</Form.Label>
+                                        <Form.Control
+                                            type="email"
+                                            placeholder="Nhập email"
+                                            {...register("email", {
+                                                required: "Email là bắt buộc",
+                                                pattern: {
+                                                    value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                                                    message: "Email không hợp lệ"
+                                                }
+                                            })} />
+                                        {errors.email && <span className="text-danger">{errors.email.message}</span>}
+                                    </Form.Group>
+                                </div>
+                                <div className="right">
+                                    <Form.Group className="mb-3">
+                                        <Form.Label>Ngày tiếp nhận</Form.Label>
+                                        <Form.Control
+                                            type="date"
+                                            defaultValue={new Date().toISOString().split("T")[0]}
+                                            {...register("ngaytiepnhan", { required: "Ngày tiếp nhận là bắt buộc" })} />
+                                        {errors.ngaytiepnhan && <span className="text-danger">{errors.ngaytiepnhan.message}</span>}
+                                    </Form.Group>
+                                </div>
                             </div>
                             <div className="footer">
                                 <Form.Group className="mb-3">

@@ -2,7 +2,10 @@ import React, { useState, useEffect } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { FormComponent } from "./components/FormComponent.js";
 import { TableComponent } from "./components/TableComponent.js";
-import { createDaily, getAllDaily, getAllLoaiDaiLy, getAllQuan, getDaily, updateDaily, deleteDaily } from "./services/api.js";
+import { 
+    createDaily, getAllDaily, getAllLoaiDaiLy, getAllQuan, 
+    getDaily, updateDaily, deleteDaily, getLatestMaDaiLy 
+} from "./services/api.js";
 import { Quan, LoaiDaiLy } from "./models";
 
 function App() {
@@ -14,6 +17,7 @@ function App() {
     const [errorMessage, setErrorMessage] = useState('');
     const [infoMessage, setInfoMessage] = useState('');
     const [selectedDaily, setSelectedDaily] = useState(null);
+    const [nextDailyId, setNextDailyId] = useState(null);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -21,13 +25,15 @@ function App() {
                 setIsLoading(true);
                 setInfoMessage('Đang tải dữ liệu...');
                 
-                const [loaiDaiLyResponse, quanResponse] = await Promise.all([
+                const [loaiDaiLyResponse, quanResponse, nextIdResponse] = await Promise.all([
                     getAllLoaiDaiLy(),
-                    getAllQuan()
+                    getAllQuan(),
+                    getLatestMaDaiLy()
                 ]);
                 
                 console.log("API Response - LoaiDaiLy:", loaiDaiLyResponse);
                 console.log("API Response - Quan:", quanResponse);
+                console.log("API Response - Next ID:", nextIdResponse);
                 
                 const loaiDaiLyList = Array.isArray(loaiDaiLyResponse) ? 
                     loaiDaiLyResponse.map(ldl => new LoaiDaiLy(ldl.maloaidaily, ldl.tenloaidaily))
@@ -61,6 +67,10 @@ function App() {
                 
                 const dailyResponse = await getAllDaily();
                 setDSDaiLy(dailyResponse || []);
+
+                if (nextIdResponse && nextIdResponse.madaily) {
+                    setNextDailyId(nextIdResponse.madaily);
+                }
                 
             } catch (error) {
                 console.error("Error loading data:", error);
@@ -103,35 +113,28 @@ function App() {
     const handleDeleteRow = async (row) => {
         console.log("Delete row (full object):", JSON.stringify(row));
         
-        // Get the daily ID
         const idToUse = row.maDaiLy || row.madaily;
         if (!idToUse) {
             setErrorMessage("Không tìm thấy mã đại lý để xóa");
             return;
         }
         
-        // Show confirmation dialog
         const isConfirmed = window.confirm(`Bạn có chắc chắn muốn xóa đại lý ${idToUse}?`);
         
         if (isConfirmed) {
             try {
                 setInfoMessage('Đang xóa đại lý...');
                 
-                // Call the delete API
                 await deleteDaily(idToUse);
                 
-                // Show success message
                 setSuccessMessage(`Đại lý ${idToUse} đã được xóa thành công`);
                 
-                // Refresh the list
                 setInfoMessage('Đang cập nhật danh sách đại lý...');
                 const updatedDaily = await getAllDaily();
                 setDSDaiLy(updatedDaily || []);
                 
-                // Clear info message
                 setInfoMessage('');
                 
-                // If the deleted daily was selected, clear the selection
                 if (selectedDaily && (selectedDaily.maDaiLy === idToUse || selectedDaily.madaily === idToUse)) {
                     setSelectedDaily(null);
                 }
@@ -155,7 +158,7 @@ function App() {
         try {
             let result;
             
-            if (formData.madaily) {
+            if (selectedDaily) {
                 setInfoMessage('Đang cập nhật đại lý...');
                 result = await updateDaily(formData.madaily, formData);
                 setSuccessMessage('Đại lý được cập nhật thành công: ' + formData.madaily);
@@ -164,6 +167,11 @@ function App() {
                 setInfoMessage('Đang tạo đại lý mới...');
                 result = await createDaily(formData);
                 setSuccessMessage('Đại lý được tạo thành công: ' + result.maDaiLy);
+                
+                const nextIdResponse = await getLatestMaDaiLy();
+                if (nextIdResponse && nextIdResponse.madaily) {
+                    setNextDailyId(nextIdResponse.madaily);
+                }
             }
             
             setInfoMessage('Đang cập nhật danh sách đại lý...');
@@ -192,8 +200,8 @@ function App() {
     };
 
     return (
-        <div className="container mt-4">
-            <h1>Thông tin đại lý</h1>
+        <div className="container-fluid px-0 mt-4">
+            <h1 className="ms-3">Thông tin đại lý</h1>
             {isLoading ? (
                 <div className="text-center">
                     <div className="spinner-border" role="status">
@@ -203,33 +211,36 @@ function App() {
             ) : (
                 <>
                     {successMessage && (
-                        <div className="alert alert-success" role="alert">
+                        <div className="alert alert-success mx-3" role="alert">
                             {successMessage}
                         </div>
                     )}
                     {errorMessage && (
-                        <div className="alert alert-danger" role="alert">
+                        <div className="alert alert-danger mx-3" role="alert">
                             {errorMessage}
                         </div>
                     )}
                     {infoMessage && (
-                        <div className="alert alert-info" role="alert">
+                        <div className="alert alert-info mx-3" role="alert">
                             {infoMessage}
                         </div>
                     )}
-                    <FormComponent 
-                        selectedDaily={selectedDaily}
-                        onSubmit={handleFormSubmit} 
-                        dsQuan={dsQuan} 
-                        dsLoaiDaiLy={dsLoaiDaiLy} 
-                    />
-                    
-                    <TableComponent 
-                        data={dsDaiLy} 
-                        onEdit={handleEditRow} 
-                        onDelete={handleDeleteRow} 
-                        onRefresh={handleRefresh}
-                    />
+                    <div className="px-3">
+                        <FormComponent 
+                            selectedDaily={selectedDaily}
+                            onSubmit={handleFormSubmit} 
+                            dsQuan={dsQuan} 
+                            dsLoaiDaiLy={dsLoaiDaiLy}
+                            nextDailyId={nextDailyId}
+                        />
+                        
+                        <TableComponent 
+                            data={dsDaiLy} 
+                            onEdit={handleEditRow} 
+                            onDelete={handleDeleteRow} 
+                            onRefresh={handleRefresh}
+                        />
+                    </div>
                 </>
             )}
         </div>

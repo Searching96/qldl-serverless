@@ -7,9 +7,18 @@ class DaiLyService {
   async getAllDaiLy() {
     const queryString = `
       SELECT 
-        d.*,
-        q.TenQuan,
-        l.TenLoaiDaiLy
+        d.MaDaiLy as madaily,
+        d.TenDaiLy as tendaily,
+        d.DiaChi as diachi,
+        d.SoDienThoai as sodienthoai,
+        d.Email as email,
+        d.MaQuan as maquan,
+        d.MaLoaiDaiLy as maloaidaily,
+        d.NgayTiepNhan as ngaytiepnhan,
+        d.TienNo as tienno,
+        d.DeletedAt as deletedat,
+        q.TenQuan as tenquan,
+        l.TenLoaiDaiLy as tenloaidaily
       FROM 
         inventory.DAILY d
       LEFT JOIN 
@@ -25,9 +34,18 @@ class DaiLyService {
   async getDaiLy(maDaiLy) {
     const queryString = `
       SELECT 
-        d.*,
-        q.TenQuan,
-        l.TenLoaiDaiLy
+        d.MaDaiLy as madaily,
+        d.TenDaiLy as tendaily,
+        d.DiaChi as diachi,
+        d.SoDienThoai as sodienthoai,
+        d.Email as email,
+        d.MaQuan as maquan,
+        d.MaLoaiDaiLy as maloaidaily,
+        d.NgayTiepNhan as ngaytiepnhan,
+        d.TienNo as tienno,
+        d.DeletedAt as deletedat,
+        q.TenQuan as tenquan,
+        l.TenLoaiDaiLy as tenloaidaily
       FROM 
         inventory.DAILY d
       LEFT JOIN 
@@ -53,11 +71,11 @@ class DaiLyService {
     return missingFields;
   }
 
-  async createDaiLy({ tendaily, sodienthoai, diachi, email, maloaidaily, maquan, ngaytiepnhan }) {
-    console.log('Inside createDaiLy service with data:', { tendaily, sodienthoai, diachi, email, maloaidaily, maquan, ngaytiepnhan });
+  async createDaiLy({ madaily, tendaily, sodienthoai, diachi, email, maloaidaily, maquan, ngaytiepnhan }) {
+    console.log('Inside createDaiLy service with data:', { madaily, tendaily, sodienthoai, diachi, email, maloaidaily, maquan, ngaytiepnhan });
 
     const requiredFields = ['tendaily', 'sodienthoai', 'diachi', 'email', 'maloaidaily', 'maquan', 'ngaytiepnhan'];
-    const data = { tendaily, sodienthoai, diachi, email, maloaidaily, maquan, ngaytiepnhan };
+    const data = { madaily, tendaily, sodienthoai, diachi, email, maloaidaily, maquan, ngaytiepnhan };
     const missingFields = this.validateRequiredFields(data, requiredFields);
 
     if (missingFields.length > 0) {
@@ -84,13 +102,13 @@ class DaiLyService {
       const tenquanResult = await query(tenquanQuery, [maquan]);
       throw new Error(`Số lượng đại lý trong quận ${tenquanResult.rows[0].TenQuan} đã đạt giới hạn tối đa.`);
     }
-    
-    const maDaiLy = uuidv4();
+
+    const maDaiLy = madaily ??= uuidv4();
     const queryString = 'INSERT INTO inventory.DAILY (MaDaiLy, TenDaiLy, SoDienThoai, DiaChi, Email, MaLoaiDaiLy, MaQuan, NgayTiepNhan, DeletedAt) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NULL)';
     console.log('Executing query:', queryString, [maDaiLy, tendaily, sodienthoai, diachi, email, maloaidaily, maquan, ngaytiepnhan]);
     await query(queryString, [maDaiLy, tendaily, sodienthoai, diachi, email, maloaidaily, maquan, ngaytiepnhan]);
     console.log('Query executed successfully, maDaiLy:', maDaiLy);
-    return { maDaiLy };
+    return { madaily: maDaiLy };
   }
 
   async updateDaiLy(maDaiLy, { tendaily, sodienthoai, diachi, email, maloaidaily, maquan, ngaytiepnhan }) {
@@ -180,9 +198,18 @@ class DaiLyService {
 
     const queryString = `
       SELECT 
-        d.*,
-        q.TenQuan,
-        l.TenLoaiDaiLy
+        d.MaDaiLy as madaily,
+        d.TenDaiLy as tendaily,
+        d.DiaChi as diachi,
+        d.SoDienThoai as sodienthoai,
+        d.Email as email,
+        d.MaQuan as maquan,
+        d.MaLoaiDaiLy as maloaidaily,
+        d.NgayTiepNhan as ngaytiepnhan,
+        d.TienNo as tienno,
+        d.DeletedAt as deletedat,
+        q.TenQuan as tenquan,
+        l.TenLoaiDaiLy as tenloaidaily
       FROM 
         inventory.DAILY d
       LEFT JOIN 

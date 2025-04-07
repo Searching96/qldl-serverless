@@ -5,26 +5,26 @@ import QuanService from './services.mjs';
 const quanService = new QuanService();
 
 const headers = {
-  'Content-Type': 'application/json',
-  'Access-Control-Allow-Origin': '*',
+    'Content-Type': 'application/json',
+    'Access-Control-Allow-Origin': '*',
 };
 
 export const createquan = async (event) => {
-  try {
-    const { tenQuan } = JSON.parse(event.body);
-    const maQuan = await quanService.createQuan(tenQuan);
-    console.log('Đã tạo quận với ID:', maQuan);
-    return {
-      statusCode: 201,
-      body: JSON.stringify({ message: 'Đã tạo quận thành công.', maQuan }),
-    };
-  } catch (error) {
-    console.error('Lỗi khi tạo quận: ', error);
-    return {
-      statusCode: error.message.includes('required') ? 400 : 500,
-      body: JSON.stringify({ message: 'Lỗi khi tạo quận: ', error: error.message }),
-    };
-  }
+    try {
+        const { tenQuan } = JSON.parse(event.body);
+        const maQuan = await quanService.createQuan(tenQuan);
+        console.log('Đã tạo quận với ID:', maQuan);
+        return {
+            statusCode: 201,
+            body: JSON.stringify({ message: 'Đã tạo quận thành công.', maQuan }),
+        };
+    } catch (error) {
+        console.error('Lỗi khi tạo quận: ', error);
+        return {
+            statusCode: error.message.includes('required') ? 400 : 500,
+            body: JSON.stringify({ message: 'Lỗi khi tạo quận: ', error: error.message }),
+        };
+    }
 };
 
 export const getallquan = async (event, context) => {
@@ -83,36 +83,36 @@ export const getquanbyid = async (event, context) => {
 };
 
 export const updatequan = async (event) => {
-  try {
-    const { maQuan } = event.pathParameters;
-    const { tenQuan } = JSON.parse(event.body);
-    await quanService.updateQuan(maQuan, tenQuan);
-    return {
-      statusCode: 200,
-      body: JSON.stringify({ message: 'Cập nhật quận thành công.' }),
-    };
-  } catch (error) {
-    console.error('Lỗi khi cập nhật quận: ', error);
-    return {
-      statusCode: error.message.includes('Không tìm thấy') ? 404 : 500,
-      body: JSON.stringify({ message: 'Lỗi khi cập nhật quận: ', error: error.message }),
-    };
-  }
+    try {
+        const { maQuan } = event.pathParameters;
+        const { tenQuan } = JSON.parse(event.body);
+        await quanService.updateQuan(maQuan, tenQuan);
+        return {
+            statusCode: 200,
+            body: JSON.stringify({ message: 'Cập nhật quận thành công.' }),
+        };
+    } catch (error) {
+        console.error('Lỗi khi cập nhật quận: ', error);
+        return {
+            statusCode: error.message.includes('Không tìm thấy') ? 404 : 500,
+            body: JSON.stringify({ message: 'Lỗi khi cập nhật quận: ', error: error.message }),
+        };
+    }
 };
 
 export const deletequan = async (event) => {
-  try {
-    const { maQuan } = event.pathParameters;
-    await quanService.deleteQuan(maQuan);
-    return {
-      statusCode: 200,
-      body: JSON.stringify({ message: 'Xóa quận thành công.' }),
-    };
-  } catch (error) {
-    console.error('Lỗi khi xóa quận: ', error);
-    return {
-      statusCode: error.message.includes('Không tìm thấy') ? 404 : 500,
-      body: JSON.stringify({ message: 'Lỗi khi xóa quận: ', error: error.message }),
-    };
-  }
+    try {
+        const { maQuan } = event.pathParameters;
+        await quanService.deleteQuan(maQuan);
+        return {
+            statusCode: 200,
+            body: JSON.stringify({ message: 'Xóa quận thành công.' }),
+        };
+    } catch (error) {
+        console.error('Lỗi khi xóa quận: ', error);
+        return {
+            statusCode: error.message.includes('Không tìm thấy') ? 404 : 500,
+            body: JSON.stringify({ message: 'Lỗi khi xóa quận: ', error: error.message }),
+        };
+    }
 };
