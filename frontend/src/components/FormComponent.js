@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { Button, Form, Card } from "react-bootstrap";
-import { v4 as uuidv4 } from 'uuid';
 import "../styles/FormComponent.css";
 
 export const FormComponent = ({ selectedDaily, onSubmit, dsQuan, dsLoaiDaiLy, nextDailyId }) => {
@@ -19,15 +18,16 @@ export const FormComponent = ({ selectedDaily, onSubmit, dsQuan, dsLoaiDaiLy, ne
             setValue("maquan", selectedDaily.maquan);
             setValue("maloaidaily", selectedDaily.maloaidaily);
 
-            // Make sure to store the ID
-            setEditId(selectedDaily.madaily);
+            // Make sure to store the ID - handle both madaily and maDaiLy formats
+            const dailyId = selectedDaily.madaily || selectedDaily.maDaiLy;
+            setEditId(dailyId);
             setNewId(null);
         }
         else {
             // Use the ID from ID-tracker or generate a UUID as fallback
-            setNewId(nextDailyId || uuidv4());
+            setNewId(nextDailyId);
             setEditId(null);
-            setValue("madaily", nextDailyId || uuidv4());
+            setValue("madaily", nextDailyId);
             
             // Reset other fields
             setValue("tendaily", "");
@@ -46,7 +46,7 @@ export const FormComponent = ({ selectedDaily, onSubmit, dsQuan, dsLoaiDaiLy, ne
 
         // Create payload to send to API
         const payload = {
-            madaily: editId || newId || nextDailyId || uuidv4(), // Use editId for updates, newId or nextDailyId for new entries
+            madaily: editId || newId || nextDailyId, // Use editId for updates, newId or nextDailyId for new entries
             tendaily: data.tendaily,
             diachi: data.diachi,
             sodienthoai: data.sodienthoai,
@@ -67,8 +67,8 @@ export const FormComponent = ({ selectedDaily, onSubmit, dsQuan, dsLoaiDaiLy, ne
         reset();
         setEditId(null);
         // Set to next ID from tracker when resetting
-        setNewId(nextDailyId || uuidv4());
-        setValue("madaily", nextDailyId || uuidv4());
+        setNewId(nextDailyId);
+        setValue("madaily", nextDailyId);
     };
 
     return (

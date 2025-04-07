@@ -90,13 +90,15 @@ function App() {
 
     const handleEditRow = async (row) => {
         console.log("Edit row (full object):", JSON.stringify(row));
-        console.log("maDaiLy value:", row.maDaiLy || row.madaily || "NOT FOUND");
         
         try {
             setInfoMessage('Đang tải thông tin đại lý...');
-            const idToUse = row.maDaiLy || row.madaily; 
+            // Handle both ID formats
+            const idToUse = row.madaily || row.maDaiLy; 
+            console.log("maDaiLy value:", idToUse || "NOT FOUND");
+            
             if (!idToUse) {
-                throw new Error("Could not find maDaiLy in the row data");
+                throw new Error("Could not find mã đại lý in the row data");
             }
             
             const daily = await getDaily(idToUse);
@@ -160,17 +162,25 @@ function App() {
             
             if (selectedDaily) {
                 setInfoMessage('Đang cập nhật đại lý...');
-                result = await updateDaily(formData.madaily, formData);
-                setSuccessMessage('Đại lý được cập nhật thành công: ' + formData.madaily);
+                // Ensure we have the ID in the correct format
+                const idToUse = formData.madaily;
+                result = await updateDaily(idToUse, formData);
+                setSuccessMessage('Đại lý được cập nhật thành công: ' + idToUse);
                 setSelectedDaily(null);
             } else {
                 setInfoMessage('Đang tạo đại lý mới...');
                 result = await createDaily(formData);
-                setSuccessMessage('Đại lý được tạo thành công: ' + result.maDaiLy);
+                const newId = result.madaily || result.maDaiLy;
+                setSuccessMessage('Đại lý được tạo thành công: ' + newId);
                 
-                const nextIdResponse = await getLatestMaDaiLy();
-                if (nextIdResponse && nextIdResponse.madaily) {
-                    setNextDailyId(nextIdResponse.madaily);
+                // Fetch the latest ID after creation
+                try {
+                    const nextIdResponse = await getLatestMaDaiLy();
+                    if (nextIdResponse && (nextIdResponse.madaily)) {
+                        setNextDailyId(nextIdResponse.madaily);
+                    }
+                } catch (idError) {
+                    console.error("Error fetching next ID:", idError);
                 }
             }
             

@@ -3,6 +3,7 @@ import DataTable from "react-data-table-component";
 
 export const TableComponent = ({ data, onEdit, onDelete, onRefresh }) => {
     const columns = [
+        { name: "Mã đại lý", selector: (row) => row.madaily, sortable: true },
         { name: "Tên đại lý", selector: (row) => row.tendaily, sortable: true },
         { name: "Số điện thoại", selector: (row) => row.sodienthoai || row.dienthoai, sortable: true },
         { name: "Địa chỉ", selector: (row) => row.diachi, sortable: true },

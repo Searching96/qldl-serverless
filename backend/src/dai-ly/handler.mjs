@@ -13,12 +13,12 @@ export const createdl = async (event, context) => {
     context.callbackWaitsForEmptyEventLoop = false;
     try {
         const { tendaily, diachi, sodienthoai, email, maquan, maloaidaily, ngaytiepnhan } = JSON.parse(event.body);
-        const maDaiLy = await daiLyService.createDaiLy({ tendaily, diachi, sodienthoai, email, maquan, maloaidaily, ngaytiepnhan });
-        console.log('Đã tạo đại lý với ID:', maDaiLy);
+        const madaily = await daiLyService.createDaiLy({ tendaily, diachi, sodienthoai, email, maquan, maloaidaily, ngaytiepnhan });
+        console.log('Đã tạo đại lý với ID:', madaily);
         return {
             statusCode: 201,
             headers,
-            body: JSON.stringify({ message: 'Đã tạo đại lý thành công.', maDaiLy }),
+            body: JSON.stringify({ message: 'Đã tạo đại lý thành công.', madaily }),
         };
     } catch (error) {
         console.error('Lỗi khi tạo đại lý: ', error);
@@ -60,8 +60,8 @@ export const getalldl = async (event, context) => {
 export const getdlbyid = async (event, context) => {
     context.callbackWaitsForEmptyEventLoop = false;
     try {
-        const { maDaiLy } = event.pathParameters;
-        const DaiLy = await daiLyService.getDaiLy(maDaiLy);
+        const { madaily } = event.pathParameters;
+        const DaiLy = await daiLyService.getDaiLy(madaily);
         if (!DaiLy) {
             return {
                 statusCode: 404,
@@ -88,10 +88,10 @@ export const getdlbyid = async (event, context) => {
 export const updatedl = async (event, context) => {
     context.callbackWaitsForEmptyEventLoop = false;
     try {
-        const { maDaiLy } = event.pathParameters;
+        const { madaily } = event.pathParameters;
         const { tendaily, diachi, sodienthoai, email, maquan, maloaidaily, ngaytiepnhan } = JSON.parse(event.body);
-        await daiLyService.updateDaiLy(maDaiLy, { tendaily, diachi, sodienthoai, email, maquan, maloaidaily, ngaytiepnhan });
-        console.log('Cập nhật đại lý thành công:', maDaiLy);
+        await daiLyService.updateDaiLy(madaily, { tendaily, diachi, sodienthoai, email, maquan, maloaidaily, ngaytiepnhan });
+        console.log('Cập nhật đại lý thành công:', madaily);
         return {
             statusCode: 200,
             headers,
@@ -110,8 +110,8 @@ export const updatedl = async (event, context) => {
 export const deletedl = async (event, context) => {
     context.callbackWaitsForEmptyEventLoop = false;
     try {
-        const { maDaiLy } = event.pathParameters;
-        await daiLyService.deleteDaiLy(maDaiLy);
+        const { madaily } = event.pathParameters;
+        await daiLyService.deleteDaiLy(madaily);
         return {
             statusCode: 200,
             headers,

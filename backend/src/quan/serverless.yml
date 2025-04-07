@@ -35,7 +35,7 @@ provider:
 layers:
   Dependencies:
     path: ../../lambda-aurora-dsql
-    name: ${sls:stage}-layerName
+    name: ${sls:stage}-pg-dsql-uuid
     description: Package for postgres, dsql-signer and uuid
     compatibleRuntimes:
       - nodejs22.x

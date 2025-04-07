@@ -37,7 +37,7 @@ provider:
 layers:
   Dependencies:
     path: ../../lambda-aurora-dsql # required, path to layer contents on disk
-    name: ${sls:stage}-layerName # optional, Deployed Lambda layer name
+    name: ${sls:stage}-pg-dsql-uuid # optional, Deployed Lambda layer name
     description: Package for postgres, dsql-signer and uuid # optional, Description to publish to AWS
     compatibleRuntimes: # optional, a list of runtimes this layer is compatible with
       - nodejs22.x
