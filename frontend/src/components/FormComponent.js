@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { Button, Form, Card } from "react-bootstrap";
 import "../styles/FormComponent.css";
 
-export const FormComponent = ({ selectedDaily, onSubmit, dsQuan, dsLoaiDaiLy, nextDailyId }) => {
+export const FormComponent = ({ selectedDaily, onSubmit, dsQuan, dsLoaiDaiLy, nextDailyId, resetTrigger }) => {
     const { register, handleSubmit, setValue, reset, formState: { errors } } = useForm();
     const [editId, setEditId] = useState(null);
     const [newId, setNewId] = useState(null);
@@ -17,6 +17,18 @@ export const FormComponent = ({ selectedDaily, onSubmit, dsQuan, dsLoaiDaiLy, ne
             setValue("email", selectedDaily.email);
             setValue("maquan", selectedDaily.maquan);
             setValue("maloaidaily", selectedDaily.maloaidaily);
+            
+            // Format the date properly for the date input
+            let formattedDate;
+            if (selectedDaily.ngaytiepnhan) {
+                // Handle different date formats
+                const date = new Date(selectedDaily.ngaytiepnhan);
+                if (!isNaN(date.getTime())) {
+                    formattedDate = date.toISOString().split('T')[0]; // Format as YYYY-MM-DD
+                }
+            }
+            
+            setValue("ngaytiepnhan", formattedDate || new Date().toISOString().split("T")[0]);
 
             // Make sure to store the ID - handle both madaily and maDaiLy formats
             const dailyId = selectedDaily.madaily || selectedDaily.maDaiLy;
@@ -36,8 +48,26 @@ export const FormComponent = ({ selectedDaily, onSubmit, dsQuan, dsLoaiDaiLy, ne
             setValue("email", "");
             setValue("maquan", "");
             setValue("maloaidaily", "");
+            setValue("ngaytiepnhan", new Date().toISOString().split("T")[0]); // Set today's date explicitly
         }
     }, [selectedDaily, setValue, nextDailyId]);
+
+    // Define resetForm with useCallback to avoid dependency issues
+    const resetForm = useCallback(() => {
+        reset();
+        setEditId(null);
+        // Set to next ID from tracker when resetting
+        setNewId(nextDailyId);
+        setValue("madaily", nextDailyId);
+        setValue("ngaytiepnhan", new Date().toISOString().split("T")[0]); // Set default date when resetting
+    }, [reset, nextDailyId, setValue]);
+
+    // Listen for reset trigger from parent
+    useEffect(() => {
+        if (resetTrigger > 0) {
+            resetForm();
+        }
+    }, [resetTrigger, resetForm]);
 
     const submitHandler = (data) => {
         // Find the objects for display purposes
@@ -60,16 +90,9 @@ export const FormComponent = ({ selectedDaily, onSubmit, dsQuan, dsLoaiDaiLy, ne
         };
 
         onSubmit(payload);
-        resetForm();
     };
 
-    const resetForm = () => {
-        reset();
-        setEditId(null);
-        // Set to next ID from tracker when resetting
-        setNewId(nextDailyId);
-        setValue("madaily", nextDailyId);
-    };
+
 
     return (
         <>
@@ -163,7 +186,6 @@ export const FormComponent = ({ selectedDaily, onSubmit, dsQuan, dsLoaiDaiLy, ne
                                         <Form.Label>Ngày tiếp nhận</Form.Label>
                                         <Form.Control
                                             type="date"
-                                            defaultValue={new Date().toISOString().split("T")[0]}
                                             {...register("ngaytiepnhan", { required: "Ngày tiếp nhận là bắt buộc" })} />
                                         {errors.ngaytiepnhan && <span className="text-danger">{errors.ngaytiepnhan.message}</span>}
                                     </Form.Group>
