@@ -102,21 +102,6 @@ class DaiLyService {
       throw new Error(`Mã quận ${maquan} không tồn tại hoặc đã bị xóa`);
     }
     const idQuan = quanCheck.rows[0].idquan;
-    // Check if the total number of DaiLy in the specified Quan exceeds the limit
-    const quanLimitQuery = `
-      SELECT COUNT(*) AS total_daily, t.SoLuongDaiLyToiDa
-      FROM inventory.DAILY d
-      JOIN inventory.THAMSO t ON TRUE
-      WHERE d.IDQuan = $1 AND d.DeletedAt IS NULL
-      GROUP BY t.SoLuongDaiLyToiDa`;
-    const quanLimitResult = await query(quanLimitQuery, [idQuan]);
-
-    if (quanLimitResult.rowCount > 0) {
-      const { total_daily, soluongdailytoida } = quanLimitResult.rows[0];
-      if (total_daily >= soluongdailytoida) {
-      throw new Error(`Số lượng đại lý trong quận đã đạt giới hạn tối đa (${soluongdailytoida}).`);
-      }
-    }
 
     // Use provided MaDaiLy or generate new one
     if (!madaily) {
@@ -128,30 +113,73 @@ class DaiLyService {
       madaily = idTrackerResult.rows[0].formatted_ma_daily;
     }
 
-    // Insert the new DaiLy record with UUID and user-facing ID
-    const insertQuery = `
-      INSERT INTO inventory.DAILY 
-      (MaDaiLy, TenDaiLy, SoDienThoai, DiaChi, Email, IDLoaiDaiLy, IDQuan, NgayTiepNhan) 
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-      RETURNING IDDaiLy as iddaily, MaDaiLy as madaily`;
-    console.log('Executing query:', insertQuery, [madaily, tendaily, sodienthoai, diachi, email, idLoaiDaiLy, idQuan, ngaytiepnhan]);
-    
-    const result = await query(insertQuery, [madaily, tendaily, sodienthoai, diachi, email, idLoaiDaiLy, idQuan, ngaytiepnhan]);
-    console.log('Query executed successfully, result:', result.rows[0]);
-    
-    return result.rows[0].madaily;
+    const mergedQuery = `
+    WITH limit_check AS (
+      SELECT 
+        COUNT(*) AS total_daily, 
+        t.SoLuongDaiLyToiDa
+      FROM inventory.DAILY d
+      JOIN inventory.THAMSO t ON TRUE
+      WHERE d.IDQuan = $7 AND d.DeletedAt IS NULL
+      GROUP BY t.SoLuongDaiLyToiDa
+    )
+    INSERT INTO inventory.DAILY 
+      (MaDaiLy, TenDaiLy, SoDienThoai, DiaChi, Email, IDLoaiDaiLy, IDQuan, NgayTiepNhan)
+    SELECT 
+      $1, $2, $3, $4, $5, $6, $7, $8
+    FROM limit_check
+    WHERE CASE 
+      WHEN total_daily < SoLuongDaiLyToiDa THEN TRUE
+      ELSE FALSE
+    END
+    RETURNING 
+      IDDaiLy as iddaily, 
+      MaDaiLy as madaily, 
+      (SELECT total_daily FROM limit_check) as current_count,
+      (SELECT SoLuongDaiLyToiDa FROM limit_check) as max_limit,
+      CASE 
+        WHEN (SELECT total_daily FROM limit_check) < (SELECT SoLuongDaiLyToiDa FROM limit_check) THEN TRUE
+        ELSE FALSE
+      END as is_valid;
+  `;
+
+    console.log('Executing query:', mergedQuery, [madaily, tendaily, sodienthoai, diachi, email, idLoaiDaiLy, idQuan, ngaytiepnhan]);
+    const result = await query(mergedQuery, [madaily, tendaily, sodienthoai, diachi, email, idLoaiDaiLy, idQuan, ngaytiepnhan]);
+
+    // Check if any rows were returned (insertion happened)
+    if (result.rowCount === 0) {
+      // No rows returned means the condition was false (limit reached)
+      // We need to get the limit info with a separate query
+      const limitQuery = `
+      SELECT COUNT(*) AS total_daily, t.SoLuongDaiLyToiDa
+      FROM inventory.DAILY d
+      JOIN inventory.THAMSO t ON TRUE
+      WHERE d.IDQuan = $1 AND d.DeletedAt IS NULL
+      GROUP BY t.SoLuongDaiLyToiDa
+    `;
+      const limitResult = await query(limitQuery, [idQuan]);
+      const { total_daily, soluongdailytoida } = limitResult.rows[0];
+      throw new Error(`Số lượng đại lý trong quận đã đạt giới hạn tối đa (${soluongdailytoida}).`);
+    } else {
+      console.log('Query executed successfully, result:', {
+        iddaily: result.rows[0].iddaily,
+        madaily: result.rows[0].madaily
+      });
+      return result.rows[0].madaily;
+    }
   }
 
   async updateDaiLy(madaily, { tendaily, sodienthoai, diachi, email, maloaidaily, maquan, ngaytiepnhan }) {
     console.log('Inside updateDaiLy service with madaily:', madaily, 'and data:', { tendaily, sodienthoai, diachi, email, maloaidaily, maquan, ngaytiepnhan });
 
     // Get IDDaiLy from MaDaiLy
-    const dailyCheckQuery = 'SELECT IDDaiLy FROM inventory.DAILY WHERE MaDaiLy = $1 AND DeletedAt IS NULL';
+    const dailyCheckQuery = 'SELECT IDDaiLy, IDQuan FROM inventory.DAILY WHERE MaDaiLy = $1 AND DeletedAt IS NULL';
     const dailyCheck = await query(dailyCheckQuery, [madaily]);
     if (dailyCheck.rowCount === 0) {
       throw new Error(`Không tìm thấy đại lý với mã ${madaily}`);
     }
     const idDaiLy = dailyCheck.rows[0].iddaily;
+    const currentQuan = dailyCheck.rows[0].idquan;
 
     let idLoaiDaiLy = null;
     if (maloaidaily) {
@@ -178,63 +206,118 @@ class DaiLyService {
     const updates = [];
     const values = [];
     let paramIndex = 1;
-    
+
     if (tendaily) { updates.push(`TenDaiLy = $${paramIndex++}`); values.push(tendaily); }
     if (sodienthoai) { updates.push(`SoDienThoai = $${paramIndex++}`); values.push(sodienthoai); }
     if (diachi) { updates.push(`DiaChi = $${paramIndex++}`); values.push(diachi); }
     if (email) { updates.push(`Email = $${paramIndex++}`); values.push(email); }
-    if (idLoaiDaiLy) { updates.push(`IDLoaiDaiLy = $${paramIndex++}`); values.push(idLoaiDaiLy); }
-    if (idQuan) { updates.push(`IDQuan = $${paramIndex++}`); values.push(idQuan); }
+    if (idLoaiDaiLy) { updates.push(`IDLoaiDaiLy = $${paramIndex++}`); values.push(idLoaiDaiLy); }    
     if (ngaytiepnhan) { updates.push(`NgayTiepNhan = $${paramIndex++}`); values.push(ngaytiepnhan); }
-    
-    if (updates.length === 0) {
+
+    if (updates.length === 0 && !idQuan) {
       throw new Error('Không có trường nào để cập nhật.');
     }
 
-    values.push(idDaiLy); // Use IDDaiLy for the WHERE clause
+    let updateQuery;
     
-    const queryString = `
-      UPDATE inventory.DAILY 
-      SET ${updates.join(', ')} 
-      WHERE IDDaiLy = $${paramIndex} AND DeletedAt IS NULL
-      RETURNING MaDaiLy as madaily`;
+    // If district is changing, use the combined limit check + update query
+    if (idQuan && idQuan !== currentQuan) {
+      console.log("Thay đổi quận từ " + currentQuan + " sang " + idQuan);
+      values.push(idQuan);
+      const idQuanParamIndex = paramIndex++;
+      values.push(idDaiLy);
       
-    console.log('Executing query:', queryString, values);
-    const result = await query(queryString, values);
-    
-    if (result.rowCount === 0) {
-      throw new Error('Không tìm thấy đại lý.');
+      updateQuery = `
+        WITH limit_check AS (
+          SELECT 
+            COUNT(*) AS total_daily, 
+            t.SoLuongDaiLyToiDa
+          FROM inventory.DAILY d
+          JOIN inventory.THAMSO t ON TRUE
+          WHERE d.IDQuan = $${idQuanParamIndex} AND d.DeletedAt IS NULL
+          GROUP BY t.SoLuongDaiLyToiDa
+        ),
+        validation AS (
+          SELECT 
+            CASE 
+              WHEN (SELECT COUNT(*) FROM limit_check WHERE total_daily >= SoLuongDaiLyToiDa) > 0
+              THEN FALSE
+              ELSE TRUE
+            END AS is_valid,
+            (SELECT SoLuongDaiLyToiDa FROM limit_check LIMIT 1) AS max_limit,
+            (SELECT total_daily FROM limit_check LIMIT 1) AS current_count
+        ),
+        update_op AS (
+          UPDATE inventory.DAILY 
+          SET ${updates.join(', ')}, IDQuan = $${idQuanParamIndex}
+          WHERE IDDaiLy = $${paramIndex} 
+            AND DeletedAt IS NULL
+            AND (SELECT is_valid FROM validation) = TRUE
+          RETURNING MaDaiLy as madaily, TRUE as update_successful
+        )
+        SELECT 
+          u.madaily,
+          u.update_successful,
+          v.is_valid,
+          v.max_limit,
+          v.current_count
+        FROM validation v
+        LEFT JOIN update_op u ON TRUE;
+      `;
+    } else {
+      // Standard update without district change
+      values.push(idDaiLy);
+      
+      updateQuery = `
+        UPDATE inventory.DAILY 
+        SET ${updates.join(', ')} ${idQuan ? `, IDQuan = ${idQuan}` : ''}
+        WHERE IDDaiLy = $${paramIndex} AND DeletedAt IS NULL
+        RETURNING MaDaiLy as madaily, TRUE as update_successful;
+      `;
     }
-    
+
+    console.log('Executing query:', updateQuery, values);
+    const result = await query(updateQuery, values);
+
+    if (result.rowCount === 0 || (result.rows[0].is_valid === false)) {
+      if (result.rows[0] && result.rows[0].max_limit) {
+        throw new Error(`Số lượng đại lý trong quận đã đạt giới hạn tối đa (${result.rows[0].max_limit}).`);
+      } else {
+        throw new Error('Không tìm thấy đại lý hoặc không thể cập nhật.');
+      }
+    }
+
     console.log('Update successful for madaily:', madaily);
-    return result.rows[0];
+    return { 
+      madaily: result.rows[0].madaily 
+    };
   }
 
   async deleteDaiLy(madaily) {
     console.log('Inside deleteDaiLy service with madaily:', madaily);
-    
+
     // Get IDDaiLy from MaDaiLy
     const dailyCheckQuery = 'SELECT IDDaiLy, CongNo FROM inventory.DAILY WHERE MaDaiLy = $1 AND DeletedAt IS NULL';
     const dailyCheck = await query(dailyCheckQuery, [madaily]);
     if (dailyCheck.rowCount === 0) {
       throw new Error(`Không tìm thấy đại lý với mã ${madaily}`);
     }
-    
+
     const idDaiLy = dailyCheck.rows[0].iddaily;
     const congNo = dailyCheck.rows[0].congno;
-    
+
     if (congNo !== 0) {
       throw new Error(`Đại lý ${madaily} chưa thanh toán công nợ.`);
     }
-    
+
     const queryString = 'UPDATE inventory.DAILY SET DeletedAt = NOW() WHERE IDDaiLy = $1 AND DeletedAt IS NULL';
     console.log('Executing query:', queryString, [idDaiLy]);
-    
+
     const result = await query(queryString, [idDaiLy]);
     if (result.rowCount === 0) {
       throw new Error('Không tìm thấy đại lý.');
     }
-    
+
     console.log('Delete successful for madaily:', madaily);
     return { madaily };
   }
