@@ -3,10 +3,28 @@ import { useForm } from "react-hook-form";
 import { Button, Form, Card } from "react-bootstrap";
 import "../styles/FormComponent.css";
 
-export const FormComponent = ({ selectedDaily, onSubmit, dsQuan, dsLoaiDaiLy, nextDailyId, resetTrigger }) => {
+export const FormComponent = ({ selectedDaily, onSubmit, dsQuan, dsLoaiDaiLy, nextDailyId, resetTrigger, getLatestId }) => {
     const { register, handleSubmit, setValue, reset, formState: { errors } } = useForm();
     const [editId, setEditId] = useState(null);
     const [newId, setNewId] = useState(null);
+    const [cachedNextId, setCachedNextId] = useState(null);
+
+    // Load cached ID from localStorage on component mount
+    useEffect(() => {
+        const storedId = localStorage.getItem('cachedDailyId');
+        if (storedId) {
+            setCachedNextId(storedId);
+            console.log("Loaded cached ID from localStorage:", storedId);
+        }
+    }, []);
+
+    // Save cachedNextId to localStorage whenever it changes
+    useEffect(() => {
+        if (cachedNextId) {
+            localStorage.setItem('cachedDailyId', cachedNextId);
+            console.log("Saved ID to localStorage:", cachedNextId);
+        }
+    }, [cachedNextId]);
 
     useEffect(() => {
         if (selectedDaily) {
@@ -36,10 +54,8 @@ export const FormComponent = ({ selectedDaily, onSubmit, dsQuan, dsLoaiDaiLy, ne
             setNewId(null);
         }
         else {
-            // Use the ID from ID-tracker or generate a UUID as fallback
-            setNewId(nextDailyId);
+            // Don't auto-fetch ID anymore, wait for button click
             setEditId(null);
-            setValue("madaily", nextDailyId);
             
             // Reset other fields
             setValue("tendaily", "");
@@ -50,17 +66,22 @@ export const FormComponent = ({ selectedDaily, onSubmit, dsQuan, dsLoaiDaiLy, ne
             setValue("maloaidaily", "");
             setValue("ngaytiepnhan", new Date().toISOString().split("T")[0]); // Set today's date explicitly
         }
-    }, [selectedDaily, setValue, nextDailyId]);
+    }, [selectedDaily, setValue]);
 
-    // Define resetForm with useCallback to avoid dependency issues
     const resetForm = useCallback(() => {
         reset();
         setEditId(null);
-        // Set to next ID from tracker when resetting
-        setNewId(nextDailyId);
-        setValue("madaily", nextDailyId);
+        setNewId(null); // Reset ID, don't auto-fetch
+        
+        // Reset other fields
+        setValue("tendaily", "");
+        setValue("diachi", "");
+        setValue("sodienthoai", "");
+        setValue("email", "");
+        setValue("maquan", "");
+        setValue("maloaidaily", "");
         setValue("ngaytiepnhan", new Date().toISOString().split("T")[0]); // Set default date when resetting
-    }, [reset, nextDailyId, setValue]);
+    }, [reset, setValue]);
 
     // Listen for reset trigger from parent
     useEffect(() => {
@@ -69,6 +90,31 @@ export const FormComponent = ({ selectedDaily, onSubmit, dsQuan, dsLoaiDaiLy, ne
         }
     }, [resetTrigger, resetForm]);
 
+    // Modified getnewId function to use cached ID without fetching a new one
+    const getnewId = async () => {
+        try {
+            // Reset form first to clear any existing data
+            resetForm();
+            
+            if (cachedNextId) {
+                // Use the cached ID if available
+                setNewId(cachedNextId);
+                setValue("madaily", cachedNextId);
+                // Don't fetch a new ID here
+            } else {
+                // If no cached ID (first time), fetch it now
+                const nextId = await getLatestId();
+                if (nextId) {
+                    setNewId(nextId);
+                    setValue("madaily", nextId);
+                    setCachedNextId(nextId);
+                }
+            }
+        } catch (error) {
+            console.error("Error using cached ID:", error);
+        }
+    };
+
     const submitHandler = (data) => {
         // Find the objects for display purposes
         const selectedQuan = dsQuan.find(q => q.maquan === data.maquan);
@@ -76,7 +122,7 @@ export const FormComponent = ({ selectedDaily, onSubmit, dsQuan, dsLoaiDaiLy, ne
 
         // Create payload to send to API
         const payload = {
-            madaily: editId || newId || nextDailyId, // Use editId for updates, newId or nextDailyId for new entries
+            madaily: editId || newId, // Use editId for updates, newId for new entries
             tendaily: data.tendaily,
             diachi: data.diachi,
             sodienthoai: data.sodienthoai,
@@ -89,10 +135,26 @@ export const FormComponent = ({ selectedDaily, onSubmit, dsQuan, dsLoaiDaiLy, ne
             tenloaidaily: selectedLoaiDaiLy?.tenloaidaily
         };
 
-        onSubmit(payload);
+        // Pass a callback function to get notified of successful operations
+        onSubmit(payload, async (success) => {
+            // Only fetch a new ID if the operation was successful
+            if (success) {
+                try {
+                    const nextId = await getLatestId();
+                    if (nextId) {
+                        setCachedNextId(nextId);
+                        console.log("Updated cached ID after successful operation:", nextId);
+                        // localStorage is updated automatically via the useEffect
+                    }
+                } catch (error) {
+                    console.error("Error fetching next ID after successful operation:", error);
+                }
+            }
+        });
     };
 
-
+    // Check if form should be enabled (when we have an ID)
+    const isFormEnabled = Boolean(editId || newId);
 
     return (
         <>
@@ -119,6 +181,7 @@ export const FormComponent = ({ selectedDaily, onSubmit, dsQuan, dsLoaiDaiLy, ne
                                     <Form.Control
                                         type="text"
                                         placeholder="Nhập tên đại lý"
+                                        disabled={!isFormEnabled}
                                         {...register("tendaily", { required: "Tên đại lý là bắt buộc" })} />
                                     {errors.tendaily && <span className="text-danger">{errors.tendaily.message}</span>}
                                 </Form.Group>
@@ -127,6 +190,7 @@ export const FormComponent = ({ selectedDaily, onSubmit, dsQuan, dsLoaiDaiLy, ne
                                 <Form.Group className="mb-3">
                                     <Form.Label>Loại đại lý</Form.Label>
                                     <Form.Select
+                                        disabled={!isFormEnabled}
                                         {...register("maloaidaily", { required: "Loại đại lý là bắt buộc" })}>
                                         <option value="">-- Chọn Loại đại lý --</option>
                                         {dsLoaiDaiLy.map((loai) => (
@@ -142,6 +206,7 @@ export const FormComponent = ({ selectedDaily, onSubmit, dsQuan, dsLoaiDaiLy, ne
                                 <Form.Group className="mb-3">
                                     <Form.Label>Quận</Form.Label>
                                     <Form.Select
+                                        disabled={!isFormEnabled}
                                         {...register("maquan", { required: "Quận là bắt buộc" })}>
                                         <option value="">-- Chọn Quận --</option>
                                         {dsQuan.map((quan) => (
@@ -161,6 +226,7 @@ export const FormComponent = ({ selectedDaily, onSubmit, dsQuan, dsLoaiDaiLy, ne
                                         <Form.Control
                                             type="text"
                                             placeholder="Nhập số điện thoại"
+                                            disabled={!isFormEnabled}
                                             {...register("sodienthoai", { required: "Số điện thoại là bắt buộc" })} />
                                         {errors.sodienthoai && <span className="text-danger">{errors.sodienthoai.message}</span>}
                                     </Form.Group>
@@ -171,6 +237,7 @@ export const FormComponent = ({ selectedDaily, onSubmit, dsQuan, dsLoaiDaiLy, ne
                                         <Form.Control
                                             type="email"
                                             placeholder="Nhập email"
+                                            disabled={!isFormEnabled}
                                             {...register("email", {
                                                 required: "Email là bắt buộc",
                                                 pattern: {
@@ -186,6 +253,7 @@ export const FormComponent = ({ selectedDaily, onSubmit, dsQuan, dsLoaiDaiLy, ne
                                         <Form.Label>Ngày tiếp nhận</Form.Label>
                                         <Form.Control
                                             type="date"
+                                            disabled={!isFormEnabled}
                                             {...register("ngaytiepnhan", { required: "Ngày tiếp nhận là bắt buộc" })} />
                                         {errors.ngaytiepnhan && <span className="text-danger">{errors.ngaytiepnhan.message}</span>}
                                     </Form.Group>
@@ -197,16 +265,32 @@ export const FormComponent = ({ selectedDaily, onSubmit, dsQuan, dsLoaiDaiLy, ne
                                     <Form.Control
                                         type="text"
                                         placeholder="Nhập địa chỉ"
+                                        disabled={!isFormEnabled}
                                         {...register("diachi", { required: "Địa chỉ là bắt buộc" })} />
                                     {errors.diachi && <span className="text-danger">{errors.diachi.message}</span>}
                                 </Form.Group>
                             </div>
                         </section>
                         <div className="d-flex justify-content-between">
-                            <Button type="submit" variant="primary" className="mt-3">
+                            <div>
+                            <Button 
+                                type="submit" 
+                                variant="primary" 
+                                className="mt-3"
+                                disabled={!isFormEnabled}>
                                 {editId ? "Cập nhật đại lý" : "Tiếp nhận đại lý"}
                             </Button>
-                            <Button type="button" variant="secondary" className="mt-3" onClick={resetForm}>
+                            <Button type="button" variant="secondary" className="mt-3 ms-2" onClick={getnewId}>
+                                Đại lý mới
+                            </Button>
+                            </div>
+
+                            <Button 
+                                type="button" 
+                                variant="secondary" 
+                                className="mt-3" 
+                                onClick={resetForm}
+                                disabled={!isFormEnabled}>
                                 Hủy
                             </Button>
                         </div>

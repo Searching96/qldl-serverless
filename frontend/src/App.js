@@ -17,7 +17,6 @@ function App() {
     const [errorMessage, setErrorMessage] = useState('');
     const [infoMessage, setInfoMessage] = useState('');
     const [selectedDaily, setSelectedDaily] = useState(null);
-    const [nextDailyId, setNextDailyId] = useState(null);
     const [resetFormTrigger, setResetFormTrigger] = useState(0);
 
     useEffect(() => {
@@ -26,15 +25,13 @@ function App() {
                 setIsLoading(true);
                 setInfoMessage('Đang tải dữ liệu...');
 
-                const [loaiDaiLyResponse, quanResponse, nextIdResponse] = await Promise.all([
+                const [loaiDaiLyResponse, quanResponse] = await Promise.all([
                     getAllLoaiDaiLy(),
-                    getAllQuan(),
-                    getLatestMaDaiLy()
+                    getAllQuan()
                 ]);
 
                 console.log("API Response - LoaiDaiLy:", loaiDaiLyResponse);
                 console.log("API Response - Quan:", quanResponse);
-                console.log("API Response - Next ID:", nextIdResponse);
 
                 const loaiDaiLyList = Array.isArray(loaiDaiLyResponse) ?
                     loaiDaiLyResponse.map(ldl => new LoaiDaiLy(ldl.maloaidaily, ldl.tenloaidaily))
@@ -69,10 +66,6 @@ function App() {
                 const dailyResponse = await getAllDaily();
                 setDSDaiLy(dailyResponse || []);
 
-                if (nextIdResponse && nextIdResponse.madaily) {
-                    setNextDailyId(nextIdResponse.madaily);
-                }
-
             } catch (error) {
                 console.error("Error loading data:", error);
             } finally {
@@ -83,6 +76,21 @@ function App() {
 
         fetchData();
     }, []);
+
+    // Function to get the latest DaiLy ID
+    const fetchLatestDaiLyId = async () => {
+        try {
+            setInfoMessage('Đang lấy mã đại lý mới...');
+            const idResponse = await getLatestMaDaiLy();
+            setInfoMessage('');
+            return idResponse?.maDaiLy || idResponse?.madaily;
+        } catch (error) {
+            console.error("Error fetching latest ID:", error);
+            setErrorMessage("Không thể lấy mã đại lý mới: " + error.message);
+            setInfoMessage('');
+            return null;
+        }
+    };
 
     useEffect(() => {
         console.log("State Updated - dsQuan:", dsQuan);
@@ -149,7 +157,7 @@ function App() {
         }
     };
 
-    const handleFormSubmit = async (formData) => {
+    const handleFormSubmit = async (formData, callback) => {
         if (formData.preventDefault) {
             formData.preventDefault();
         }
@@ -158,6 +166,8 @@ function App() {
 
         setSuccessMessage('');
         setErrorMessage('');
+        let operationSuccess = false;
+        
         try {
             let result;
 
@@ -168,21 +178,13 @@ function App() {
                 result = await updateDaily(idToUse, formData);
                 setSuccessMessage('Đại lý được cập nhật thành công: ' + idToUse);
                 setSelectedDaily(null); // Only clear selection on success
+                operationSuccess = true;
             } else {
                 setInfoMessage('Đang tạo đại lý mới...');
                 result = await createDaily(formData);
                 const newId = result.madaily || result.maDaiLy;
                 setSuccessMessage('Đại lý được tạo thành công: ' + newId);
-
-                // Fetch the latest ID after creation
-                try {
-                    const nextIdResponse = await getLatestMaDaiLy();
-                    if (nextIdResponse && (nextIdResponse.madaily)) {
-                        setNextDailyId(nextIdResponse.madaily);
-                    }
-                } catch (idError) {
-                    console.error("Error fetching next ID:", idError);
-                }
+                operationSuccess = true;
             }
 
             setInfoMessage('Đang cập nhật danh sách đại lý...');
@@ -203,6 +205,12 @@ function App() {
             console.error("Có lỗi xảy ra:", err);
             setErrorMessage(err.message || 'Có lỗi xảy ra khi xử lý đại lý');
             setInfoMessage('');
+            operationSuccess = false;
+        }
+        
+        // Call the callback with the operation result if provided
+        if (callback && typeof callback === 'function') {
+            callback(operationSuccess);
         }
     };
 
@@ -276,8 +284,8 @@ function App() {
                             onSubmit={handleFormSubmit}
                             dsQuan={dsQuan}
                             dsLoaiDaiLy={dsLoaiDaiLy}
-                            nextDailyId={nextDailyId}
                             resetTrigger={resetFormTrigger}
+                            getLatestId={fetchLatestDaiLyId}
                         />
 
                         <TableComponent
