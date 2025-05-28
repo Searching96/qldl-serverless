@@ -13,7 +13,7 @@ provider:
   timeout: 29
   environment:
     DATABASE_REGION: ${env:DB_REGION}
-    DATABASE_USER: ${env:DB_USER} # Configure your database credentials as environment variables
+    DATABASE_USER: ${env:DB_USER}
     DATABASE_HOST: ${env:DB_HOST}
     DATABASE_NAME: ${env:DB_NAME}
     DATABASE_PORT: ${env:DB_PORT}
@@ -34,6 +34,16 @@ provider:
       # Add the Aurora DSQL managed policy
       managedPolicies:
         - 'arn:aws:iam::aws:policy/AmazonAuroraDSQLFullAccess'
+
+plugins:
+  - serverless-dotenv-plugin
+  - serverless-offline
+
+custom:
+  dotenv:
+    path: ../../.env
+  serverless-offline:
+    httpPort: 4005
 
 # package:
 #   patterns:

@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
-import { FormComponent } from "./components/FormComponent.js";
-import { TableComponent } from "./components/TableComponent.js";
+import "bootstrap-icons/font/bootstrap-icons.css";
+import Navbar from "./components/Navbar.js";
+import ManagementPage from "./pages/ManagementPage.js";
+import SearchPage from "./pages/SearchPage.js";
+import "./styles/App.css";
+import "./styles/Navbar.css";
 import {
     createDaily, getAllDaily, getAllLoaiDaiLy, getAllQuan,
     getDaily, updateDaily, deleteDaily, getLatestMaDaiLy
@@ -18,6 +22,7 @@ function App() {
     const [infoMessage, setInfoMessage] = useState('');
     const [selectedDaily, setSelectedDaily] = useState(null);
     const [resetFormTrigger, setResetFormTrigger] = useState(0);
+    const [currentPage, setCurrentPage] = useState('management'); // Changed from activeTab to currentPage
 
     useEffect(() => {
         const fetchData = async () => {
@@ -228,23 +233,59 @@ function App() {
         }
     };
 
+    const handlePageChange = (page) => {
+        setCurrentPage(page);
+        // Clear any selected daily when switching pages
+        if (page === 'search') {
+            setSelectedDaily(null);
+        }
+    };
+
+    const renderPage = () => {
+        switch (currentPage) {
+            case 'management':
+                return (
+                    <ManagementPage
+                        selectedDaily={selectedDaily}
+                        onSubmit={handleFormSubmit}
+                        dsQuan={dsQuan}
+                        dsLoaiDaiLy={dsLoaiDaiLy}
+                        resetTrigger={resetFormTrigger}
+                        getLatestId={fetchLatestDaiLyId}
+                        data={dsDaiLy}
+                        onEdit={handleEditRow}
+                        onDelete={handleDeleteRow}
+                        onRefresh={handleRefresh}
+                    />
+                );
+            case 'search':
+                return (
+                    <SearchPage 
+                        dsQuan={dsQuan}
+                        dsLoaiDaiLy={dsLoaiDaiLy}
+                    />
+                );
+            default:
+                return null;
+        }
+    };
+
     return (
-        <div className="container-fluid px-0 mt-4">
-            <h1 className="ms-3">Thông tin đại lý</h1>
-            {isLoading ? (
-                <div className="text-center">
-                    <div className="spinner-border" role="status">
-                        <span className="visually-hidden">Loading...</span>
-                    </div>
-                </div>
-            ) : (
-                <>
+        <div className="app">
+            <Navbar currentPage={currentPage} onPageChange={handlePageChange} />
+            
+            {/* Alert Messages */}
+            {(successMessage || errorMessage || infoMessage) && (
+                <div className="alert-container">
                     {successMessage && (
-                        <div className="alert alert-success mx-3" role="alert">
+                        <div className="alert alert-success" role="alert">
                             <div className="d-flex justify-content-between align-items-center">
-                                <span>{successMessage}</span>
+                                <span>
+                                    <i className="bi bi-check-circle me-2"></i>
+                                    {successMessage}
+                                </span>
                                 <button
-                                    className="btn btn-outline-primary btn-sm ms-2"
+                                    className="btn btn-outline-success btn-sm ms-2"
                                     onClick={() => setSuccessMessage('')}
                                 >
                                     <i className="bi bi-x"></i>
@@ -253,11 +294,14 @@ function App() {
                         </div>
                     )}
                     {errorMessage && (
-                        <div className="alert alert-danger mx-3" role="alert">
+                        <div className="alert alert-danger" role="alert">
                             <div className="d-flex justify-content-between align-items-center">
-                                <span>{errorMessage}</span>
+                                <span>
+                                    <i className="bi bi-exclamation-triangle me-2"></i>
+                                    {errorMessage}
+                                </span>
                                 <button
-                                    className="btn btn-outline-primary btn-sm ms-2"
+                                    className="btn btn-outline-danger btn-sm ms-2"
                                     onClick={() => setErrorMessage('')}
                                 >
                                     <i className="bi bi-x"></i>
@@ -266,11 +310,14 @@ function App() {
                         </div>
                     )}
                     {infoMessage && (
-                        <div className="alert alert-info mx-3" role="alert">
+                        <div className="alert alert-info" role="alert">
                             <div className="d-flex justify-content-between align-items-center">
-                                <span>{infoMessage}</span>
+                                <span>
+                                    <i className="bi bi-info-circle me-2"></i>
+                                    {infoMessage}
+                                </span>
                                 <button
-                                    className="btn btn-outline-primary btn-sm ms-2"
+                                    className="btn btn-outline-info btn-sm ms-2"
                                     onClick={() => setInfoMessage('')}
                                 >
                                     <i className="bi bi-x"></i>
@@ -278,24 +325,24 @@ function App() {
                             </div>
                         </div>
                     )}
-                    <div className="px-3">
-                        <FormComponent
-                            selectedDaily={selectedDaily}
-                            onSubmit={handleFormSubmit}
-                            dsQuan={dsQuan}
-                            dsLoaiDaiLy={dsLoaiDaiLy}
-                            resetTrigger={resetFormTrigger}
-                            getLatestId={fetchLatestDaiLyId}
-                        />
+                </div>
+            )}
 
-                        <TableComponent
-                            data={dsDaiLy}
-                            onEdit={handleEditRow}
-                            onDelete={handleDeleteRow}
-                            onRefresh={handleRefresh}
-                        />
+            {/* Loading Overlay */}
+            {isLoading && (
+                <div className="loading-overlay">
+                    <div className="spinner-border" role="status">
+                        <span className="visually-hidden">Loading...</span>
                     </div>
-                </>
+                    <p className="mt-3">Đang tải dữ liệu...</p>
+                </div>
+            )}
+
+            {/* Page Content */}
+            {!isLoading && (
+                <div className="page-container">
+                    {renderPage()}
+                </div>
             )}
         </div>
     );

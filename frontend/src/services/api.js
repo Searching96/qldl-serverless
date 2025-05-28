@@ -1,5 +1,5 @@
 // src/services/api.js
-const API_DOMAIN = 'https://testapi.thinhuit.id.vn';
+const API_DOMAIN = 'http://localhost:8080/';
 
 async function fetchData(endpoint, method = 'GET', body = null) {
   const url = `${API_DOMAIN}${endpoint}`;
@@ -27,6 +27,10 @@ export const getDaily = (maDaiLy) => fetchData(`/daily/${maDaiLy}`);
 export const createDaily = (data) => fetchData('/daily/', 'POST', data);
 export const updateDaily = (maDaiLy, data) => fetchData(`/daily/${maDaiLy}`, 'PUT', data);
 export const deleteDaily = (maDaiLy) => fetchData(`/daily/${maDaiLy}`, 'DELETE');
+export const searchDaiLy = (searchParams) => {
+  const queryString = new URLSearchParams(searchParams).toString();
+  return fetchData(`/daily/search?${queryString}`);
+};
 
 export const getAllQuan = () => fetchData('/quan/');
 export const getQuan = (maQuan) => fetchData(`/quan/${maQuan}`);

@@ -1,7 +1,6 @@
 // src/dai-ly/service.js
 
 import { query } from './database.mjs';
-import { v4 as uuidv4 } from 'uuid';
 
 class DaiLyService {
   async getAllDaiLy() {
@@ -111,55 +110,70 @@ class DaiLyService {
         RETURNING 'DL' || LPAD(MaDaiLyCuoi::TEXT, 5, '0') AS formatted_ma_daily`;
       const idTrackerResult = await query(idTrackerQuery);
       madaily = idTrackerResult.rows[0].formatted_ma_daily;
-    }
-
-    const mergedQuery = `
-    WITH limit_check AS (
+    }    const mergedQuery = `
+    WITH validation_check AS (
       SELECT 
-        COUNT(*) AS total_daily, 
-        t.SoLuongDaiLyToiDa
-      FROM inventory.DAILY d
-      JOIN inventory.THAMSO t ON TRUE
-      WHERE d.IDQuan = $7 AND d.DeletedAt IS NULL
-      GROUP BY t.SoLuongDaiLyToiDa
+        -- Validate agent type exists
+        (SELECT COUNT(*) FROM inventory.LOAIDAILY WHERE IDLoaiDaiLy = $6 AND DeletedAt IS NULL) as agent_type_valid,
+        -- Validate district exists  
+        (SELECT COUNT(*) FROM inventory.QUAN WHERE IDQuan = $7 AND DeletedAt IS NULL) as district_valid,
+        -- Count existing agents in district
+        (SELECT COUNT(*) FROM inventory.DAILY WHERE IDQuan = $7 AND DeletedAt IS NULL) as current_agents,
+        -- Get max agents limit from parameters (get latest active parameter)
+        (SELECT SoLuongDaiLyToiDa FROM inventory.THAMSO WHERE DeletedAt IS NULL ORDER BY CreatedAt DESC LIMIT 1) as max_agents
+    ),
+    insert_check AS (
+      SELECT 
+        CASE 
+          WHEN agent_type_valid = 0 THEN 'INVALID_AGENT_TYPE'
+          WHEN district_valid = 0 THEN 'INVALID_DISTRICT'
+          WHEN current_agents >= max_agents THEN 'MAX_AGENTS_EXCEEDED'
+          ELSE 'VALID'
+        END as validation_result,
+        current_agents,
+        max_agents,
+        agent_type_valid,
+        district_valid
+      FROM validation_check
     )
     INSERT INTO inventory.DAILY 
       (MaDaiLy, TenDaiLy, SoDienThoai, DiaChi, Email, IDLoaiDaiLy, IDQuan, NgayTiepNhan)
     SELECT 
       $1, $2, $3, $4, $5, $6, $7, $8
-    FROM limit_check
-    WHERE CASE 
-      WHEN total_daily < SoLuongDaiLyToiDa THEN TRUE
-      ELSE FALSE
-    END
+    FROM insert_check
+    WHERE validation_result = 'VALID'
     RETURNING 
       IDDaiLy as iddaily, 
       MaDaiLy as madaily, 
-      (SELECT total_daily FROM limit_check) as current_count,
-      (SELECT SoLuongDaiLyToiDa FROM limit_check) as max_limit,
-      CASE 
-        WHEN (SELECT total_daily FROM limit_check) < (SELECT SoLuongDaiLyToiDa FROM limit_check) THEN TRUE
-        ELSE FALSE
-      END as is_valid;
-  `;
-
-    console.log('Executing query:', mergedQuery, [madaily, tendaily, sodienthoai, diachi, email, idLoaiDaiLy, idQuan, ngaytiepnhan]);
+      'VALID' as validation_result,
+      0 as current_agents,
+      0 as max_agents;`;    console.log('Executing query:', mergedQuery, [madaily, tendaily, sodienthoai, diachi, email, idLoaiDaiLy, idQuan, ngaytiepnhan]);
     const result = await query(mergedQuery, [madaily, tendaily, sodienthoai, diachi, email, idLoaiDaiLy, idQuan, ngaytiepnhan]);
 
     // Check if any rows were returned (insertion happened)
     if (result.rowCount === 0) {
-      // No rows returned means the condition was false (limit reached)
-      // We need to get the limit info with a separate query
-      const limitQuery = `
-      SELECT COUNT(*) AS total_daily, t.SoLuongDaiLyToiDa
-      FROM inventory.DAILY d
-      JOIN inventory.THAMSO t ON TRUE
-      WHERE d.IDQuan = $1 AND d.DeletedAt IS NULL
-      GROUP BY t.SoLuongDaiLyToiDa
-    `;
-      const limitResult = await query(limitQuery, [idQuan]);
-      const { total_daily, soluongdailytoida } = limitResult.rows[0];
-      throw new Error(`Số lượng đại lý trong quận đã đạt giới hạn tối đa (${soluongdailytoida}).`);
+      // No rows returned means validation failed, get the validation result
+      const validationQuery = `
+        WITH validation_check AS (
+          SELECT 
+            (SELECT COUNT(*) FROM inventory.LOAIDAILY WHERE IDLoaiDaiLy = $1 AND DeletedAt IS NULL) as agent_type_valid,
+            (SELECT COUNT(*) FROM inventory.QUAN WHERE IDQuan = $2 AND DeletedAt IS NULL) as district_valid,
+            (SELECT COUNT(*) FROM inventory.DAILY WHERE IDQuan = $2 AND DeletedAt IS NULL) as current_agents,
+            (SELECT SoLuongDaiLyToiDa FROM inventory.THAMSO WHERE DeletedAt IS NULL ORDER BY CreatedAt DESC LIMIT 1) as max_agents
+        )
+        SELECT 
+          CASE 
+            WHEN agent_type_valid = 0 THEN 'Mã loại đại lý không tồn tại hoặc đã bị xóa'
+            WHEN district_valid = 0 THEN 'Mã quận không tồn tại hoặc đã bị xóa'
+            WHEN current_agents >= max_agents THEN 'Số lượng đại lý trong quận đã đạt giới hạn tối đa (' || max_agents || ')'
+            ELSE 'Lỗi không xác định'
+          END as error_message,
+          current_agents,
+          max_agents
+        FROM validation_check`;
+      
+      const validationResult = await query(validationQuery, [idLoaiDaiLy, idQuan]);
+      throw new Error(validationResult.rows[0].error_message);
     } else {
       console.log('Query executed successfully, result:', {
         iddaily: result.rows[0].iddaily,
@@ -219,8 +233,7 @@ class DaiLyService {
     }
 
     let updateQuery;
-    
-    // If district is changing, use the combined limit check + update query
+      // If district is changing, use the combined limit check + update query
     if (idQuan && idQuan !== currentQuan) {
       console.log("Thay đổi quận từ " + currentQuan + " sang " + idQuan);
       values.push(idQuan);
@@ -228,42 +241,40 @@ class DaiLyService {
       values.push(idDaiLy);
       
       updateQuery = `
-        WITH limit_check AS (
+        WITH validation_check AS (
           SELECT 
-            COUNT(*) AS total_daily, 
-            t.SoLuongDaiLyToiDa
-          FROM inventory.DAILY d
-          JOIN inventory.THAMSO t ON TRUE
-          WHERE d.IDQuan = $${idQuanParamIndex} AND d.DeletedAt IS NULL
-          GROUP BY t.SoLuongDaiLyToiDa
+            (SELECT COUNT(*) FROM inventory.QUAN WHERE IDQuan = $${idQuanParamIndex} AND DeletedAt IS NULL) as district_valid,
+            (SELECT COUNT(*) FROM inventory.DAILY WHERE IDQuan = $${idQuanParamIndex} AND DeletedAt IS NULL) as current_agents,
+            (SELECT SoLuongDaiLyToiDa FROM inventory.THAMSO WHERE DeletedAt IS NULL ORDER BY CreatedAt DESC LIMIT 1) as max_agents
         ),
-        validation AS (
+        update_check AS (
           SELECT 
             CASE 
-              WHEN (SELECT COUNT(*) FROM limit_check WHERE total_daily >= SoLuongDaiLyToiDa) > 0
-              THEN FALSE
-              ELSE TRUE
-            END AS is_valid,
-            (SELECT SoLuongDaiLyToiDa FROM limit_check LIMIT 1) AS max_limit,
-            (SELECT total_daily FROM limit_check LIMIT 1) AS current_count
+              WHEN district_valid = 0 THEN 'INVALID_DISTRICT'
+              WHEN current_agents >= max_agents THEN 'MAX_AGENTS_EXCEEDED'
+              ELSE 'VALID'
+            END as validation_result,
+            current_agents,
+            max_agents,
+            district_valid
+          FROM validation_check
         ),
         update_op AS (
           UPDATE inventory.DAILY 
           SET ${updates.join(', ')}, IDQuan = $${idQuanParamIndex}
           WHERE IDDaiLy = $${paramIndex} 
             AND DeletedAt IS NULL
-            AND (SELECT is_valid FROM validation) = TRUE
-          RETURNING MaDaiLy as madaily, TRUE as update_successful
+            AND (SELECT validation_result FROM update_check) = 'VALID'
+          RETURNING MaDaiLy as madaily, 'VALID' as validation_result
         )
         SELECT 
-          u.madaily,
-          u.update_successful,
-          v.is_valid,
-          v.max_limit,
-          v.current_count
-        FROM validation v
-        LEFT JOIN update_op u ON TRUE;
-      `;
+          COALESCE(u.madaily, 'UPDATE_FAILED') as madaily,
+          COALESCE(u.validation_result, uc.validation_result) as validation_result,
+          uc.max_agents,
+          uc.current_agents,
+          uc.district_valid
+        FROM update_check uc
+        LEFT JOIN update_op u ON TRUE;`;
     } else {
       // Standard update without district change
       values.push(idDaiLy);
@@ -274,14 +285,15 @@ class DaiLyService {
         WHERE IDDaiLy = $${paramIndex} AND DeletedAt IS NULL
         RETURNING MaDaiLy as madaily, TRUE as update_successful;
       `;
-    }
-
-    console.log('Executing query:', updateQuery, values);
+    }    console.log('Executing query:', updateQuery, values);
     const result = await query(updateQuery, values);
 
-    if (result.rowCount === 0 || (result.rows[0].is_valid === false)) {
-      if (result.rows[0] && result.rows[0].max_limit) {
-        throw new Error(`Số lượng đại lý trong quận đã đạt giới hạn tối đa (${result.rows[0].max_limit}).`);
+    if (result.rowCount === 0 || result.rows[0].validation_result !== 'VALID') {
+      const row = result.rows[0];
+      if (row.validation_result === 'INVALID_DISTRICT') {
+        throw new Error('Mã quận không tồn tại hoặc đã bị xóa');
+      } else if (row.validation_result === 'MAX_AGENTS_EXCEEDED') {
+        throw new Error(`Số lượng đại lý trong quận đã đạt giới hạn tối đa (${row.max_agents}).`);
       } else {
         throw new Error('Không tìm thấy đại lý hoặc không thể cập nhật.');
       }
@@ -320,68 +332,268 @@ class DaiLyService {
 
     console.log('Delete successful for madaily:', madaily);
     return { madaily };
-  }
-
-  async searchDaiLy({ madaily, tendaily, sodienthoai, email, diachi }) {
-    console.log('Inside searchDaiLy service with criteria:', { tendaily, sodienthoai, email, diachi });
+  }  async searchDaiLy({ 
+    madaily, 
+    tendaily, 
+    sodienthoai, 
+    email, 
+    diachi, 
+    maquan, 
+    tenquan,
+    maloaidaily, 
+    tenloaidaily,
+    ngaytiepnhan_from,
+    ngaytiepnhan_to,
+    congno_min,
+    congno_max,
+    has_debt,
+    // Advanced export slip criteria
+    maphieuxuat_from,
+    maphieuxuat_to,
+    ngaylap_from,
+    ngaylap_to,
+    tonggiatri_from,
+    tonggiatri_to,
+    // Product/item criteria
+    tenmathang,
+    soluongxuat_from,
+    soluongxuat_to,
+    dongiaxuat_from,
+    dongiaxuat_to,
+    thanhtien_from,
+    thanhtien_to,
+    soluongton_from,
+    soluongton_to,
+    tendonvitinh
+  }) {    console.log('Inside searchDaiLy service with criteria:', { 
+      madaily, tendaily, sodienthoai, email, diachi, maquan, tenquan, 
+      maloaidaily, tenloaidaily, ngaytiepnhan_from, ngaytiepnhan_to, 
+      congno_min, congno_max, has_debt,
+      maphieuxuat_from, maphieuxuat_to, ngaylap_from, ngaylap_to,
+      tonggiatri_from, tonggiatri_to, tenmathang, soluongxuat_from,
+      soluongxuat_to, dongiaxuat_from, dongiaxuat_to, thanhtien_from,
+      thanhtien_to, soluongton_from, soluongton_to, tendonvitinh
+    });
 
     const conditions = [];
     const values = [];
     let paramIndex = 1;
 
+    // Agent code search
+    if (madaily) {
+      conditions.push(`d.MaDaiLy = $${paramIndex++}`);
+      values.push(madaily);
+    }
+
+    // Agent name search (partial match)
     if (tendaily) {
       conditions.push(`LOWER(d.TenDaiLy) LIKE LOWER($${paramIndex++})`);
       values.push(`%${tendaily}%`);
     }
 
+    // Phone number search (partial match)
     if (sodienthoai) {
       conditions.push(`d.SoDienThoai LIKE $${paramIndex++}`);
       values.push(`%${sodienthoai}%`);
     }
 
+    // Email search (partial match)
     if (email) {
       conditions.push(`LOWER(d.Email) LIKE LOWER($${paramIndex++})`);
       values.push(`%${email}%`);
     }
 
+    // Address search (partial match)
     if (diachi) {
       conditions.push(`LOWER(d.DiaChi) LIKE LOWER($${paramIndex++})`);
       values.push(`%${diachi}%`);
     }
 
+    // District code search
+    if (maquan) {
+      conditions.push(`q.MaQuan = $${paramIndex++}`);
+      values.push(maquan);
+    }
+
+    // District name search (partial match)
+    if (tenquan) {
+      conditions.push(`LOWER(q.TenQuan) LIKE LOWER($${paramIndex++})`);
+      values.push(`%${tenquan}%`);
+    }
+
+    // Agent type code search
+    if (maloaidaily) {
+      conditions.push(`l.MaLoaiDaiLy = $${paramIndex++}`);
+      values.push(maloaidaily);
+    }
+
+    // Agent type name search (partial match)
+    if (tenloaidaily) {
+      conditions.push(`LOWER(l.TenLoaiDaiLy) LIKE LOWER($${paramIndex++})`);
+      values.push(`%${tenloaidaily}%`);
+    }
+
+    // Date range search for NgayTiepNhan
+    if (ngaytiepnhan_from) {
+      conditions.push(`d.NgayTiepNhan >= $${paramIndex++}`);
+      values.push(ngaytiepnhan_from);
+    }
+
+    if (ngaytiepnhan_to) {
+      conditions.push(`d.NgayTiepNhan <= $${paramIndex++}`);
+      values.push(ngaytiepnhan_to);
+    }
+
+    // Outstanding debt range search
+    if (congno_min !== undefined && congno_min !== null) {
+      conditions.push(`d.CongNo >= $${paramIndex++}`);
+      values.push(congno_min);
+    }
+
+    if (congno_max !== undefined && congno_max !== null) {
+      conditions.push(`d.CongNo <= $${paramIndex++}`);
+      values.push(congno_max);
+    }    // Filter by debt status
+    if (has_debt === 'true') {
+      conditions.push(`d.CongNo > 0`);
+    } else if (has_debt === 'false') {
+      conditions.push(`d.CongNo = 0`);
+    }
+
+    // Advanced export slip search criteria
+    if (maphieuxuat_from) {
+      conditions.push(`px.MaPhieuXuat >= $${paramIndex++}`);
+      values.push(maphieuxuat_from);
+    }
+
+    if (maphieuxuat_to) {
+      conditions.push(`px.MaPhieuXuat <= $${paramIndex++}`);
+      values.push(maphieuxuat_to);
+    }
+
+    if (ngaylap_from) {
+      conditions.push(`px.NgayLap >= $${paramIndex++}`);
+      values.push(ngaylap_from);
+    }
+
+    if (ngaylap_to) {
+      conditions.push(`px.NgayLap <= $${paramIndex++}`);
+      values.push(ngaylap_to);
+    }
+
+    if (tonggiatri_from !== undefined && tonggiatri_from !== null) {
+      conditions.push(`px.TongGiaTri >= $${paramIndex++}`);
+      values.push(tonggiatri_from);
+    }
+
+    if (tonggiatri_to !== undefined && tonggiatri_to !== null) {
+      conditions.push(`px.TongGiaTri <= $${paramIndex++}`);
+      values.push(tonggiatri_to);
+    }
+
+    // Product/item search criteria
+    if (tenmathang) {
+      conditions.push(`LOWER(mh.TenMatHang) LIKE LOWER($${paramIndex++})`);
+      values.push(`%${tenmathang}%`);
+    }
+
+    if (soluongxuat_from !== undefined && soluongxuat_from !== null) {
+      conditions.push(`ct.SoLuongXuat >= $${paramIndex++}`);
+      values.push(soluongxuat_from);
+    }
+
+    if (soluongxuat_to !== undefined && soluongxuat_to !== null) {
+      conditions.push(`ct.SoLuongXuat <= $${paramIndex++}`);
+      values.push(soluongxuat_to);
+    }
+
+    if (dongiaxuat_from !== undefined && dongiaxuat_from !== null) {
+      conditions.push(`ct.DonGiaXuat >= $${paramIndex++}`);
+      values.push(dongiaxuat_from);
+    }
+
+    if (dongiaxuat_to !== undefined && dongiaxuat_to !== null) {
+      conditions.push(`ct.DonGiaXuat <= $${paramIndex++}`);
+      values.push(dongiaxuat_to);
+    }
+
+    if (thanhtien_from !== undefined && thanhtien_from !== null) {
+      conditions.push(`ct.ThanhTien >= $${paramIndex++}`);
+      values.push(thanhtien_from);
+    }
+
+    if (thanhtien_to !== undefined && thanhtien_to !== null) {
+      conditions.push(`ct.ThanhTien <= $${paramIndex++}`);
+      values.push(thanhtien_to);
+    }
+
+    if (soluongton_from !== undefined && soluongton_from !== null) {
+      conditions.push(`mh.SoLuongTon >= $${paramIndex++}`);
+      values.push(soluongton_from);
+    }
+
+    if (soluongton_to !== undefined && soluongton_to !== null) {
+      conditions.push(`mh.SoLuongTon <= $${paramIndex++}`);
+      values.push(soluongton_to);
+    }
+
+    if (tendonvitinh) {
+      conditions.push(`LOWER(dvt.TenDonViTinh) LIKE LOWER($${paramIndex++})`);
+      values.push(`%${tendonvitinh}%`);
+    }
+
     let whereClause = 'd.DeletedAt IS NULL';
     if (conditions.length > 0) {
       whereClause += ` AND ${conditions.join(' AND ')}`;
-    }
-
-    const queryString = `
-      SELECT 
+    }    const queryString = `
+      SELECT DISTINCT
+        d.IDDaiLy as iddaily,
         d.MaDaiLy as madaily,
         d.TenDaiLy as tendaily,
         d.DiaChi as diachi,
         d.SoDienThoai as sodienthoai,
         d.Email as email,
-        d.MaQuan as maquan,
-        d.MaLoaiDaiLy as maloaidaily,
+        q.MaQuan as maquan,
+        l.MaLoaiDaiLy as maloaidaily,
         d.NgayTiepNhan as ngaytiepnhan,
         d.CongNo as congno,
         d.DeletedAt as deletedat,
         q.TenQuan as tenquan,
-        l.TenLoaiDaiLy as tenloaidaily
+        l.TenLoaiDaiLy as tenloaidaily,
+        l.NoToiDa as notoida,        -- Export slip information (aggregated)
+        COUNT(DISTINCT px.IDPhieuXuat) as so_phieu_xuat,
+        MAX(px.NgayLap) as ngay_lap_gan_nhat,
+        SUM(px.TongGiaTri) as tong_gia_tri_xuat,
+        -- Product information (aggregated)
+        COUNT(DISTINCT mh.IDMatHang) as so_mat_hang,
+        SUM(ct.SoLuongXuat) as tong_so_luong_xuat,
+        SUM(ct.ThanhTien) as tong_thanh_tien
       FROM 
         inventory.DAILY d
       LEFT JOIN 
-        inventory.QUAN q ON d.MaQuan = q.MaQuan
+        inventory.QUAN q ON d.IDQuan = q.IDQuan
       LEFT JOIN 
-        inventory.LOAIDAILY l ON d.MaLoaiDaiLy = l.MaLoaiDaiLy
+        inventory.LOAIDAILY l ON d.IDLoaiDaiLy = l.IDLoaiDaiLy
+      LEFT JOIN 
+        inventory.PHIEUXUAT px ON d.IDDaiLy = px.IDDaiLy AND px.DeletedAt IS NULL
+      LEFT JOIN 
+        inventory.CTPHIEUXUAT ct ON px.IDPhieuXuat = ct.IDPhieuXuat AND ct.DeletedAt IS NULL
+      LEFT JOIN 
+        inventory.MATHANG mh ON ct.IDMatHang = mh.IDMatHang AND mh.DeletedAt IS NULL
+      LEFT JOIN 
+        inventory.DONVITINH dvt ON mh.IDDonViTinh = dvt.IDDonViTinh AND dvt.DeletedAt IS NULL
       WHERE 
         ${whereClause}
+      GROUP BY 
+        d.IDDaiLy, d.MaDaiLy, d.TenDaiLy, d.DiaChi, d.SoDienThoai, d.Email, 
+        q.MaQuan, l.MaLoaiDaiLy, d.NgayTiepNhan, d.CongNo, d.DeletedAt, 
+        q.TenQuan, l.TenLoaiDaiLy, l.NoToiDa
       ORDER BY 
-        d.TenDaiLy`;
+        d.TenDaiLy, d.MaDaiLy`;
 
     console.log('Executing search query with values:', values);
     const result = await query(queryString, values);
-    return result.rows[0];
+    return result.rows; // Return all matching rows, not just the first one
   }
 }
 
