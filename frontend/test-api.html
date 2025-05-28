@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API Testing Tool</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; }
+        button { margin: 5px; padding: 10px; }
+        .result { margin: 10px 0; padding: 10px; background: #f5f5f5; border-radius: 4px; }
+        .error { background: #ffe6e6; }
+        .success { background: #e6ffe6; }
+    </style>
+</head>
+<body>
+    <h1>Local API Testing Tool</h1>
+    
+    <div class="test-section">
+        <h3>Test getAllDaily()</h3>
+        <button onclick="testGetAllDaily()">Get All Agents</button>
+        <div id="getAllResult" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>Test searchDaiLy()</h3>
+        <input type="text" id="searchTerm" placeholder="Search term (e.g., 'mini')" value="mini">
+        <button onclick="testSearch()">Search Agents</button>
+        <div id="searchResult" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>Test getDaily() by ID</h3>
+        <input type="text" id="agentId" placeholder="Agent ID (e.g., 'DL00001')" value="DL00001">
+        <button onclick="testGetById()">Get Agent by ID</button>
+        <div id="getByIdResult" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>Test createDaily()</h3>
+        <button onclick="testCreate()">Create Test Agent</button>
+        <div id="createResult" class="result"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8080';
+
+        async function apiCall(endpoint, method = 'GET', body = null) {
+            try {
+                const config = {
+                    method,
+                    headers: { 'Content-Type': 'application/json' }
+                };
+                if (body) {
+                    config.body = JSON.stringify(body);
+                }
+                
+                const response = await fetch(`${API_BASE}${endpoint}`, config);
+                const data = await response.json();
+                
+                return { success: true, data, status: response.status };
+            } catch (error) {
+                return { success: false, error: error.message };
+            }
+        }
+
+        async function testGetAllDaily() {
+            const result = await apiCall('/');
+            const resultDiv = document.getElementById('getAllResult');
+            
+            if (result.success) {
+                resultDiv.className = 'result success';
+                resultDiv.innerHTML = `<strong>Success!</strong><br>Found ${result.data.length} agents:<br><pre>${JSON.stringify(result.data.slice(0, 3), null, 2)}...</pre>`;
+            } else {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `<strong>Error:</strong> ${result.error}`;
+            }
+        }
+
+        async function testSearch() {
+            const searchTerm = document.getElementById('searchTerm').value;
+            const result = await apiCall(`/search?tendaily=${encodeURIComponent(searchTerm)}`);
+            const resultDiv = document.getElementById('searchResult');
+            
+            if (result.success) {
+                resultDiv.className = 'result success';
+                resultDiv.innerHTML = `<strong>Search Success!</strong><br>Found ${result.data.length} agents:<br><pre>${JSON.stringify(result.data, null, 2)}</pre>`;
+            } else {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `<strong>Error:</strong> ${result.error}`;
+            }
+        }
+
+        async function testGetById() {
+            const agentId = document.getElementById('agentId').value;
+            const result = await apiCall(`/${agentId}`);
+            const resultDiv = document.getElementById('getByIdResult');
+            
+            if (result.success) {
+                resultDiv.className = 'result success';
+                resultDiv.innerHTML = `<strong>Found Agent!</strong><br><pre>${JSON.stringify(result.data, null, 2)}</pre>`;
+            } else {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `<strong>Error:</strong> ${result.error}`;
+            }
+        }
+
+        async function testCreate() {
+            const testAgent = {
+                madaily: "TEST001",
+                tendaily: "Test Agent " + Date.now(),
+                diachi: "123 Test Street",
+                sodienthoai: "0123456789",
+                email: "test@example.com",
+                maquan: "QUA00001",
+                maloaidaily: "LDL00001",
+                ngaytiepnhan: new Date().toISOString().split('T')[0]
+            };
+            
+            const result = await apiCall('/', 'POST', testAgent);
+            const resultDiv = document.getElementById('createResult');
+            
+            if (result.success) {
+                resultDiv.className = 'result success';
+                resultDiv.innerHTML = `<strong>Created Agent!</strong><br><pre>${JSON.stringify(result.data, null, 2)}</pre>`;
+            } else {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `<strong>Error:</strong> ${result.error}`;
+            }
+        }
+    </script>
+</body>
+</html>
