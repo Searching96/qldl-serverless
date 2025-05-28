@@ -108,6 +108,13 @@
   font-size: var(--font-size-sm);
 }
 
+/* Search Buttons Container */
+.search-component .d-flex.justify-content-between > div:first-child {
+  display: flex;
+  justify-content: center;
+  flex-grow: 1;
+}
+
 .search-component .table thead th {
   background: var(--dark);
   color: var(--white);

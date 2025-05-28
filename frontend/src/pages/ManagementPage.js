@@ -16,33 +16,21 @@ const ManagementPage = ({
 }) => {
     return (
         <div className="container-fluid">
-            <div className="page-header">
-                <div className="container">
-                    <h2 className="mb-0">
-                        <i className="bi bi-people-fill me-2"></i>
-                        Quản lý đại lý
-                    </h2>
-                    <small className="text-white-50">Thêm, sửa, xóa thông tin đại lý</small>
-                </div>
-            </div>
-            
-            <div className="container">
-                <FormComponent
-                    selectedDaily={selectedDaily}
-                    onSubmit={onSubmit}
-                    dsQuan={dsQuan}
-                    dsLoaiDaiLy={dsLoaiDaiLy}
-                    resetTrigger={resetTrigger}
-                    getLatestId={getLatestId}
-                />
+            <FormComponent
+                selectedDaily={selectedDaily}
+                onSubmit={onSubmit}
+                dsQuan={dsQuan}
+                dsLoaiDaiLy={dsLoaiDaiLy}
+                resetTrigger={resetTrigger}
+                getLatestId={getLatestId}
+            />
 
-                <TableComponent
-                    data={data}
-                    onEdit={onEdit}
-                    onDelete={onDelete}
-                    onRefresh={onRefresh}
-                />
-            </div>
+            <TableComponent
+                data={data}
+                onEdit={onEdit}
+                onDelete={onDelete}
+                onRefresh={onRefresh}
+            />
         </div>
     );
 };

@@ -3,7 +3,8 @@ import { Form, Button, Card, Row, Col, Table, Alert, Accordion } from 'react-boo
 import { searchDaiLy } from '../services/api';
 import '../styles/SearchComponent.css';
 
-export const SearchComponent = ({ dsQuan, dsLoaiDaiLy }) => {    const [searchCriteria, setSearchCriteria] = useState({
+export const SearchComponent = ({ dsQuan, dsLoaiDaiLy }) => {
+    const [searchCriteria, setSearchCriteria] = useState({
         madaily: '',
         tendaily: '',
         sodienthoai: '',
@@ -36,7 +37,7 @@ export const SearchComponent = ({ dsQuan, dsLoaiDaiLy }) => {    const [searchCr
         soluongton_from: '',
         soluongton_to: '',
         tendonvitinh: ''
-    });const [searchResults, setSearchResults] = useState([]);
+    }); const [searchResults, setSearchResults] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
     const [searchPerformed, setSearchPerformed] = useState(false);
@@ -71,7 +72,7 @@ export const SearchComponent = ({ dsQuan, dsLoaiDaiLy }) => {    const [searchCr
         } finally {
             setIsLoading(false);
         }
-    };    const handleClearSearch = () => {
+    }; const handleClearSearch = () => {
         setSearchCriteria({
             madaily: '',
             tendaily: '',
@@ -127,11 +128,10 @@ export const SearchComponent = ({ dsQuan, dsLoaiDaiLy }) => {    const [searchCr
         <div className="search-component">
             <Card>
                 <Card.Header>
-                    <h4>🔍 Tra cứu đại lý (Sprint 03)</h4>
+                    <h4>🔍 Tra cứu đại lý</h4>
                 </Card.Header>
-                <Card.Body>
-                    <Form onSubmit={handleSearch}>
-                        <Accordion defaultActiveKey="0">
+                <Card.Body>                    <Form onSubmit={handleSearch}>
+                        <Accordion alwaysOpen defaultActiveKey={["0"]}>
                             {/* Basic Search Criteria */}
                             <Accordion.Item eventKey="0">
                                 <Accordion.Header>Thông tin cơ bản</Accordion.Header>
@@ -565,30 +565,26 @@ export const SearchComponent = ({ dsQuan, dsLoaiDaiLy }) => {    const [searchCr
                                     </Row>
                                 </Accordion.Body>
                             </Accordion.Item>
-                        </Accordion>
-
-                        <div className="d-flex justify-content-between mt-4">
-                            <div>
+                        </Accordion>                        <div className="text-center mt-4">
+                            <div className="mb-3">
                                 <Button type="submit" variant="primary" disabled={isLoading}>
                                     {isLoading ? 'Đang tìm kiếm...' : '🔍 Tìm kiếm'}
                                 </Button>
-                                <Button 
-                                    type="button" 
-                                    variant="secondary" 
-                                    className="ms-2" 
+                                <Button
+                                    type="button"
+                                    variant="secondary"
+                                    className="ms-2"
                                     onClick={handleClearSearch}
                                     disabled={isLoading}
                                 >
                                     🗑️ Xóa bộ lọc
                                 </Button>
                             </div>
-                            <div>
-                                {searchPerformed && (
-                                    <span className="text-muted">
-                                        Tìm thấy {searchResults.length} kết quả
-                                    </span>
-                                )}
-                            </div>
+                            {searchPerformed && (
+                                <div className="text-muted">
+                                    Tìm thấy {searchResults.length} kết quả
+                                </div>
+                            )}
                         </div>
                     </Form>
                 </Card.Body>
@@ -614,53 +610,53 @@ export const SearchComponent = ({ dsQuan, dsLoaiDaiLy }) => {    const [searchCr
                             </Alert>
                         ) : (
                             <div className="table-responsive">                                <Table striped bordered hover>
-                                    <thead className="table-dark">
-                                        <tr>
-                                            <th>Mã đại lý</th>
-                                            <th>Tên đại lý</th>
-                                            <th>SĐT</th>
-                                            <th>Email</th>
-                                            <th>Địa chỉ</th>
-                                            <th>Quận</th>
-                                            <th>Loại đại lý</th>
-                                            <th>Ngày tiếp nhận</th>
-                                            <th>Công nợ</th>
-                                            <th>Số phiếu xuất</th>
-                                            <th>Tổng giá trị xuất</th>
-                                            <th>Số mặt hàng</th>
+                                <thead className="table-dark">
+                                    <tr>
+                                        <th>Mã đại lý</th>
+                                        <th>Tên đại lý</th>
+                                        <th>SĐT</th>
+                                        <th>Email</th>
+                                        <th>Địa chỉ</th>
+                                        <th>Quận</th>
+                                        <th>Loại đại lý</th>
+                                        <th>Ngày tiếp nhận</th>
+                                        <th>Công nợ</th>
+                                        <th>Số phiếu xuất</th>
+                                        <th>Tổng giá trị xuất</th>
+                                        <th>Số mặt hàng</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {searchResults.map((agent, index) => (
+                                        <tr key={agent.madaily || index}>
+                                            <td className="fw-bold">{agent.madaily}</td>
+                                            <td>{agent.tendaily}</td>
+                                            <td>{agent.sodienthoai}</td>
+                                            <td>{agent.email}</td>
+                                            <td>{agent.diachi}</td>
+                                            <td>{agent.tenquan || agent.maquan}</td>
+                                            <td>{agent.tenloaidaily || agent.maloaidaily}</td>
+                                            <td>{formatDate(agent.ngaytiepnhan)}</td>
+                                            <td className={agent.congno > 0 ? 'text-danger fw-bold' : 'text-success'}>
+                                                {formatCurrency(agent.congno || 0)}
+                                            </td>
+                                            <td className="text-center">
+                                                <span className="badge bg-info">
+                                                    {agent.so_phieu_xuat || 0}
+                                                </span>
+                                            </td>
+                                            <td className="text-end">
+                                                {agent.tong_gia_tri_xuat ? formatCurrency(agent.tong_gia_tri_xuat) : '-'}
+                                            </td>
+                                            <td className="text-center">
+                                                <span className="badge bg-secondary">
+                                                    {agent.so_mat_hang || 0}
+                                                </span>
+                                            </td>
                                         </tr>
-                                    </thead>
-                                    <tbody>
-                                        {searchResults.map((agent, index) => (
-                                            <tr key={agent.madaily || index}>
-                                                <td className="fw-bold">{agent.madaily}</td>
-                                                <td>{agent.tendaily}</td>
-                                                <td>{agent.sodienthoai}</td>
-                                                <td>{agent.email}</td>
-                                                <td>{agent.diachi}</td>
-                                                <td>{agent.tenquan || agent.maquan}</td>
-                                                <td>{agent.tenloaidaily || agent.maloaidaily}</td>
-                                                <td>{formatDate(agent.ngaytiepnhan)}</td>
-                                                <td className={agent.congno > 0 ? 'text-danger fw-bold' : 'text-success'}>
-                                                    {formatCurrency(agent.congno || 0)}
-                                                </td>
-                                                <td className="text-center">
-                                                    <span className="badge bg-info">
-                                                        {agent.so_phieu_xuat || 0}
-                                                    </span>
-                                                </td>
-                                                <td className="text-end">
-                                                    {agent.tong_gia_tri_xuat ? formatCurrency(agent.tong_gia_tri_xuat) : '-'}
-                                                </td>
-                                                <td className="text-center">
-                                                    <span className="badge bg-secondary">
-                                                        {agent.so_mat_hang || 0}
-                                                    </span>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </Table>
+                                    ))}
+                                </tbody>
+                            </Table>
                             </div>
                         )}
                     </Card.Body>
