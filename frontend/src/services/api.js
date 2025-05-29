@@ -1,5 +1,5 @@
 // src/services/api.js
-const API_DOMAIN = 'https://testapi.thinhuit.id.vn';
+const API_DOMAIN = ' http://localhost:3001';
 
 async function fetchData(endpoint, method = 'GET', body = null) {
   const url = `${API_DOMAIN}${endpoint}`;
@@ -46,6 +46,8 @@ export const getDonViTinh = (maDonViTinh) => fetchData(`/donvitinh/${maDonViTinh
 export const createDonViTinh = (data) => fetchData('/donvitinh/', 'POST', data);
 export const updateDonViTinh = (maDonViTinh, data) => fetchData(`/donvitinh/${maDonViTinh}`, 'PUT', data);
 export const deleteDonViTinh = (maDonViTinh) => fetchData(`/donvitinh/${maDonViTinh}`, 'DELETE');
+
+export const createPhieuXuat = (data) => fetchData('/', 'POST', data);
 
 export const getLatestMaDaiLy = () => fetchData('/id/madl');
 export const getLatestMaDonViTinh = () => fetchData('/id/madvt');

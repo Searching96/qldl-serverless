@@ -11,13 +11,14 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "@aws-sdk/dsql-signer": "^3.777.0",
-    "pg": "^8.14.1",
+    "@aws-sdk/dsql-signer": "^3.817.0",
+    "pg": "^8.16.0",
     "serverless": "^3.40.0",
     "serverless-dotenv-plugin": "^6.0.0",
     "uuid": "^11.1.0"
   },
   "devDependencies": {
+    "serverless-offline": "^14.4.0",
     "serverless-plugin-common-excludes": "^4.0.0",
     "serverless-plugin-include-dependencies": "^6.1.1"
   }
