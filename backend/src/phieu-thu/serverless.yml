@@ -1,0 +1,102 @@
+# "org" ensures this Service is used with the correct Serverless Framework Access Key.
+org: doancnpm
+# "app" enables Serverless Framework Dashboard features and sharing them with other Services.
+app: quan-ly-dai-ly
+# "service" is the name of this project. This will also be added to your AWS resource names.
+service: phieu-thu
+
+provider:
+  name: aws
+  runtime: nodejs22.x
+  region: ${env:AWS_REGION}
+  stage: ${opt:stage, 'dev'}
+  timeout: 29
+  environment:
+    DATABASE_REGION: ${env:DB_REGION}
+    DATABASE_USER: ${env:DB_USER}
+    DATABASE_HOST: ${env:DB_HOST}
+    DATABASE_NAME: ${env:DB_NAME}
+    DATABASE_PORT: ${env:DB_PORT}
+  httpApi:
+    disableDefaultEndpoint: true
+    cors: true
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - logs:CreateLogGroup
+            - logs:CreateLogStream
+            - logs:PutLogEvents
+          Resource: 'arn:aws:logs:*:*:*'
+      managedPolicies:
+        - 'arn:aws:iam::aws:policy/AmazonAuroraDSQLFullAccess'
+
+layers:
+  Dependencies:
+    path: ../../lambda-aurora-dsql
+    name: ${sls:stage}-pg-dsql-uuid
+    description: Package for postgres, dsql-signer and uuid
+    compatibleRuntimes:
+      - nodejs22.x
+    compatibleArchitectures:
+      - x86_64
+    retain: false
+
+functions:
+  creatept:
+    handler: handler.creatept
+    layers:
+      - !Ref DependenciesLambdaLayer
+    events:
+      - httpApi:
+          path: /
+          method: post
+  
+  getallpt:
+    handler: handler.getallpt
+    layers:
+      - !Ref DependenciesLambdaLayer
+    events:
+      - httpApi:
+          path: /
+          method: get
+  
+  getptbyid:
+    handler: handler.getptbyid
+    layers:
+      - !Ref DependenciesLambdaLayer
+    events:
+      - httpApi:
+          path: /{maPhieuThu}
+          method: get
+  
+  updatept:
+    handler: handler.updatept
+    layers:
+      - !Ref DependenciesLambdaLayer
+    events:
+      - httpApi:
+          path: /{maPhieuThu}
+          method: put
+  
+  deletept:
+    handler: handler.deletept
+    layers:
+      - !Ref DependenciesLambdaLayer
+    events:
+      - httpApi:
+          path: /{maPhieuThu}
+          method: delete
+
+  searchpt:
+    handler: handler.searchpt
+    layers:
+      - !Ref DependenciesLambdaLayer
+    events:
+      - httpApi:
+          path: /search
+          method: get
+
+plugins:
+  - serverless-offline

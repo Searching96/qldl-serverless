@@ -65,7 +65,11 @@ export const createDonViTinh = (data) => fetchData('/donvitinh/', 'POST', data);
 export const updateDonViTinh = (maDonViTinh, data) => fetchData(`/donvitinh/${maDonViTinh}`, 'PUT', data);
 export const deleteDonViTinh = (maDonViTinh) => fetchData(`/donvitinh/${maDonViTinh}`, 'DELETE');
 
+// Phieu Xuat
 export const createPhieuXuat = (data) => fetchData('/', 'POST', data);
+
+// Phieu Thu
+export const createPhieuThu = (data) => fetchData('http://localhost:3003/', 'POST', data);
 
 export const getLatestMaDaiLy = () => fetchData('/id/madl');
 export const getLatestMaDonViTinh = () => fetchData('/id/madvt');
