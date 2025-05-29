@@ -45,13 +45,60 @@ export const ThaoTacDb = () => {
     if (!results) return null;
 
     if (operationType === 'query') {
-      // For query operations, display the string result
+      let displayContent;
+      try {
+        // First, try to parse the results as JSON if it's a string
+        const parsedResults = typeof results === 'string' ? JSON.parse(results) : results;
+        
+        // Check if the result has a nested "result" field that contains the actual data
+        if (parsedResults.result && typeof parsedResults.result === 'string') {
+          // Parse the nested result string and format it
+          const resultData = parsedResults.result;
+          
+          // Split by newlines and parse each row
+          const rows = resultData.split('\n').filter(row => row.trim());
+          const formattedData = rows.map(row => {
+            const fields = {};
+            const pairs = row.split(', ');
+            pairs.forEach(pair => {
+              const [key, value] = pair.split(': ');
+              fields[key] = value === 'NULL' ? null : value;
+            });
+            return fields;
+          });
+          
+          displayContent = JSON.stringify({
+            message: parsedResults.message,
+            data: formattedData,
+            count: formattedData.length
+          }, null, 4);
+        } else {
+          // Use 4 spaces for better readability
+          displayContent = JSON.stringify(parsedResults, null, 4);
+        }
+      } catch (parseError) {
+        // If parsing fails, display as is
+        displayContent = typeof results === 'string' ? results : JSON.stringify(results, null, 4);
+      }
+
       return (
         <div className="mt-3">
           <h5>Kết quả truy vấn:</h5>
           <Alert variant="info">
-            <pre style={{ whiteSpace: 'pre-wrap', marginBottom: 0 }}>
-              {typeof results === 'string' ? results : JSON.stringify(results, null, 2)}
+            <pre style={{ 
+              whiteSpace: 'pre-wrap', 
+              marginBottom: 0,
+              fontSize: '13px',
+              lineHeight: '1.5',
+              fontFamily: 'Consolas, Monaco, "Courier New", monospace',
+              backgroundColor: '#f8f9fa',
+              border: '1px solid #dee2e6',
+              borderRadius: '4px',
+              padding: '12px',
+              overflow: 'auto',
+              maxHeight: '500px'
+            }}>
+              {displayContent}
             </pre>
           </Alert>
         </div>

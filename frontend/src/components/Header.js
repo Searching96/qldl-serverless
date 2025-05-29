@@ -60,6 +60,18 @@ export const Header = () => {
             </Nav.Link>
             <Nav.Link
               as={Link}
+              to="/sprint05"
+              className={
+                location.pathname === "/sprint05" ||
+                location.pathname === "/lap-bao-cao-doanh-so"
+                  ? "active"
+                  : ""
+              }
+            >
+              Sprint 05
+            </Nav.Link>
+            <Nav.Link
+              as={Link}
               to="/thao-tac-db"
               className={
                 location.pathname === "/thao-tac-db"
