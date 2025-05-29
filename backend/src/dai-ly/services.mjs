@@ -4,6 +4,103 @@ import { query } from './database.mjs';
 import { v4 as uuidv4 } from 'uuid';
 
 class DaiLyService {
+  async getMonthlyRevenueReport(month, year) {
+    const queryString = `
+      WITH monthly_data AS (
+        SELECT 
+          d.MaDaiLy as madaily,
+          d.TenDaiLy as tendaily,
+          COUNT(px.IDPhieuXuat)::INTEGER as soluongphieuxuat,
+          COALESCE(SUM(px.TongGiaTri), 0)::INTEGER as tonggiatrigiaodich
+        FROM 
+          inventory.DAILY d
+        LEFT JOIN 
+          inventory.PHIEUXUAT px ON d.IDDaiLy = px.IDDaiLy 
+            AND EXTRACT(MONTH FROM px.NgayLap) = $1 
+            AND EXTRACT(YEAR FROM px.NgayLap) = $2
+            AND px.DeletedAt IS NULL
+        WHERE 
+          d.DeletedAt IS NULL
+        GROUP BY 
+          d.MaDaiLy, d.TenDaiLy
+      ),
+      total_revenue AS (
+        SELECT COALESCE(SUM(tonggiatrigiaodich), 0)::INTEGER as tongdoanhso
+        FROM monthly_data
+        WHERE tonggiatrigiaodich > 0
+      )
+      SELECT 
+        md.madaily,
+        md.tendaily,
+        md.soluongphieuxuat,
+        md.tonggiatrigiaodich,
+        tr.tongdoanhso,
+        CASE 
+          WHEN tr.tongdoanhso > 0 THEN 
+            ROUND((md.tonggiatrigiaodich::DECIMAL / tr.tongdoanhso::DECIMAL) * 100, 2)
+          ELSE 0 
+        END as tile_phantram
+      FROM 
+        monthly_data md
+      CROSS JOIN 
+        total_revenue tr
+      WHERE 
+        md.tonggiatrigiaodich > 0
+      ORDER BY 
+        md.tonggiatrigiaodich DESC, md.madaily`;
+    
+    const result = await query(queryString, [month, year]);
+    
+    // Comprehensive Debug logging
+    console.log('=== COMPREHENSIVE DEBUG OUTPUT ===');
+    console.log('Query parameters:', { month, year });
+    console.log('Result object keys:', Object.keys(result));
+    console.log('Result rowCount:', result.rowCount);
+    console.log('Result rows length:', result.rows?.length);
+    
+    if (result.rows && result.rows.length > 0) {
+      console.log('All rows raw data:');
+      result.rows.forEach((row, index) => {
+        console.log(`Row ${index}:`, JSON.stringify(row, null, 2));
+        console.log(`Row ${index} keys:`, Object.keys(row));
+        console.log(`Row ${index} values with types:`);
+        Object.entries(row).forEach(([key, value]) => {
+          console.log(`  ${key}: ${value} (type: ${typeof value})`);
+        });
+      });
+      
+      console.log('First row detailed analysis:');
+      const firstRow = result.rows[0];
+      console.log('madaily:', firstRow.madaily, typeof firstRow.madaily);
+      console.log('tendaily:', firstRow.tendaily, typeof firstRow.tendaily);
+      console.log('soluongphieuxuat:', firstRow.soluongphieuxuat, typeof firstRow.soluongphieuxuat);
+      console.log('tonggiatrigiaodich:', firstRow.tonggiatrigiaodich, typeof firstRow.tonggiatrigiaodich);
+      console.log('tongdoanhso:', firstRow.tongdoanhso, typeof firstRow.tongdoanhso);
+      console.log('tile_phantram:', firstRow.tile_phantram, typeof firstRow.tile_phantram);
+    } else {
+      console.log('No rows returned from query');
+    }
+    console.log('=== END DEBUG OUTPUT ===');
+    
+    // Calculate summary data
+    const tongDoanhSo = result.rows.length > 0 ? parseInt(result.rows[0].tongdoanhso) : 0;
+    const soLuongDaiLy = result.rows.length;
+    
+    return {
+      thang: month,
+      nam: year,
+      tongdoanhso: tongDoanhSo,
+      soluongdaily: soLuongDaiLy,
+      chitiet: result.rows.map(row => ({
+        madaily: row.madaily,
+        tendaily: row.tendaily,
+        soluongphieuxuat: parseInt(row.soluongphieuxuat),
+        tonggiatrigiaodich: parseInt(row.tonggiatrigiaodich),
+        tilephantramdoanhso: parseFloat(row.tile_phantram)
+      }))
+    };
+  }
+
   async getAllDaiLy() {
     const queryString = `
       SELECT 

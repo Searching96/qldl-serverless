@@ -30,6 +30,8 @@ export const LapPhieuThuTien = () => {
   const [showSuccess, setShowSuccess] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState('');
   const [showLoading, setShowLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [showError, setShowError] = useState(false);
 
   useEffect(() => {
     fetchDaiLyList();
@@ -111,8 +113,9 @@ export const LapPhieuThuTien = () => {
       const result = await createPhieuThu(phieuThuData);
       console.log('Lập phiếu thu tiền thành công:', result);
       
-      // Show simple success message
-      setSuccessMessage("Lập phiếu thu thành công");
+      // Display message from backend if available, otherwise default success message
+      const message = result?.message || "Lập phiếu thu thành công";
+      setSuccessMessage(message);
       setShowSuccess(true);
       
       // Auto hide after 5 seconds
@@ -127,7 +130,15 @@ export const LapPhieuThuTien = () => {
       handleThoat();
     } catch (error) {
       console.error('Error creating payment receipt:', error);
-      alert('Có lỗi xảy ra khi lập phiếu thu tiền: ' + error.message);
+      
+      // Display error message in Alert format instead of browser alert
+      setErrorMessage(error.message || 'Có lỗi xảy ra khi lập phiếu thu tiền');
+      setShowError(true);
+      
+      // Auto hide error after 8 seconds
+      setTimeout(() => {
+        setShowError(false);
+      }, 8000);
     } finally {
       setShowLoading(false);
     }
@@ -153,6 +164,14 @@ export const LapPhieuThuTien = () => {
         <Alert variant="info">
           <pre style={{ whiteSpace: 'pre-wrap', marginBottom: 0 }}>
             {loadingMessage}
+          </pre>
+        </Alert>
+      )}
+      
+      {showError && (
+        <Alert variant="danger" onClose={() => setShowError(false)} dismissible>
+          <pre style={{ whiteSpace: 'pre-wrap', marginBottom: 0 }}>
+            {errorMessage}
           </pre>
         </Alert>
       )}

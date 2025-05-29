@@ -1,15 +1,19 @@
 import React, { useState } from 'react';
-import { Card, Form, Row, Col, Button } from "react-bootstrap";
+import { Card, Form, Row, Col, Button, Alert } from "react-bootstrap";
+import { getMonthlyRevenueReport } from '../services/api';
 
 export const LapBaoCaoDoanhSo = () => {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [tongDoanhSo, setTongDoanhSo] = useState('0');
+  const [soLuongDaiLy, setSoLuongDaiLy] = useState(0);
   const [baoCaoData, setBaoCaoData] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  // Generate years array (current year ± 5 years)
+  // Generate years array (2000 to current year)
   const currentYear = new Date().getFullYear();
-  const years = Array.from({ length: 11 }, (_, i) => currentYear - 5 + i);
+  const years = Array.from({ length: currentYear - 2000 + 1 }, (_, i) => 2000 + i);
 
   // Generate months array
   const months = [
@@ -26,6 +30,72 @@ export const LapBaoCaoDoanhSo = () => {
     { value: 11, label: 'Tháng 11' },
     { value: 12, label: 'Tháng 12' }
   ];
+
+  const handleLapBaoCao = async () => {
+    setLoading(true);
+    setError('');
+    
+    try {
+      const requestData = {
+        month: selectedMonth,
+        year: selectedYear
+      };
+      
+      console.log('=== REQUEST DEBUG ===');
+      console.log('Request data:', requestData);
+      console.log('JSON string:', JSON.stringify(requestData));
+      console.log('====================');
+      
+      const reportData = await getMonthlyRevenueReport(requestData);
+      
+      console.log('=== RESPONSE DEBUG ===');
+      console.log('Response data:', reportData);
+      console.log('Response type:', typeof reportData);
+      console.log('Response JSON string:', JSON.stringify(reportData, null, 2));
+      console.log('tongdoanhso:', reportData.tongdoanhso, 'type:', typeof reportData.tongdoanhso);
+      console.log('soluongdaily:', reportData.soluongdaily, 'type:', typeof reportData.soluongdaily);
+      console.log('chitiet:', reportData.chitiet);
+      if (reportData.chitiet && reportData.chitiet.length > 0) {
+        console.log('First chitiet item:', reportData.chitiet[0]);
+        console.log('tonggiatrigiaodich of first item:', reportData.chitiet[0].tonggiatrigiaodich, 'type:', typeof reportData.chitiet[0].tonggiatrigiaodich);
+      }
+      console.log('======================');
+      
+      // Update state with received data - keep original values without formatting
+      setTongDoanhSo(reportData.tongdoanhso || '0');
+      setSoLuongDaiLy(reportData.soluongdaily || 0);
+      
+      // Map the chitiet data to the expected format - keep original values
+      const formattedData = reportData.chitiet?.map(item => ({
+        tenDaiLy: item.tendaily,
+        soLuongPhieuXuat: item.soluongphieuxuat,
+        tongGiaTriGiaoDich: item.tonggiatrigiaodich || '0',
+        tiLe: `${item.tilephantramdoanhso}%`
+      })) || [];
+      
+      setBaoCaoData(formattedData);
+      
+    } catch (err) {
+      console.error('=== ERROR DEBUG ===');
+      console.error('Full error object:', err);
+      console.error('Error message:', err.message);
+      console.error('Error stack:', err.stack);
+      console.error('==================');
+      setError('Có lỗi xảy ra khi lập báo cáo: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleThoat = () => {
+    // Reset form
+    setSelectedYear(new Date().getFullYear());
+    setSelectedMonth(new Date().getMonth() + 1);
+    setTongDoanhSo('0');
+    setSoLuongDaiLy(0);
+    setBaoCaoData([]);
+    setError('');
+  };
 
   return (
     <div className="container mt-4">
@@ -83,25 +153,36 @@ export const LapBaoCaoDoanhSo = () => {
                 <Button
                   type="button"
                   variant="primary"
-                  onClick={() => console.log('Lập báo cáo doanh số cho', selectedMonth, '/', selectedYear)}
+                  onClick={handleLapBaoCao}
+                  disabled={loading}
                 >
-                  Lập báo cáo doanh số
+                  {loading ? 'Đang lập báo cáo...' : 'Lập báo cáo doanh số'}
                 </Button>
                 <Button
                   type="button"
                   variant="secondary"
-                  onClick={() => console.log('Thoát')}
+                  onClick={handleThoat}
                 >
                   Thoát
                 </Button>
               </Col>
             </Row>
             
+            {error && (
+              <Row className="mb-3">
+                <Col>
+                  <Alert variant="danger">
+                    {error}
+                  </Alert>
+                </Col>
+              </Row>
+            )}
+            
             {/* Total sales row */}
             <Row className="mb-3">
               <Col className="d-flex justify-content-center align-items-center gap-3">
                 <span style={{ fontWeight: 'bold' }}>
-                  Tổng doanh số trong tháng của tất cả đại lý:
+                  Tổng doanh số trong tháng của tất cả đại lý ({soLuongDaiLy} đại lý):
                 </span>
                 <Form.Control
                   type="text"

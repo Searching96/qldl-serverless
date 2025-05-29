@@ -146,8 +146,8 @@ export const LapPhieuXuatHang = () => {
     
     // Store raw number value for calculation
     chiTiet[index].thanhTienValue = thanhTien;
-    // Store formatted string for display
-    chiTiet[index].thanhTien = thanhTien.toLocaleString('vi-VN');
+    // Store as plain number without formatting
+    chiTiet[index].thanhTien = thanhTien.toString();
     
     // Calculate total from all items
     calculateTongTien(chiTiet);
@@ -160,7 +160,7 @@ export const LapPhieuXuatHang = () => {
       return sum + itemThanhTien;
     }, 0);
         
-    setValue("tongTien", tongTien.toLocaleString('vi-VN'));
+    setValue("tongTien", tongTien.toString());
   };
 
   const addRow = () => {
@@ -191,6 +191,30 @@ export const LapPhieuXuatHang = () => {
   const submitHandler = async (data) => {
     // Validation checks before submission
     const validationErrors = [];
+    
+    // Check if no items are selected
+    const hasSelectedItems = chiTietPhieu.some(item => item.tenMatHang);
+    if (!hasSelectedItems) {
+      validationErrors.push('Phải chọn ít nhất một mặt hàng để xuất');
+    }
+    
+    // Check for missing required fields in selected items
+    chiTietPhieu.forEach((item, index) => {
+      if (item.tenMatHang) {
+        // If item is selected, check required fields
+        if (!item.soLuongXuat || item.soLuongXuat === '0') {
+          const selectedProduct = matHangList.find(mh => mh.mamathang === item.tenMatHang);
+          const tenMatHang = selectedProduct ? selectedProduct.tenmathang : item.tenMatHang;
+          validationErrors.push(`Mặt hàng "${tenMatHang}" chưa nhập số lượng xuất`);
+        }
+        
+        if (!item.donGiaXuat || item.donGiaXuat === '0') {
+          const selectedProduct = matHangList.find(mh => mh.mamathang === item.tenMatHang);
+          const tenMatHang = selectedProduct ? selectedProduct.tenmathang : item.tenMatHang;
+          validationErrors.push(`Mặt hàng "${tenMatHang}" chưa nhập đơn giá xuất`);
+        }
+      }
+    });
     
     // Check inventory for each item
     chiTietPhieu.forEach((item, index) => {
@@ -253,31 +277,38 @@ export const LapPhieuXuatHang = () => {
         .map(item => ({
           mamathang: item.tenMatHang,
           soluongxuat: parseInt(item.soLuongXuat),
-          dongiaxuat: parseFloat(item.donGiaXuat),
-          thanhtien: parseFloat(item.thanhTien.replace(/,/g, ''))
+          dongiaxuat: parseInt(parseFloat(item.donGiaXuat)), // Convert to integer
+          thanhtien: parseInt(parseFloat(item.thanhTien.replace(/\./g, '').replace(/,/g, '')) || 0) // Remove dots and commas first
         }));
       
       const phieuXuatData = {
         maphieuxuat: data.maPhieuXuat,
         madaily: data.tenDaiLy,
         ngaylap: formattedDate,
-        tongtien: parseFloat(data.tongTien.replace(/,/g, '')) || 0,
+        tonggiatri: parseInt(parseFloat(data.tongTien.replace(/\./g, '').replace(/,/g, '')) || 0), // Remove dots (thousands separator) and commas
         chitiet: chitiet
       };
       
       // Debug: Log the exact data being sent
       console.log('=== DEBUG: Data being sent to API ===');
       console.log('Form data received:', data);
+      console.log('data.tongTien:', data.tongTien, 'type:', typeof data.tongTien);
+      console.log('After removing dots and commas:', data.tongTien.replace(/\./g, '').replace(/,/g, ''));
+      console.log('After parseFloat:', parseFloat(data.tongTien.replace(/\./g, '').replace(/,/g, '')));
+      console.log('After parseInt:', parseInt(parseFloat(data.tongTien.replace(/\./g, '').replace(/,/g, '')) || 0));
       console.log('Chi tiết phiếu array:', chiTietPhieu);
       console.log('Filtered chi tiết:', chitiet);
       console.log('Final phieuXuatData:', phieuXuatData);
-      console.log('JSON string:', JSON.stringify(phieuXuatData, null, 2));
+      console.log('JSON string to be sent:');
+      console.log(JSON.stringify(phieuXuatData, null, 2));
       console.log('=====================================');
       
       const result = await createPhieuXuat(phieuXuatData);
       console.log('Lập phiếu xuất hàng thành công:', result);
       
-      setSuccessMessage("Lập phiếu xuất thành công");
+      // Display message from backend if available, otherwise default success message
+      const message = result?.message || "Lập phiếu xuất thành công";
+      setSuccessMessage(message);
       setShowSuccess(true);
       
       setTimeout(() => {
@@ -425,13 +456,13 @@ export const LapPhieuXuatHang = () => {
                       <thead>
                         <tr>
                           <th width="5%">STT</th>
-                          <th width="25%">Tên mặt hàng</th>
+                          <th width="23%">Tên mặt hàng</th>
                           <th width="15%">Tên đơn vị tính</th>
                           <th width="10%">Số lượng tồn</th>
                           <th width="10%">Số lượng xuất</th>
                           <th width="15%">Đơn giá xuất</th>
                           <th width="15%">Thành tiền</th>
-                          <th width="5%">Thao tác</th>
+                          <th width="7%">Thao tác</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -480,7 +511,6 @@ export const LapPhieuXuatHang = () => {
                                 value={item.donGiaXuat}
                                 onChange={(e) => handleDonGiaXuatChange(index, e.target.value)}
                                 min="0"
-                                step="1000"
                               />
                             </td>
                             <td>

@@ -15,13 +15,27 @@ class PhieuThuService {
       throw new Error(`Thiếu các trường bắt buộc: ${missingFields.join(', ')}`);
     }
 
-    // Get IDDaiLy from MaDaiLy
-    const dailyCheckQuery = 'SELECT IDDaiLy FROM inventory.DAILY WHERE MaDaiLy = $1 AND DeletedAt IS NULL';
+    // Get IDDaiLy and CongNo from MaDaiLy
+    const dailyCheckQuery = 'SELECT IDDaiLy, CongNo FROM inventory.DAILY WHERE MaDaiLy = $1 AND DeletedAt IS NULL';
     const dailyCheck = await query(dailyCheckQuery, [madaily]);
     if (dailyCheck.rowCount === 0) {
       throw new Error(`Mã đại lý ${madaily} không tồn tại hoặc đã bị xóa`);
     }
     const idDaiLy = dailyCheck.rows[0].iddaily;
+    const congNo = dailyCheck.rows[0].congno;
+
+    // Check QuyDinhTienThuTienNo rule
+    const thamSoQuery = 'SELECT QuyDinhTienThuTienNo FROM inventory.THAMSO WHERE DeletedAt IS NULL LIMIT 1';
+    const thamSoResult = await query(thamSoQuery);
+    if (thamSoResult.rowCount > 0) {
+      const quyDinhTienThuTienNo = thamSoResult.rows[0].quydinhtienthutienno;
+      
+      if (quyDinhTienThuTienNo === 1) {
+        if (sotienthu > congNo) {
+          throw new Error(`Số tiền thu (${sotienthu}) không được lớn hơn công nợ hiện tại (${congNo}).`);
+        }
+      }
+    }
 
     // Get the last MaPhieuThu and increment by 1
     const lastMaPhieuThuQuery = `

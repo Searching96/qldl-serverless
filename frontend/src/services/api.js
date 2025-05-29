@@ -45,6 +45,7 @@ export const getDaily = (maDaiLy) => fetchData(`/daily/${maDaiLy}`);
 export const createDaily = (data) => fetchData('/daily/', 'POST', data);
 export const updateDaily = (maDaiLy, data) => fetchData(`/daily/${maDaiLy}`, 'PUT', data);
 export const deleteDaily = (maDaiLy) => fetchData(`/daily/${maDaiLy}`, 'DELETE');
+export const getMonthlyRevenueReport = (data) => fetchData('http://localhost:3001/mrr', 'POST', data);
 
 export const getAllQuan = () => fetchData('/quan/');
 export const getQuan = (maQuan) => fetchData(`/quan/${maQuan}`);

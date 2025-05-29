@@ -243,3 +243,53 @@ export const searchdl = async (event, context) => {
         };
     }
 };
+
+export const getmrr = async (event, context) => {
+    context.callbackWaitsForEmptyEventLoop = false;
+    try {
+        const { month, year } = JSON.parse(event.body);
+        
+        if (!month || !year) {
+            return {
+                statusCode: 400,
+                headers,
+                body: JSON.stringify({ message: 'Thiếu tham số month và year.' }),
+            };
+        }
+
+        const monthNum = parseInt(month);
+        const yearNum = parseInt(year);
+
+        if (monthNum < 1 || monthNum > 12) {
+            return {
+                statusCode: 400,
+                headers,
+                body: JSON.stringify({ message: 'Tháng phải từ 1 đến 12.' }),
+            };
+        }
+
+        if (yearNum < 1900 || yearNum > 2100) {
+            return {
+                statusCode: 400,
+                headers,
+                body: JSON.stringify({ message: 'Năm không hợp lệ.' }),
+            };
+        }
+
+        const report = await daiLyService.getMonthlyRevenueReport(monthNum, yearNum);
+        
+        console.log('Tạo báo cáo doanh thu tháng thành công:', monthNum, '/', yearNum);
+        return {
+            statusCode: 200,
+            headers,
+            body: JSON.stringify(report),
+        };
+    } catch (error) {
+        console.error('Lỗi khi tạo báo cáo doanh thu tháng: ', error);
+        return {
+            statusCode: 500,
+            headers,
+            body: JSON.stringify({ message: 'Lỗi khi tạo báo cáo doanh thu tháng: ', error: error.message }),
+        };
+    }
+};

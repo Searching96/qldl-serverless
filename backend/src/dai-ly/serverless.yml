@@ -121,5 +121,14 @@ functions:
           path: /{maDaiLy}
           method: delete
 
+  getmrr:
+    handler: handler.getmrr
+    layers:
+      - !Ref DependenciesLambdaLayer
+    events:
+      - httpApi:
+          path: /mrr
+          method: post
+
 plugins:
   - serverless-offline
