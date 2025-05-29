@@ -12,7 +12,15 @@ const headers = {
 export const exequery = async (event, context) => {
     context.callbackWaitsForEmptyEventLoop = false;
     try {
-        const { queryString, params = [] } = JSON.parse(event.body);
+        // Handle both JSON and plain text body
+        let queryString;
+        try {
+            const parsed = JSON.parse(event.body);
+            queryString = parsed.queryString || parsed.query;
+        } catch {
+            // If JSON parse fails, treat as plain SQL string
+            queryString = event.body;
+        }
         
         if (!queryString) {
             return {
@@ -22,7 +30,7 @@ export const exequery = async (event, context) => {
             };
         }
 
-        const result = await daiLyService.executeQuery(queryString, params);
+        const result = await daiLyService.executeQuery(queryString);
         console.log('Query executed successfully');
         
         return {
@@ -46,7 +54,15 @@ export const exequery = async (event, context) => {
 export const exeinsert = async (event, context) => {
     context.callbackWaitsForEmptyEventLoop = false;
     try {
-        const { insertString, params = [] } = JSON.parse(event.body);
+        // Handle both JSON and plain text body
+        let insertString;
+        try {
+            const parsed = JSON.parse(event.body);
+            insertString = parsed.insertString || parsed.insert || parsed.query;
+        } catch {
+            // If JSON parse fails, treat as plain SQL string
+            insertString = event.body;
+        }
         
         if (!insertString) {
             return {
@@ -56,7 +72,7 @@ export const exeinsert = async (event, context) => {
             };
         }
 
-        const result = await daiLyService.executeInsert(insertString, params);
+        const result = await daiLyService.executeInsert(insertString);
         console.log('Insert executed successfully, rows affected:', result.rowCount);
         
         return {

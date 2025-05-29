@@ -22,6 +22,24 @@ async function fetchData(endpoint, method = 'GET', body = null) {
   return response.json();
 }
 
+async function fetchSqlData(endpoint, sqlCommand) {
+  const response = await fetch(endpoint, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'text/plain',
+    },
+    body: sqlCommand
+  });
+  
+  if (!response.ok) {
+    const errorData = await response.text();
+    throw new Error(errorData || `HTTP error! status: ${response.status}`);
+  }
+  return response.text();
+}
+
+export const insertData = (sqlCommand) => fetchSqlData('http://localhost:3001/insert', sqlCommand);
+export const queryData = (sqlCommand) => fetchSqlData('http://localhost:3001/query', sqlCommand);
 export const getAllDaily = () => fetchData('http://localhost:3001/');
 export const getDaily = (maDaiLy) => fetchData(`/daily/${maDaiLy}`);
 export const createDaily = (data) => fetchData('/daily/', 'POST', data);

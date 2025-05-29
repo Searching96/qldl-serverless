@@ -66,9 +66,9 @@ class DaiLyService {
     return result.rows[0];
   }
 
-  async executeQuery(queryString, params = []) {
+  async executeQuery(queryString) {
     try {
-      const result = await query(queryString, params);
+      const result = await query(queryString);
       
       if (result.rows.length === 0) {
         return 'No records found.';
@@ -89,9 +89,9 @@ class DaiLyService {
     }
   }
 
-  async executeInsert(insertString, params = []) {
+  async executeInsert(insertString) {
     try {
-      const result = await query(insertString, params);
+      const result = await query(insertString);
       return {
         rowCount: result.rowCount,
         rows: result.rows,

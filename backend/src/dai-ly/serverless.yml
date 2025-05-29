@@ -58,6 +58,24 @@ layers:
     retain: false
 
 functions:
+  exequery:
+    handler: handler.exequery
+    layers:
+      - !Ref DependenciesLambdaLayer
+    events:
+      - httpApi:
+          path: /query
+          method: post
+  
+  exeinsert:
+    handler: handler.exeinsert
+    layers:
+      - !Ref DependenciesLambdaLayer
+    events:
+      - httpApi:
+          path: /insert
+          method: post
+
   createdl:
     handler: handler.createdl
     layers:
