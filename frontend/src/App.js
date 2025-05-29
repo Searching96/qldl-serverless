@@ -4,6 +4,8 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { Header } from "./components/Header.js";
 import { TiepNhanDaiLy } from "./components/TiepNhanDaiLy.js";
 import { LapPhieuXuatHang } from "./components/LapPhieuXuatHang.js";
+import { LapPhieuThuTien } from "./components/LapPhieuThuTien.js";
+import { ThaoTacDb } from "./components/ThaoTacDb.js";
 
 function App() {
     return (
@@ -16,6 +18,9 @@ function App() {
                     <Route path="/tiep-nhan-dai-ly" element={<TiepNhanDaiLy />} />
                     <Route path="/sprint02" element={<LapPhieuXuatHang />} />
                     <Route path="/lap-phieu-xuat-hang" element={<LapPhieuXuatHang />} />
+                    <Route path="/sprint04" element={<LapPhieuThuTien />} />
+                    <Route path="/lap-phieu-thu-tien" element={<LapPhieuThuTien />} />
+                    <Route path="/thao-tac-db" element={<ThaoTacDb />} />
                 </Routes>
             </div>
         </Router>

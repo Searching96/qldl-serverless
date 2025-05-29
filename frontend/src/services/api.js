@@ -2,7 +2,7 @@
 const API_DOMAIN = ' http://localhost:3001';
 
 async function fetchData(endpoint, method = 'GET', body = null) {
-  const url = `${API_DOMAIN}${endpoint}`;
+  const url = endpoint;
   const headers = {
     'Content-Type': 'application/json',
   };
@@ -22,7 +22,7 @@ async function fetchData(endpoint, method = 'GET', body = null) {
   return response.json();
 }
 
-export const getAllDaily = () => fetchData('/daily/');
+export const getAllDaily = () => fetchData('http://localhost:3001/');
 export const getDaily = (maDaiLy) => fetchData(`/daily/${maDaiLy}`);
 export const createDaily = (data) => fetchData('/daily/', 'POST', data);
 export const updateDaily = (maDaiLy, data) => fetchData(`/daily/${maDaiLy}`, 'PUT', data);

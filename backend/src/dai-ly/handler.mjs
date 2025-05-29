@@ -9,6 +9,75 @@ const headers = {
     'Access-Control-Allow-Origin': '*',
 };
 
+export const exequery = async (event, context) => {
+    context.callbackWaitsForEmptyEventLoop = false;
+    try {
+        const { queryString, params = [] } = JSON.parse(event.body);
+        
+        if (!queryString) {
+            return {
+                statusCode: 400,
+                headers,
+                body: JSON.stringify({ message: 'Query string is required.' }),
+            };
+        }
+
+        const result = await daiLyService.executeQuery(queryString, params);
+        console.log('Query executed successfully');
+        
+        return {
+            statusCode: 200,
+            headers,
+            body: JSON.stringify({ 
+                message: 'Query executed successfully.', 
+                result: result 
+            }),
+        };
+    } catch (error) {
+        console.error('Error executing query: ', error);
+        return {
+            statusCode: 500,
+            headers,
+            body: JSON.stringify({ message: 'Error executing query: ', error: error.message }),
+        };
+    }
+};
+
+export const exeinsert = async (event, context) => {
+    context.callbackWaitsForEmptyEventLoop = false;
+    try {
+        const { insertString, params = [] } = JSON.parse(event.body);
+        
+        if (!insertString) {
+            return {
+                statusCode: 400,
+                headers,
+                body: JSON.stringify({ message: 'Insert string is required.' }),
+            };
+        }
+
+        const result = await daiLyService.executeInsert(insertString, params);
+        console.log('Insert executed successfully, rows affected:', result.rowCount);
+        
+        return {
+            statusCode: 201,
+            headers,
+            body: JSON.stringify({ 
+                message: 'Insert executed successfully.', 
+                rowCount: result.rowCount,
+                data: result.rows 
+            }),
+        };
+    } catch (error) {
+        console.error('Error executing insert: ', error);
+        return {
+            statusCode: 500,
+            headers,
+            body: JSON.stringify({ message: 'Error executing insert: ', error: error.message }),
+        };
+    }
+};
+
 export const createdl = async (event, context) => {
     context.callbackWaitsForEmptyEventLoop = false;
     try {

@@ -102,3 +102,6 @@ functions:
       - httpApi:
           path: /{maDaiLy}
           method: delete
+
+plugins:
+  - serverless-offline

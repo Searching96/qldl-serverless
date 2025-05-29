@@ -46,6 +46,29 @@ export const Header = () => {
             >
               Sprint 02
             </Nav.Link>
+            <Nav.Link
+              as={Link}
+              to="/sprint04"
+              className={
+                location.pathname === "/sprint04" ||
+                location.pathname === "/lap-phieu-thu-tien"
+                  ? "active"
+                  : ""
+              }
+            >
+              Sprint 04
+            </Nav.Link>
+            <Nav.Link
+              as={Link}
+              to="/thao-tac-db"
+              className={
+                location.pathname === "/thao-tac-db"
+                  ? "active"
+                  : ""
+              }
+            >
+              Thao Tác DB
+            </Nav.Link>
             {/* Add more Nav.Link items here as needed */}
           </Nav>
         </Navbar.Collapse>

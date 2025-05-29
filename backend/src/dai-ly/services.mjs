@@ -66,6 +66,42 @@ class DaiLyService {
     return result.rows[0];
   }
 
+  async executeQuery(queryString, params = []) {
+    try {
+      const result = await query(queryString, params);
+      
+      if (result.rows.length === 0) {
+        return 'No records found.';
+      }
+      
+      // Get column names from the first row
+      const columns = Object.keys(result.rows[0]);
+      
+      // Format each row as a string
+      const formattedRows = result.rows.map(row => {
+        const values = columns.map(col => `${col}: ${row[col] || 'NULL'}`);
+        return values.join(', ');
+      });
+      
+      return formattedRows.join('\n');
+    } catch (error) {
+      throw new Error(`Query execution failed: ${error.message}`);
+    }
+  }
+
+  async executeInsert(insertString, params = []) {
+    try {
+      const result = await query(insertString, params);
+      return {
+        rowCount: result.rowCount,
+        rows: result.rows,
+        success: true
+      };
+    } catch (error) {
+      throw new Error(`Insert execution failed: ${error.message}`);
+    }
+  }
+  
   validateRequiredFields(data, requiredFields) {
     const missingFields = [];
     for (const field of requiredFields) {
