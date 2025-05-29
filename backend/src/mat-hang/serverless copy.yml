@@ -1,0 +1,107 @@
+# "org" ensures this Service is used with the correct Serverless Framework Access Key.
+org: doancnpm
+# "app" enables Serverless Framework Dashboard features and sharing them with other Services.
+app: quan-ly-dai-ly
+# "service" is the name of this project. This will also be added to your AWS resource names.
+service: phieu-xuat
+
+provider:
+  name: aws
+  runtime: nodejs22.x
+  region: ${env:AWS_REGION}
+  stage: ${opt:stage, 'dev'}
+  timeout: 29
+  environment:
+    DATABASE_REGION: ${env:DB_REGION}
+    DATABASE_USER: ${env:DB_USER} # Configure your database credentials as environment variables
+    DATABASE_HOST: ${env:DB_HOST}
+    DATABASE_NAME: ${env:DB_NAME}
+    DATABASE_PORT: ${env:DB_PORT}
+  httpApi:
+    disableDefaultEndpoint: true
+    cors: true
+  # Add IAM configuration here
+  iam:
+    role:
+      statements:
+        # Add basic Lambda permissions
+        - Effect: Allow
+          Action:
+            - logs:CreateLogGroup
+            - logs:CreateLogStream
+            - logs:PutLogEvents
+          Resource: 'arn:aws:logs:*:*:*'
+      # Add the Aurora DSQL managed policy
+      managedPolicies:
+        - 'arn:aws:iam::aws:policy/AmazonAuroraDSQLFullAccess'
+
+# package:
+#   patterns:
+#     - '!**'             # Exclude everything
+#     - 'handler.mjs'      # Include the handler file
+#     - 'services.mjs'     # Include the services file
+#     - 'database.mjs'
+#     - 'src/loai-dai-ly/**' # Include everything in this directory
+
+plugins:
+  - serverless-offline
+
+layers:
+  Dependencies:
+    path: ../../lambda-aurora-dsql # required, path to layer contents on disk
+    name: ${sls:stage}-pg-dsql-uuid # optional, Deployed Lambda layer name
+    description: Package for postgres, dsql-signer and uuid # optional, Description to publish to AWS
+    compatibleRuntimes: # optional, a list of runtimes this layer is compatible with
+      - nodejs22.x
+    compatibleArchitectures: # optional, a list of architectures this layer is compatible with
+      - x86_64
+    # allowedAccounts: # optional, a list of AWS account IDs allowed to access this layer.
+    #   - '*'
+    # note: uncommenting this will give all AWS users access to this layer unconditionally.
+    retain: false
+
+functions:
+  createpx:
+    handler: handler.createpx
+    layers:
+      - !Ref DependenciesLambdaLayer
+    events:
+      - httpApi:
+          path: /
+          method: post
+  
+  getallpx:
+    handler: handler.getallpx
+    layers:
+    - !Ref DependenciesLambdaLayer
+    events:
+      - httpApi:
+          path: /
+          method: get
+  
+  getpxbyid:
+    handler: handler.getpxbyid
+    layers:
+    - !Ref DependenciesLambdaLayer
+    events:
+      - httpApi:
+          path: /{maPhieuXuat}
+          method: get
+  
+  updatepx:
+    handler: handler.updatepx
+    layers:
+    - !Ref DependenciesLambdaLayer
+    events:
+      - httpApi:
+          path: /{maPhieuXuat}
+          method: put
+  
+  deletepx:
+    handler: handler.deletepx
+    layers:
+    - !Ref DependenciesLambdaLayer
+    events:
+      - httpApi:
+          path: /{maPhieuXuat}
+          method: delete

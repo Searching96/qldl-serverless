@@ -19,7 +19,8 @@ class DaiLyService {
         d.CongNo as congno,
         d.DeletedAt as deletedat,
         q.TenQuan as tenquan,
-        l.TenLoaiDaiLy as tenloaidaily
+        l.TenLoaiDaiLy as tenloaidaily,
+        l.NoToiDa as notoida
       FROM 
         inventory.DAILY d
       LEFT JOIN 
@@ -31,9 +32,9 @@ class DaiLyService {
       ORDER BY 
         d.MaDaiLy`;
 
-    const result = await query(queryString);
-    return result.rows;
-  }
+      const result = await query(queryString);
+      return result.rows;
+    }
 
   async getDaiLy(madaily) {
     const queryString = `
