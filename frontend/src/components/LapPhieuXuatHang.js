@@ -2,17 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { Button, Form, Card, Alert } from "react-bootstrap";
 import { useForm } from "react-hook-form";
 import "../styles/FormComponent.css";
-import { getAllDaily, createPhieuXuat } from '../services/api';
+import { getAllDaily, createPhieuXuat, getAllMatHang } from '../services/api';
 
 export const LapPhieuXuatHang = () => {
   const { register, handleSubmit, setValue, reset, clearErrors, formState: { errors } } = useForm();
   
   const getCurrentDate = () => {
     const today = new Date();
-    const day = String(today.getDate()).padStart(2, '0');
-    const month = String(today.getMonth() + 1).padStart(2, '0');
     const year = today.getFullYear();
-    return `${day}/${month}/${year}`;
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   };
 
   const [daiLyList, setDaiLyList] = useState([]);
@@ -41,12 +41,12 @@ export const LapPhieuXuatHang = () => {
   };
 
   const fetchMatHangList = async () => {
-    // try {
-    //   //const data = await getAllMatHang();
-    //   setMatHangList(data);
-    // } catch (error) {
-    //   console.error('Error fetching product list:', error);
-    // }
+    try {
+      const data = await getAllMatHang();
+      setMatHangList(data);
+    } catch (error) {
+      console.error('Error fetching product list:', error);
+    }
   };
 
   const handleDaiLyChange = (e) => {
@@ -119,14 +119,22 @@ export const LapPhieuXuatHang = () => {
     const donGia = parseFloat(chiTiet[index].donGiaXuat) || 0;
     const thanhTien = soLuong * donGia;
     
+    // Store raw number value for calculation
+    chiTiet[index].thanhTienValue = thanhTien;
+    // Store formatted string for display
     chiTiet[index].thanhTien = thanhTien.toLocaleString('vi-VN');
     
-    // Calculate total
+    // Calculate total from all items
+    calculateTongTien(chiTiet);
+  };
+
+  const calculateTongTien = (chiTiet) => {
     const tongTien = chiTiet.reduce((sum, item) => {
-      const itemThanhTien = parseFloat(item.thanhTien.replace(/,/g, '')) || 0;
+      // Use the raw number value instead of parsing formatted string
+      const itemThanhTien = item.thanhTienValue || 0;
       return sum + itemThanhTien;
     }, 0);
-    
+        
     setValue("tongTien", tongTien.toLocaleString('vi-VN'));
   };
 
@@ -150,6 +158,8 @@ export const LapPhieuXuatHang = () => {
         item.stt = i + 1;
       });
       setChiTietPhieu(newChiTiet);
+      // Recalculate total after removing row
+      calculateTongTien(newChiTiet);
     }
   };
 
@@ -157,15 +167,35 @@ export const LapPhieuXuatHang = () => {
     setLoadingMessage("Đang lập phiếu xuất...");
     setShowLoading(true);
     try {
-      const dateParts = data.ngayLap.split('/');
-      const formattedDate = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`;
+      // Use the date directly from the date picker (already in YYYY-MM-DD format)
+      const formattedDate = data.ngayLap;
+      
+      // Prepare chi tiết data
+      const chitiet = chiTietPhieu
+        .filter(item => item.tenMatHang && item.soLuongXuat && item.donGiaXuat)
+        .map(item => ({
+          mamathang: item.tenMatHang,
+          soluongxuat: parseInt(item.soLuongXuat),
+          dongiaxuat: parseFloat(item.donGiaXuat),
+          thanhtien: parseFloat(item.thanhTien.replace(/,/g, ''))
+        }));
       
       const phieuXuatData = {
         maphieuxuat: data.maPhieuXuat,
         madaily: data.tenDaiLy,
         ngaylap: formattedDate,
-        tongtien: parseInt(data.tongTien) || 0
+        tongtien: parseFloat(data.tongTien.replace(/,/g, '')) || 0,
+        chitiet: chitiet
       };
+      
+      // Debug: Log the exact data being sent
+      console.log('=== DEBUG: Data being sent to API ===');
+      console.log('Form data received:', data);
+      console.log('Chi tiết phiếu array:', chiTietPhieu);
+      console.log('Filtered chi tiết:', chitiet);
+      console.log('Final phieuXuatData:', phieuXuatData);
+      console.log('JSON string:', JSON.stringify(phieuXuatData, null, 2));
+      console.log('=====================================');
       
       const result = await createPhieuXuat(phieuXuatData);
       console.log('Lập phiếu xuất hàng thành công:', result);
@@ -190,6 +220,9 @@ export const LapPhieuXuatHang = () => {
   const handleThoat = () => {
     reset();
     setValue("ngayLap", getCurrentDate());
+    setChiTietPhieu([
+      { stt: 1, tenMatHang: '', tenDonViTinh: '', soLuongTon: '', soLuongXuat: '', donGiaXuat: '', thanhTien: '' }
+    ]);
   };
 
   return (
@@ -275,15 +308,10 @@ export const LapPhieuXuatHang = () => {
                   <Form.Group>
                     <Form.Label>Ngày lập</Form.Label>
                     <Form.Control
-                      type="text"
+                      type="date"
                       {...register("ngayLap", { 
-                        required: "Ngày lập là bắt buộc",
-                        pattern: {
-                          value: /^(0[1-9]|[12][0-9]|3[01])\/(0[1-9]|1[012])\/\d{4}$/,
-                          message: "Định dạng ngày không hợp lệ (dd/mm/yyyy)"
-                        }
+                        required: "Ngày lập là bắt buộc"
                       })}
-                      placeholder="dd/mm/yyyy"
                     />
                     {errors.ngayLap && <span className="text-danger">{errors.ngayLap.message}</span>}
                   </Form.Group>

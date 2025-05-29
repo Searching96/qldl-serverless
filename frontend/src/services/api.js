@@ -66,10 +66,17 @@ export const updateDonViTinh = (maDonViTinh, data) => fetchData(`/donvitinh/${ma
 export const deleteDonViTinh = (maDonViTinh) => fetchData(`/donvitinh/${maDonViTinh}`, 'DELETE');
 
 // Phieu Xuat
-export const createPhieuXuat = (data) => fetchData('/', 'POST', data);
+export const createPhieuXuat = (data) => fetchData('http://localhost:3005/', 'POST', data);
 
 // Phieu Thu
 export const createPhieuThu = (data) => fetchData('http://localhost:3003/', 'POST', data);
+
+// Mat Hang
+export const getAllMatHang = () => fetchData('http://localhost:3007/');
+export const getMatHang = (maMatHang) => fetchData(`/mathang/${maMatHang}`);
+export const createMatHang = (data) => fetchData('/mathang/', 'POST', data);
+export const updateMatHang = (maMatHang, data) => fetchData(`/mathang/${maMatHang}`, 'PUT', data);
+export const deleteMatHang = (maMatHang) => fetchData(`/mathang/${maMatHang}`, 'DELETE');
 
 export const getLatestMaDaiLy = () => fetchData('/id/madl');
 export const getLatestMaDonViTinh = () => fetchData('/id/madvt');

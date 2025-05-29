@@ -1,183 +1,91 @@
-// src/phieu-xuat/service.js
+// src/mat-hang/service.js
 
 import { query } from './database.mjs';
+import { v4 as uuidv4 } from 'uuid';
 
-class DaiLyService {
-  async createPhieuXuat({ maphieuxuat, madaily }) {
-    console.log('Inside createPhieuXuat service with data:', { maphieuxuat, madaily });
+class MatHangService {
+  async getAllMatHang() {
+    const queryString = `
+      SELECT 
+        mh.IDMatHang as idmathang,
+        mh.MaMatHang as mamathang,
+        mh.TenMatHang as tenmathang,
+        mh.SoLuongTon as soluongton,
+        mh.DeletedAt as deletedat,
+        dvt.MaDonViTinh as madonvitinh,
+        dvt.TenDonViTinh as tendonvitinh
+      FROM 
+        inventory.MATHANG mh
+      LEFT JOIN 
+        inventory.DONVITINH dvt ON mh.IDDonViTinh = dvt.IDDonViTinh
+      WHERE 
+        mh.DeletedAt IS NULL
+      ORDER BY 
+        mh.MaMatHang`;
 
-    const requiredFields = ['maphieuxuat', 'madaily'];
-    const data = { maphieuxuat, madaily };
-    const missingFields = this.validateRequiredFields(data, requiredFields);
-
-    if (missingFields.length > 0) {
-      throw new Error(`Thiếu các trường bắt buộc: ${missingFields.join(', ')}`);
-    }
-
-    // // Get IDLoaiDaiLy from MaLoaiDaiLy
-    // const loaidailyCheckQuery = 'SELECT IDLoaiDaiLy FROM inventory.LOAIDAILY WHERE MaLoaiDaiLy = $1 AND DeletedAt IS NULL';
-    // const loaidailyCheck = await query(loaidailyCheckQuery, [maloaidaily]);
-    // if (loaidailyCheck.rowCount === 0) {
-    //   throw new Error(`Mã loại đại lý ${maloaidaily} không tồn tại hoặc đã bị xóa`);
-    // }
-    // const idLoaiDaiLy = loaidailyCheck.rows[0].idloaidaily;
-
-    // // Get IDQuan from MaQuan
-    // const quanCheckQuery = 'SELECT IDQuan FROM inventory.QUAN WHERE MaQuan = $1 AND DeletedAt IS NULL';
-    // const quanCheck = await query(quanCheckQuery, [maquan]);
-    // if (quanCheck.rowCount === 0) {
-    //   throw new Error(`Mã quận ${maquan} không tồn tại hoặc đã bị xóa`);
-    // }
-    // const idQuan = quanCheck.rows[0].idquan;
-
-    // Use provided MaDaiLy or generate new one
-    // if (!madaily) {
-    //   const idTrackerQuery = `
-    //     UPDATE inventory.ID_TRACKER
-    //     SET MaDaiLyCuoi = MaDaiLyCuoi + 1
-    //     RETURNING 'DL' || LPAD(MaDaiLyCuoi::TEXT, 5, '0') AS formatted_ma_daily`;
-    //   const idTrackerResult = await query(idTrackerQuery);
-    //   madaily = idTrackerResult.rows[0].formatted_ma_daily;
-    // }
-
-  //   const mergedQuery = `
-  //   WITH limit_check AS (
-  //     SELECT 
-  //       COUNT(*) AS total_daily, 
-  //       t.SoLuongDaiLyToiDa
-  //     FROM inventory.DAILY d
-  //     JOIN inventory.THAMSO t ON TRUE
-  //     WHERE d.IDQuan = $7 AND d.DeletedAt IS NULL
-  //     GROUP BY t.SoLuongDaiLyToiDa
-  //   )
-  //   INSERT INTO inventory.DAILY 
-  //     (MaDaiLy, TenDaiLy, SoDienThoai, DiaChi, Email, IDLoaiDaiLy, IDQuan, NgayTiepNhan)
-  //   SELECT 
-  //     $1, $2, $3, $4, $5, $6, $7, $8
-  //   FROM limit_check
-  //   WHERE CASE 
-  //     WHEN total_daily < SoLuongDaiLyToiDa THEN TRUE
-  //     ELSE FALSE
-  //   END
-  //   RETURNING 
-  //     IDDaiLy as iddaily, 
-  //     MaDaiLy as madaily, 
-  //     (SELECT total_daily FROM limit_check) as current_count,
-  //     (SELECT SoLuongDaiLyToiDa FROM limit_check) as max_limit,
-  //     CASE 
-  //       WHEN (SELECT total_daily FROM limit_check) < (SELECT SoLuongDaiLyToiDa FROM limit_check) THEN TRUE
-  //       ELSE FALSE
-  //     END as is_valid;
-  // `;
-
-    const mergedQuery = `
-    INSERT INTO inventory.PHIEUXUAT (MaPhieuXuat, IDDaiLy, NgayLap, TongGiaTri) values ($1, $2, $3, $4)
-    `;
-
-    //
-    const getFirstDaiLyQuery = `
-      SELECT IDDaiLy, MaDaiLy, TenDaiLy 
-      FROM inventory.DAILY 
-      WHERE DeletedAt IS NULL 
-      ORDER BY NgayTiepNhan ASC, IDDaiLy ASC 
-      LIMIT 1`;
-
-    const firstDaiLyResult = await query(getFirstDaiLyQuery);
-    
-    if (firstDaiLyResult.rowCount === 0) {
-        throw new Error('Không tìm thấy đại lý nào trong hệ thống');
-    }
-
-    const firstDaiLyUUID = firstDaiLyResult.rows[0].iddaily;
-    //
-    console.log('Executing query:', mergedQuery, [maphieuxuat, firstDaiLyUUID, '1/1/2000', 1000]);
-    const result = await query(mergedQuery, [maphieuxuat, firstDaiLyUUID, '1/1/2000', 1000]);
-
-    // // Check if any rows were returned (insertion happened)
-    // if (result.rowCount === 0) {
-    //   // No rows returned means the condition was false (limit reached)
-    //   // We need to get the limit info with a separate query
-    //   const limitQuery = `
-    //   SELECT COUNT(*) AS total_daily, t.SoLuongDaiLyToiDa
-    //   FROM inventory.DAILY d
-    //   JOIN inventory.THAMSO t ON TRUE
-    //   WHERE d.IDQuan = $1 AND d.DeletedAt IS NULL
-    //   GROUP BY t.SoLuongDaiLyToiDa
-    // `;
-    //   const limitResult = await query(limitQuery, [idQuan]);
-    //   const { total_daily, soluongdailytoida } = limitResult.rows[0];
-    //   throw new Error(`Số lượng đại lý trong quận đã đạt giới hạn tối đa (${soluongdailytoida}).`);
-    // } else {
-    //   console.log('Query executed successfully, result:', {
-    //     iddaily: result.rows[0].iddaily,
-    //     madaily: result.rows[0].madaily
-    //   });
-    //   return result.rows[0].madaily;
-    // }
+    const result = await query(queryString);
+    return result.rows;
   }
 
-  // async getAllDaiLy() {
-  //   const queryString = `
-  //     SELECT 
-  //       d.IDDaiLy as iddaily,
-  //       d.MaDaiLy as madaily,
-  //       d.TenDaiLy as tendaily,
-  //       d.DiaChi as diachi,
-  //       d.SoDienThoai as sodienthoai,
-  //       d.Email as email,
-  //       q.MaQuan as maquan,
-  //       l.MaLoaiDaiLy as maloaidaily,
-  //       d.NgayTiepNhan as ngaytiepnhan,
-  //       d.CongNo as congno,
-  //       d.DeletedAt as deletedat,
-  //       q.TenQuan as tenquan,
-  //       l.TenLoaiDaiLy as tenloaidaily
-  //     FROM 
-  //       inventory.DAILY d
-  //     LEFT JOIN 
-  //       inventory.QUAN q ON d.IDQuan = q.IDQuan
-  //     LEFT JOIN 
-  //       inventory.LOAIDAILY l ON d.IDLoaiDaiLy = l.IDLoaiDaiLy
-  //     WHERE 
-  //       d.DeletedAt IS NULL
-  //     ORDER BY 
-  //       d.MaDaiLy`;
+  async getMatHang(mamathang) {
+    const queryString = `
+      SELECT 
+        mh.IDMatHang as idmathang,
+        mh.MaMatHang as mamathang,
+        mh.TenMatHang as tenmathang,
+        mh.SoLuongTon as soluongton,
+        mh.DeletedAt as deletedat,
+        dvt.MaDonViTinh as madonvitinh,
+        dvt.TenDonViTinh as tendonvitinh
+      FROM 
+        inventory.MATHANG mh
+      LEFT JOIN 
+        inventory.DONVITINH dvt ON mh.IDDonViTinh = dvt.IDDonViTinh
+      WHERE 
+        mh.MaMatHang = $1 AND mh.DeletedAt IS NULL`;
+    const result = await query(queryString, [mamathang]);
+    if (result.rowCount === 0) {
+      throw new Error('Không tìm thấy mặt hàng.');
+    }
+    return result.rows[0];
+  }
 
-  //   const result = await query(queryString);
-  //   return result.rows;
-  // }
+  async executeQuery(queryString) {
+    try {
+      const result = await query(queryString);
+      
+      if (result.rows.length === 0) {
+        return 'No records found.';
+      }
+      
+      // Get column names from the first row
+      const columns = Object.keys(result.rows[0]);
+      
+      // Format each row as a string
+      const formattedRows = result.rows.map(row => {
+        const values = columns.map(col => `${col}: ${row[col] || 'NULL'}`);
+        return values.join(', ');
+      });
+      
+      return formattedRows.join('\n');
+    } catch (error) {
+      throw new Error(`Query execution failed: ${error.message}`);
+    }
+  }
 
-  // async getDaiLy(madaily) {
-  //   const queryString = `
-  //     SELECT 
-  //       d.IDDaiLy as iddaily,
-  //       d.MaDaiLy as madaily,
-  //       d.TenDaiLy as tendaily,
-  //       d.DiaChi as diachi,
-  //       d.SoDienThoai as sodienthoai,
-  //       d.Email as email,
-  //       q.MaQuan as maquan,
-  //       l.MaLoaiDaiLy as maloaidaily,
-  //       d.NgayTiepNhan as ngaytiepnhan,
-  //       d.CongNo as congno,
-  //       d.DeletedAt as deletedat,
-  //       q.TenQuan as tenquan,
-  //       l.TenLoaiDaiLy as tenloaidaily
-  //     FROM 
-  //       inventory.DAILY d
-  //     LEFT JOIN 
-  //       inventory.QUAN q ON d.IDQuan = q.IDQuan
-  //     LEFT JOIN 
-  //       inventory.LOAIDAILY l ON d.IDLoaiDaiLy = l.IDLoaiDaiLy
-  //     WHERE 
-  //       d.MaDaiLy = $1 AND d.DeletedAt IS NULL`;
-  //   const result = await query(queryString, [madaily]);
-  //   if (result.rowCount === 0) {
-  //     throw new Error('Không tìm thấy đại lý.');
-  //   }
-  //   return result.rows[0];
-  // }
-
+  async executeInsert(insertString) {
+    try {
+      const result = await query(insertString);
+      return {
+        rowCount: result.rowCount,
+        rows: result.rows,
+        success: true
+      };
+    } catch (error) {
+      throw new Error(`Insert execution failed: ${error.message}`);
+    }
+  }
+  
   validateRequiredFields(data, requiredFields) {
     const missingFields = [];
     for (const field of requiredFields) {
@@ -188,220 +96,189 @@ class DaiLyService {
     return missingFields;
   }
 
-  // async updateDaiLy(madaily, { tendaily, sodienthoai, diachi, email, maloaidaily, maquan, ngaytiepnhan }) {
-  //   console.log('Inside updateDaiLy service with madaily:', madaily, 'and data:', { tendaily, sodienthoai, diachi, email, maloaidaily, maquan, ngaytiepnhan });
+  async createMatHang({ mamathang, tenmathang, madonvitinh, soluongton }) {
+    console.log('Inside createMatHang service with data:', { mamathang, tenmathang, madonvitinh, soluongton });
 
-  //   // Get IDDaiLy from MaDaiLy
-  //   const dailyCheckQuery = 'SELECT IDDaiLy, IDQuan FROM inventory.DAILY WHERE MaDaiLy = $1 AND DeletedAt IS NULL';
-  //   const dailyCheck = await query(dailyCheckQuery, [madaily]);
-  //   if (dailyCheck.rowCount === 0) {
-  //     throw new Error(`Không tìm thấy đại lý với mã ${madaily}`);
-  //   }
-  //   const idDaiLy = dailyCheck.rows[0].iddaily;
-  //   const currentQuan = dailyCheck.rows[0].idquan;
+    const requiredFields = ['tenmathang', 'madonvitinh', 'soluongton'];
+    const data = { tenmathang, madonvitinh, soluongton };
+    const missingFields = this.validateRequiredFields(data, requiredFields);
 
-  //   let idLoaiDaiLy = null;
-  //   if (maloaidaily) {
-  //     // Get IDLoaiDaiLy from MaLoaiDaiLy
-  //     const loaidailyCheckQuery = 'SELECT IDLoaiDaiLy FROM inventory.LOAIDAILY WHERE MaLoaiDaiLy = $1 AND DeletedAt IS NULL';
-  //     const loaidailyCheck = await query(loaidailyCheckQuery, [maloaidaily]);
-  //     if (loaidailyCheck.rowCount === 0) {
-  //       throw new Error(`Mã loại đại lý ${maloaidaily} không tồn tại hoặc đã bị xóa`);
-  //     }
-  //     idLoaiDaiLy = loaidailyCheck.rows[0].idloaidaily;
-  //   }
+    if (missingFields.length > 0) {
+      throw new Error(`Thiếu các trường bắt buộc: ${missingFields.join(', ')}`);
+    }
 
-  //   let idQuan = null;
-  //   if (maquan) {
-  //     // Get IDQuan from MaQuan
-  //     const quanCheckQuery = 'SELECT IDQuan FROM inventory.QUAN WHERE MaQuan = $1 AND DeletedAt IS NULL';
-  //     const quanCheck = await query(quanCheckQuery, [maquan]);
-  //     if (quanCheck.rowCount === 0) {
-  //       throw new Error(`Mã quận ${maquan} không tồn tại hoặc đã bị xóa`);
-  //     }
-  //     idQuan = quanCheck.rows[0].idquan;
-  //   }
+    // Validate soluongton is non-negative integer
+    if (!Number.isInteger(soluongton) || soluongton < 0) {
+      throw new Error('Số lượng tồn phải là số nguyên không âm.');
+    }
 
-  //   const updates = [];
-  //   const values = [];
-  //   let paramIndex = 1;
+    // Get IDDonViTinh from MaDonViTinh
+    const donViTinhCheckQuery = 'SELECT IDDonViTinh FROM inventory.DONVITINH WHERE MaDonViTinh = $1 AND DeletedAt IS NULL';
+    const donViTinhCheck = await query(donViTinhCheckQuery, [madonvitinh]);
+    if (donViTinhCheck.rowCount === 0) {
+      throw new Error(`Mã đơn vị tính ${madonvitinh} không tồn tại hoặc đã bị xóa`);
+    }
+    const idDonViTinh = donViTinhCheck.rows[0].iddonvitinh;
 
-  //   if (tendaily) { updates.push(`TenDaiLy = $${paramIndex++}`); values.push(tendaily); }
-  //   if (sodienthoai) { updates.push(`SoDienThoai = $${paramIndex++}`); values.push(sodienthoai); }
-  //   if (diachi) { updates.push(`DiaChi = $${paramIndex++}`); values.push(diachi); }
-  //   if (email) { updates.push(`Email = $${paramIndex++}`); values.push(email); }
-  //   if (idLoaiDaiLy) { updates.push(`IDLoaiDaiLy = $${paramIndex++}`); values.push(idLoaiDaiLy); }    
-  //   if (ngaytiepnhan) { updates.push(`NgayTiepNhan = $${paramIndex++}`); values.push(ngaytiepnhan); }
+    // Use provided MaMatHang or generate new one
+    if (!mamathang) {
+      const idTrackerQuery = `
+        UPDATE inventory.ID_TRACKER
+        SET MaMatHangCuoi = MaMatHangCuoi + 1
+        RETURNING 'MH' || LPAD(MaMatHangCuoi::TEXT, 6, '0') AS formatted_ma_mathang`;
+      const idTrackerResult = await query(idTrackerQuery);
+      mamathang = idTrackerResult.rows[0].formatted_ma_mathang;
+    }
 
-  //   if (updates.length === 0 && !idQuan) {
-  //     throw new Error('Không có trường nào để cập nhật.');
-  //   }
+    const insertQuery = `
+      INSERT INTO inventory.MATHANG 
+        (MaMatHang, TenMatHang, IDDonViTinh, SoLuongTon)
+      VALUES 
+        ($1, $2, $3, $4)
+      RETURNING MaMatHang as mamathang`;
 
-  //   let updateQuery;
-    
-  //   // If district is changing, use the combined limit check + update query
-  //   if (idQuan && idQuan !== currentQuan) {
-  //     console.log("Thay đổi quận từ " + currentQuan + " sang " + idQuan);
-  //     values.push(idQuan);
-  //     const idQuanParamIndex = paramIndex++;
-  //     values.push(idDaiLy);
-      
-  //     updateQuery = `
-  //       WITH limit_check AS (
-  //         SELECT 
-  //           COUNT(*) AS total_daily, 
-  //           t.SoLuongDaiLyToiDa
-  //         FROM inventory.DAILY d
-  //         JOIN inventory.THAMSO t ON TRUE
-  //         WHERE d.IDQuan = $${idQuanParamIndex} AND d.DeletedAt IS NULL
-  //         GROUP BY t.SoLuongDaiLyToiDa
-  //       ),
-  //       validation AS (
-  //         SELECT 
-  //           CASE 
-  //             WHEN (SELECT COUNT(*) FROM limit_check WHERE total_daily >= SoLuongDaiLyToiDa) > 0
-  //             THEN FALSE
-  //             ELSE TRUE
-  //           END AS is_valid,
-  //           (SELECT SoLuongDaiLyToiDa FROM limit_check LIMIT 1) AS max_limit,
-  //           (SELECT total_daily FROM limit_check LIMIT 1) AS current_count
-  //       ),
-  //       update_op AS (
-  //         UPDATE inventory.DAILY 
-  //         SET ${updates.join(', ')}, IDQuan = $${idQuanParamIndex}
-  //         WHERE IDDaiLy = $${paramIndex} 
-  //           AND DeletedAt IS NULL
-  //           AND (SELECT is_valid FROM validation) = TRUE
-  //         RETURNING MaDaiLy as madaily, TRUE as update_successful
-  //       )
-  //       SELECT 
-  //         u.madaily,
-  //         u.update_successful,
-  //         v.is_valid,
-  //         v.max_limit,
-  //         v.current_count
-  //       FROM validation v
-  //       LEFT JOIN update_op u ON TRUE;
-  //     `;
-  //   } else {
-  //     // Standard update without district change
-  //     values.push(idDaiLy);
-      
-  //     updateQuery = `
-  //       UPDATE inventory.DAILY 
-  //       SET ${updates.join(', ')} ${idQuan ? `, IDQuan = ${idQuan}` : ''}
-  //       WHERE IDDaiLy = $${paramIndex} AND DeletedAt IS NULL
-  //       RETURNING MaDaiLy as madaily, TRUE as update_successful;
-  //     `;
-  //   }
+    console.log('Executing query:', insertQuery, [mamathang, tenmathang, idDonViTinh, soluongton]);
+    const result = await query(insertQuery, [mamathang, tenmathang, idDonViTinh, soluongton]);
 
-  //   console.log('Executing query:', updateQuery, values);
-  //   const result = await query(updateQuery, values);
+    console.log('Query executed successfully, result:', {
+      mamathang: result.rows[0].mamathang
+    });
+    return result.rows[0].mamathang;
+  }
 
-  //   if (result.rowCount === 0 || (result.rows[0].is_valid === false)) {
-  //     if (result.rows[0] && result.rows[0].max_limit) {
-  //       throw new Error(`Số lượng đại lý trong quận đã đạt giới hạn tối đa (${result.rows[0].max_limit}).`);
-  //     } else {
-  //       throw new Error('Không tìm thấy đại lý hoặc không thể cập nhật.');
-  //     }
-  //   }
+  async updateMatHang(mamathang, { tenmathang, madonvitinh, soluongton }) {
+    console.log('Inside updateMatHang service with mamathang:', mamathang, 'and data:', { tenmathang, madonvitinh, soluongton });
 
-  //   console.log('Update successful for madaily:', madaily);
-  //   return { 
-  //     madaily: result.rows[0].madaily 
-  //   };
-  // }
+    // Get IDMatHang from MaMatHang
+    const matHangCheckQuery = 'SELECT IDMatHang FROM inventory.MATHANG WHERE MaMatHang = $1 AND DeletedAt IS NULL';
+    const matHangCheck = await query(matHangCheckQuery, [mamathang]);
+    if (matHangCheck.rowCount === 0) {
+      throw new Error(`Không tìm thấy mặt hàng với mã ${mamathang}`);
+    }
+    const idMatHang = matHangCheck.rows[0].idmathang;
 
-  // async deleteDaiLy(madaily) {
-  //   console.log('Inside deleteDaiLy service with madaily:', madaily);
+    let idDonViTinh = null;
+    if (madonvitinh) {
+      // Get IDDonViTinh from MaDonViTinh
+      const donViTinhCheckQuery = 'SELECT IDDonViTinh FROM inventory.DONVITINH WHERE MaDonViTinh = $1 AND DeletedAt IS NULL';
+      const donViTinhCheck = await query(donViTinhCheckQuery, [madonvitinh]);
+      if (donViTinhCheck.rowCount === 0) {
+        throw new Error(`Mã đơn vị tính ${madonvitinh} không tồn tại hoặc đã bị xóa`);
+      }
+      idDonViTinh = donViTinhCheck.rows[0].iddonvitinh;
+    }
 
-  //   // Get IDDaiLy from MaDaiLy
-  //   const dailyCheckQuery = 'SELECT IDDaiLy, CongNo FROM inventory.DAILY WHERE MaDaiLy = $1 AND DeletedAt IS NULL';
-  //   const dailyCheck = await query(dailyCheckQuery, [madaily]);
-  //   if (dailyCheck.rowCount === 0) {
-  //     throw new Error(`Không tìm thấy đại lý với mã ${madaily}`);
-  //   }
+    const updates = [];
+    const values = [];
+    let paramIndex = 1;
 
-  //   const idDaiLy = dailyCheck.rows[0].iddaily;
-  //   const congNo = dailyCheck.rows[0].congno;
+    if (tenmathang) { updates.push(`TenMatHang = $${paramIndex++}`); values.push(tenmathang); }
+    if (idDonViTinh) { updates.push(`IDDonViTinh = $${paramIndex++}`); values.push(idDonViTinh); }
+    if (soluongton !== undefined) { 
+      // Validate soluongton is non-negative integer
+      if (!Number.isInteger(soluongton) || soluongton < 0) {
+        throw new Error('Số lượng tồn phải là số nguyên không âm.');
+      }
+      updates.push(`SoLuongTon = $${paramIndex++}`); 
+      values.push(soluongton); 
+    }
 
-  //   if (congNo !== 0) {
-  //     throw new Error(`Đại lý ${madaily} chưa thanh toán công nợ.`);
-  //   }
+    if (updates.length === 0) {
+      throw new Error('Không có trường nào để cập nhật.');
+    }
 
-  //   const queryString = 'UPDATE inventory.DAILY SET DeletedAt = NOW() WHERE IDDaiLy = $1 AND DeletedAt IS NULL';
-  //   console.log('Executing query:', queryString, [idDaiLy]);
+    values.push(idMatHang);
 
-  //   const result = await query(queryString, [idDaiLy]);
-  //   if (result.rowCount === 0) {
-  //     throw new Error('Không tìm thấy đại lý.');
-  //   }
+    const updateQuery = `
+      UPDATE inventory.MATHANG 
+      SET ${updates.join(', ')}
+      WHERE IDMatHang = $${paramIndex} AND DeletedAt IS NULL
+      RETURNING MaMatHang as mamathang`;
 
-  //   console.log('Delete successful for madaily:', madaily);
-  //   return { madaily };
-  // }
+    console.log('Executing query:', updateQuery, values);
+    const result = await query(updateQuery, values);
 
-  // async searchDaiLy({ madaily, tendaily, sodienthoai, email, diachi }) {
-  //   console.log('Inside searchDaiLy service with criteria:', { tendaily, sodienthoai, email, diachi });
+    if (result.rowCount === 0) {
+      throw new Error('Không tìm thấy mặt hàng hoặc không thể cập nhật.');
+    }
 
-  //   const conditions = [];
-  //   const values = [];
-  //   let paramIndex = 1;
+    console.log('Update successful for mamathang:', mamathang);
+    return { 
+      mamathang: result.rows[0].mamathang 
+    };
+  }
 
-  //   if (tendaily) {
-  //     conditions.push(`LOWER(d.TenDaiLy) LIKE LOWER($${paramIndex++})`);
-  //     values.push(`%${tendaily}%`);
-  //   }
+  async deleteMatHang(mamathang) {
+    console.log('Inside deleteMatHang service with mamathang:', mamathang);
 
-  //   if (sodienthoai) {
-  //     conditions.push(`d.SoDienThoai LIKE $${paramIndex++}`);
-  //     values.push(`%${sodienthoai}%`);
-  //   }
+    // Get IDMatHang from MaMatHang
+    const matHangCheckQuery = 'SELECT IDMatHang FROM inventory.MATHANG WHERE MaMatHang = $1 AND DeletedAt IS NULL';
+    const matHangCheck = await query(matHangCheckQuery, [mamathang]);
+    if (matHangCheck.rowCount === 0) {
+      throw new Error(`Không tìm thấy mặt hàng với mã ${mamathang}`);
+    }
 
-  //   if (email) {
-  //     conditions.push(`LOWER(d.Email) LIKE LOWER($${paramIndex++})`);
-  //     values.push(`%${email}%`);
-  //   }
+    const idMatHang = matHangCheck.rows[0].idmathang;
 
-  //   if (diachi) {
-  //     conditions.push(`LOWER(d.DiaChi) LIKE LOWER($${paramIndex++})`);
-  //     values.push(`%${diachi}%`);
-  //   }
+    const queryString = 'UPDATE inventory.MATHANG SET DeletedAt = NOW() WHERE IDMatHang = $1 AND DeletedAt IS NULL';
+    console.log('Executing query:', queryString, [idMatHang]);
 
-  //   let whereClause = 'd.DeletedAt IS NULL';
-  //   if (conditions.length > 0) {
-  //     whereClause += ` AND ${conditions.join(' AND ')}`;
-  //   }
+    const result = await query(queryString, [idMatHang]);
+    if (result.rowCount === 0) {
+      throw new Error('Không tìm thấy mặt hàng.');
+    }
 
-  //   const queryString = `
-  //     SELECT 
-  //       d.MaDaiLy as madaily,
-  //       d.TenDaiLy as tendaily,
-  //       d.DiaChi as diachi,
-  //       d.SoDienThoai as sodienthoai,
-  //       d.Email as email,
-  //       d.MaQuan as maquan,
-  //       d.MaLoaiDaiLy as maloaidaily,
-  //       d.NgayTiepNhan as ngaytiepnhan,
-  //       d.CongNo as congno,
-  //       d.DeletedAt as deletedat,
-  //       q.TenQuan as tenquan,
-  //       l.TenLoaiDaiLy as tenloaidaily
-  //     FROM 
-  //       inventory.DAILY d
-  //     LEFT JOIN 
-  //       inventory.QUAN q ON d.MaQuan = q.MaQuan
-  //     LEFT JOIN 
-  //       inventory.LOAIDAILY l ON d.MaLoaiDaiLy = l.MaLoaiDaiLy
-  //     WHERE 
-  //       ${whereClause}
-  //     ORDER BY 
-  //       d.TenDaiLy`;
+    console.log('Delete successful for mamathang:', mamathang);
+    return { mamathang };
+  }
 
-  //   console.log('Executing search query with values:', values);
-  //   const result = await query(queryString, values);
-  //   return result.rows[0];
-  // }
+  async searchMatHang({ mamathang, tenmathang, madonvitinh }) {
+    console.log('Inside searchMatHang service with criteria:', { mamathang, tenmathang, madonvitinh });
+
+    const conditions = [];
+    const values = [];
+    let paramIndex = 1;
+
+    if (mamathang) {
+      conditions.push(`mh.MaMatHang LIKE $${paramIndex++}`);
+      values.push(`%${mamathang}%`);
+    }
+
+    if (tenmathang) {
+      conditions.push(`LOWER(mh.TenMatHang) LIKE LOWER($${paramIndex++})`);
+      values.push(`%${tenmathang}%`);
+    }
+
+    if (madonvitinh) {
+      conditions.push(`dvt.MaDonViTinh LIKE $${paramIndex++}`);
+      values.push(`%${madonvitinh}%`);
+    }
+
+    let whereClause = 'mh.DeletedAt IS NULL';
+    if (conditions.length > 0) {
+      whereClause += ` AND ${conditions.join(' AND ')}`;
+    }
+
+    const queryString = `
+      SELECT 
+        mh.MaMatHang as mamathang,
+        mh.TenMatHang as tenmathang,
+        mh.SoLuongTon as soluongton,
+        dvt.MaDonViTinh as madonvitinh,
+        dvt.TenDonViTinh as tendonvitinh
+      FROM 
+        inventory.MATHANG mh
+      LEFT JOIN 
+        inventory.DONVITINH dvt ON mh.IDDonViTinh = dvt.IDDonViTinh
+      WHERE 
+        ${whereClause}
+      ORDER BY 
+        mh.TenMatHang`;
+
+    console.log('Executing search query with values:', values);
+    const result = await query(queryString, values);
+    return result.rows;
+  }
 }
 
-export default DaiLyService;
+export default MatHangService;

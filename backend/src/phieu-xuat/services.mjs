@@ -1,119 +1,173 @@
 // src/phieu-xuat/service.js
 
 import { query } from './database.mjs';
+import { v4 as uuidv4 } from 'uuid';
 
-class DaiLyService {
-  async createPhieuXuat({ maphieuxuat, madaily }) {
-    console.log('Inside createPhieuXuat service with data:', { maphieuxuat, madaily });
+class PhieuXuatService {
+  async createPhieuXuat({ maphieuxuat, madaily, ngaylap, chitiet, tongtien }) {
+    console.log('Inside createPhieuXuat service with data:', { maphieuxuat, madaily, ngaylap, tongtien, chitiet });
 
-    const requiredFields = ['maphieuxuat', 'madaily'];
-    const data = { maphieuxuat, madaily };
+    const requiredFields = ['madaily', 'ngaylap', 'chitiet'];
+    const data = { madaily, ngaylap, chitiet };
     const missingFields = this.validateRequiredFields(data, requiredFields);
 
     if (missingFields.length > 0) {
       throw new Error(`Thiếu các trường bắt buộc: ${missingFields.join(', ')}`);
     }
 
-    // // Get IDLoaiDaiLy from MaLoaiDaiLy
-    // const loaidailyCheckQuery = 'SELECT IDLoaiDaiLy FROM inventory.LOAIDAILY WHERE MaLoaiDaiLy = $1 AND DeletedAt IS NULL';
-    // const loaidailyCheck = await query(loaidailyCheckQuery, [maloaidaily]);
-    // if (loaidailyCheck.rowCount === 0) {
-    //   throw new Error(`Mã loại đại lý ${maloaidaily} không tồn tại hoặc đã bị xóa`);
-    // }
-    // const idLoaiDaiLy = loaidailyCheck.rows[0].idloaidaily;
-
-    // // Get IDQuan from MaQuan
-    // const quanCheckQuery = 'SELECT IDQuan FROM inventory.QUAN WHERE MaQuan = $1 AND DeletedAt IS NULL';
-    // const quanCheck = await query(quanCheckQuery, [maquan]);
-    // if (quanCheck.rowCount === 0) {
-    //   throw new Error(`Mã quận ${maquan} không tồn tại hoặc đã bị xóa`);
-    // }
-    // const idQuan = quanCheck.rows[0].idquan;
-
-    // Use provided MaDaiLy or generate new one
-    // if (!madaily) {
-    //   const idTrackerQuery = `
-    //     UPDATE inventory.ID_TRACKER
-    //     SET MaDaiLyCuoi = MaDaiLyCuoi + 1
-    //     RETURNING 'DL' || LPAD(MaDaiLyCuoi::TEXT, 5, '0') AS formatted_ma_daily`;
-    //   const idTrackerResult = await query(idTrackerQuery);
-    //   madaily = idTrackerResult.rows[0].formatted_ma_daily;
-    // }
-
-  //   const mergedQuery = `
-  //   WITH limit_check AS (
-  //     SELECT 
-  //       COUNT(*) AS total_daily, 
-  //       t.SoLuongDaiLyToiDa
-  //     FROM inventory.DAILY d
-  //     JOIN inventory.THAMSO t ON TRUE
-  //     WHERE d.IDQuan = $7 AND d.DeletedAt IS NULL
-  //     GROUP BY t.SoLuongDaiLyToiDa
-  //   )
-  //   INSERT INTO inventory.DAILY 
-  //     (MaDaiLy, TenDaiLy, SoDienThoai, DiaChi, Email, IDLoaiDaiLy, IDQuan, NgayTiepNhan)
-  //   SELECT 
-  //     $1, $2, $3, $4, $5, $6, $7, $8
-  //   FROM limit_check
-  //   WHERE CASE 
-  //     WHEN total_daily < SoLuongDaiLyToiDa THEN TRUE
-  //     ELSE FALSE
-  //   END
-  //   RETURNING 
-  //     IDDaiLy as iddaily, 
-  //     MaDaiLy as madaily, 
-  //     (SELECT total_daily FROM limit_check) as current_count,
-  //     (SELECT SoLuongDaiLyToiDa FROM limit_check) as max_limit,
-  //     CASE 
-  //       WHEN (SELECT total_daily FROM limit_check) < (SELECT SoLuongDaiLyToiDa FROM limit_check) THEN TRUE
-  //       ELSE FALSE
-  //     END as is_valid;
-  // `;
-
-    const mergedQuery = `
-    INSERT INTO inventory.PHIEUXUAT (MaPhieuXuat, IDDaiLy, NgayLap, TongGiaTri) values ($1, $2, $3, $4)
-    `;
-
-    //
-    const getFirstDaiLyQuery = `
-      SELECT IDDaiLy, MaDaiLy, TenDaiLy 
-      FROM inventory.DAILY 
-      WHERE DeletedAt IS NULL 
-      ORDER BY NgayTiepNhan ASC, IDDaiLy ASC 
-      LIMIT 1`;
-
-    const firstDaiLyResult = await query(getFirstDaiLyQuery);
-    
-    if (firstDaiLyResult.rowCount === 0) {
-        throw new Error('Không tìm thấy đại lý nào trong hệ thống');
+    // Validate chitiet is array and not empty
+    if (!Array.isArray(chitiet) || chitiet.length === 0) {
+      throw new Error('Chi tiết phiếu xuất phải là mảng và không được rỗng.');
     }
 
-    const firstDaiLyUUID = firstDaiLyResult.rows[0].iddaily;
-    //
-    console.log('Executing query:', mergedQuery, [maphieuxuat, firstDaiLyUUID, '1/1/2000', 1000]);
-    const result = await query(mergedQuery, [maphieuxuat, firstDaiLyUUID, '1/1/2000', 1000]);
+    // Get IDDaiLy from MaDaiLy
+    const dailyCheckQuery = 'SELECT IDDaiLy FROM inventory.DAILY WHERE MaDaiLy = $1 AND DeletedAt IS NULL';
+    const dailyCheck = await query(dailyCheckQuery, [madaily]);
+    if (dailyCheck.rowCount === 0) {
+      throw new Error(`Mã đại lý ${madaily} không tồn tại hoặc đã bị xóa`);
+    }
+    const idDaiLy = dailyCheck.rows[0].iddaily;
 
-    // // Check if any rows were returned (insertion happened)
-    // if (result.rowCount === 0) {
-    //   // No rows returned means the condition was false (limit reached)
-    //   // We need to get the limit info with a separate query
-    //   const limitQuery = `
-    //   SELECT COUNT(*) AS total_daily, t.SoLuongDaiLyToiDa
-    //   FROM inventory.DAILY d
-    //   JOIN inventory.THAMSO t ON TRUE
-    //   WHERE d.IDQuan = $1 AND d.DeletedAt IS NULL
-    //   GROUP BY t.SoLuongDaiLyToiDa
-    // `;
-    //   const limitResult = await query(limitQuery, [idQuan]);
-    //   const { total_daily, soluongdailytoida } = limitResult.rows[0];
-    //   throw new Error(`Số lượng đại lý trong quận đã đạt giới hạn tối đa (${soluongdailytoida}).`);
-    // } else {
-    //   console.log('Query executed successfully, result:', {
-    //     iddaily: result.rows[0].iddaily,
-    //     madaily: result.rows[0].madaily
-    //   });
-    //   return result.rows[0].madaily;
-    // }
+    // Use provided maphieuxuat or generate new one
+    let finalMaPhieuXuat = maphieuxuat;
+    if (!finalMaPhieuXuat) {
+      const lastMaPhieuXuatQuery = `
+        SELECT MaPhieuXuat 
+        FROM inventory.PHIEUXUAT 
+        WHERE DeletedAt IS NULL 
+        ORDER BY CAST(MaPhieuXuat AS INTEGER) DESC 
+        LIMIT 1`;
+      const lastMaPhieuXuatResult = await query(lastMaPhieuXuatQuery);
+      
+      if (lastMaPhieuXuatResult.rowCount === 0) {
+        finalMaPhieuXuat = "1";
+      } else {
+        const lastMaPhieuXuat = parseInt(lastMaPhieuXuatResult.rows[0].maphieuxuat);
+        finalMaPhieuXuat = (lastMaPhieuXuat + 1).toString();
+      }
+    }
+
+    // Validate and calculate total for each detail item
+    let tongGiaTri = 0;
+    const validatedChiTiet = [];
+
+    for (const item of chitiet) {
+      const { mamathang, soluongxuat, dongiaxuat, thanhtien } = item;
+      
+      if (!mamathang || !soluongxuat || !dongiaxuat) {
+        throw new Error('Mỗi chi tiết phải có mamathang, soluongxuat và dongiaxuat.');
+      }
+
+      // Validate soluongxuat and dongiaxuat are positive integers
+      if (!Number.isInteger(soluongxuat) || soluongxuat <= 0) {
+        throw new Error('Số lượng xuất phải là số nguyên dương.');
+      }
+      if (!Number.isInteger(dongiaxuat) || dongiaxuat <= 0) {
+        throw new Error('Đơn giá xuất phải là số nguyên dương.');
+      }
+
+      // Get IDMatHang from MaMatHang
+      const matHangCheckQuery = 'SELECT IDMatHang, SoLuongTon FROM inventory.MATHANG WHERE MaMatHang = $1 AND DeletedAt IS NULL';
+      const matHangCheck = await query(matHangCheckQuery, [mamathang]);
+      if (matHangCheck.rowCount === 0) {
+        throw new Error(`Mã mặt hàng ${mamathang} không tồn tại hoặc đã bị xóa`);
+      }
+      
+      const idMatHang = matHangCheck.rows[0].idmathang;
+      const soLuongTon = matHangCheck.rows[0].soluongton;
+
+      // Check if there's enough stock
+      if (soLuongTon < soluongxuat) {
+        throw new Error(`Mặt hàng ${mamathang} không đủ số lượng tồn kho. Tồn: ${soLuongTon}, Xuất: ${soluongxuat}`);
+      }
+
+      // Use provided thanhtien or calculate it
+      const finalThanhTien = thanhtien || (soluongxuat * dongiaxuat);
+      tongGiaTri += finalThanhTien;
+
+      validatedChiTiet.push({
+        idMatHang,
+        soluongxuat,
+        dongiaxuat,
+        thanhTien: finalThanhTien
+      });
+    }
+
+    // Use provided tongtien or calculated tongGiaTri
+    const finalTongGiaTri = tongtien || tongGiaTri;
+
+    // Begin transaction
+    await query('BEGIN');
+
+    try {
+      // Insert PHIEUXUAT
+      const insertPhieuXuatQuery = `
+        INSERT INTO inventory.PHIEUXUAT 
+          (MaPhieuXuat, IDDaiLy, NgayLap, TongGiaTri)
+        VALUES 
+          ($1, $2, $3, $4)
+        RETURNING IDPhieuXuat as idphieuxuat, MaPhieuXuat as maphieuxuat`;
+
+      console.log('Executing PhieuXuat query:', insertPhieuXuatQuery, [finalMaPhieuXuat, idDaiLy, ngaylap, finalTongGiaTri]);
+      const phieuXuatResult = await query(insertPhieuXuatQuery, [finalMaPhieuXuat, idDaiLy, ngaylap, finalTongGiaTri]);
+      const idPhieuXuat = phieuXuatResult.rows[0].idphieuxuat;
+
+      // Insert CTPHIEUXUAT details
+      for (const item of validatedChiTiet) {
+        const insertChiTietQuery = `
+          INSERT INTO inventory.CTPHIEUXUAT 
+            (IDPhieuXuat, IDMatHang, SoLuongXuat, DonGiaXuat, ThanhTien)
+          VALUES 
+            ($1, $2, $3, $4, $5)`;
+
+        await query(insertChiTietQuery, [
+          idPhieuXuat, 
+          item.idMatHang, 
+          item.soluongxuat, 
+          item.dongiaxuat, 
+          item.thanhTien
+        ]);
+
+        // Update MATHANG stock
+        const updateStockQuery = `
+          UPDATE inventory.MATHANG 
+          SET SoLuongTon = SoLuongTon - $1 
+          WHERE IDMatHang = $2 AND DeletedAt IS NULL`;
+        await query(updateStockQuery, [item.soluongxuat, item.idMatHang]);
+      }
+
+      // Update DaiLy CongNo (add the total value)
+      const updateCongNoQuery = `
+        UPDATE inventory.DAILY 
+        SET CongNo = CongNo + $1 
+        WHERE IDDaiLy = $2 AND DeletedAt IS NULL`;
+      await query(updateCongNoQuery, [finalTongGiaTri, idDaiLy]);
+
+      // Commit transaction
+      await query('COMMIT');
+
+      console.log('PhieuXuat created successfully:', {
+        maphieuxuat: phieuXuatResult.rows[0].maphieuxuat,
+        tongGiaTri
+      });
+      
+      return phieuXuatResult.rows[0].maphieuxuat;
+
+    } catch (error) {
+      // Rollback transaction
+      await query('ROLLBACK');
+      throw error;
+    }
+  }
+
+  validateRequiredFields(data, requiredFields) {
+    const missingFields = [];
+    for (const field of requiredFields) {
+      if (!data[field]) {
+        missingFields.push(field);
+      }
+    }
+    return missingFields;
   }
 
   // async getAllDaiLy() {
@@ -177,16 +231,6 @@ class DaiLyService {
   //   }
   //   return result.rows[0];
   // }
-
-  validateRequiredFields(data, requiredFields) {
-    const missingFields = [];
-    for (const field of requiredFields) {
-      if (!data[field]) {
-        missingFields.push(field);
-      }
-    }
-    return missingFields;
-  }
 
   // async updateDaiLy(madaily, { tendaily, sodienthoai, diachi, email, maloaidaily, maquan, ngaytiepnhan }) {
   //   console.log('Inside updateDaiLy service with madaily:', madaily, 'and data:', { tendaily, sodienthoai, diachi, email, maloaidaily, maquan, ngaytiepnhan });
@@ -319,7 +363,7 @@ class DaiLyService {
   //   const dailyCheckQuery = 'SELECT IDDaiLy, CongNo FROM inventory.DAILY WHERE MaDaiLy = $1 AND DeletedAt IS NULL';
   //   const dailyCheck = await query(dailyCheckQuery, [madaily]);
   //   if (dailyCheck.rowCount === 0) {
-  //     throw new Error(`Không tìm thấy đại lý với mã ${madaily}`);
+  //     throw new Error(`Không tìm thấy đại lý với madaily ${madaily}`);
   //   }
 
   //   const idDaiLy = dailyCheck.rows[0].iddaily;
@@ -404,4 +448,4 @@ class DaiLyService {
   // }
 }
 
-export default DaiLyService;
+export default PhieuXuatService;

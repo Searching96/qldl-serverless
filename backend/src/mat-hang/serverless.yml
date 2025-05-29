@@ -7,12 +7,96 @@ service: mat-hang
 
 provider:
   name: aws
-  runtime: nodejs20.x
+  runtime: nodejs22.x
+  region: ${env:AWS_REGION}
+  stage: ${opt:stage, 'dev'}
+  timeout: 29
+  environment:
+    DATABASE_REGION: ${env:DB_REGION}
+    DATABASE_USER: ${env:DB_USER}
+    DATABASE_HOST: ${env:DB_HOST}
+    DATABASE_NAME: ${env:DB_NAME}
+    DATABASE_PORT: ${env:DB_PORT}
+  httpApi:
+    disableDefaultEndpoint: true
+    cors: true
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - logs:CreateLogGroup
+            - logs:CreateLogStream
+            - logs:PutLogEvents
+          Resource: 'arn:aws:logs:*:*:*'
+      managedPolicies:
+        - 'arn:aws:iam::aws:policy/AmazonAuroraDSQLFullAccess'
+
+layers:
+  Dependencies:
+    path: ../../lambda-aurora-dsql
+    name: ${sls:stage}-pg-dsql-uuid
+    description: Package for postgres, dsql-signer and uuid
+    compatibleRuntimes:
+      - nodejs22.x
+    compatibleArchitectures:
+      - x86_64
+    retain: false
 
 functions:
-  hello:
-    handler: handler.hello
+  createmh:
+    handler: handler.createmh
+    layers:
+      - !Ref DependenciesLambdaLayer
+    events:
+      - httpApi:
+          path: /
+          method: post
+  
+  getallmh:
+    handler: handler.getallmh
+    layers:
+      - !Ref DependenciesLambdaLayer
     events:
       - httpApi:
           path: /
           method: get
+  
+  getmhbyid:
+    handler: handler.getmhbyid
+    layers:
+      - !Ref DependenciesLambdaLayer
+    events:
+      - httpApi:
+          path: /{maMatHang}
+          method: get
+  
+  updatemh:
+    handler: handler.updatemh
+    layers:
+      - !Ref DependenciesLambdaLayer
+    events:
+      - httpApi:
+          path: /{maMatHang}
+          method: put
+  
+  deletemh:
+    handler: handler.deletemh
+    layers:
+      - !Ref DependenciesLambdaLayer
+    events:
+      - httpApi:
+          path: /{maMatHang}
+          method: delete
+
+  searchmh:
+    handler: handler.searchmh
+    layers:
+      - !Ref DependenciesLambdaLayer
+    events:
+      - httpApi:
+          path: /search
+          method: get
+
+plugins:
+  - serverless-offline

@@ -13,19 +13,19 @@ export const createpx = async (event, context) => {
     context.callbackWaitsForEmptyEventLoop = false;
     try {
         console.log('Event body:', event.body);
-        const { maphieuxuat, madaily } = JSON.parse(event.body);
-        console.log('Parsed body:', { maphieuxuat, madaily });
-        const maPhieuXuat = await phieuXuatService.createPhieuXuat({ maphieuxuat, madaily });
+        const { maphieuxuat, madaily, ngaylap, chitiet, tongtien } = JSON.parse(event.body);
+        console.log('Parsed body:', { maphieuxuat, madaily, ngaylap, chitiet, tongtien });
+        const maPhieuXuat = await phieuXuatService.createPhieuXuat({ maphieuxuat, madaily, ngaylap, chitiet, tongtien });
         console.log('Đã tạo phiếu xuất với ID:', maPhieuXuat);
         return {
             statusCode: 201,
             headers,
-            body: JSON.stringify({ message: 'Đã tạo phiếu xuất thành công.', maPhieuXuat }),
+            body: JSON.stringify({ message: 'Lập phiếu xuất thành công.', maPhieuXuat }),
         };
     } catch (error) {
         console.error('Lỗi khi tạo phiếu xuất: ', error);
         return {
-            statusCode: error.message.includes('required') ? 400 : 500,
+            statusCode: error.message.includes('required') || error.message.includes('Thiếu') ? 400 : 500,
             headers,
             body: JSON.stringify({ message: 'Lỗi khi tạo phiếu xuất: ', error: error.message }),
         };
