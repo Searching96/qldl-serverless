@@ -66,6 +66,7 @@ export const updateDonViTinh = (maDonViTinh, data) => fetchData(`/donvitinh/${ma
 export const deleteDonViTinh = (maDonViTinh) => fetchData(`/donvitinh/${maDonViTinh}`, 'DELETE');
 
 // Phieu Xuat
+export const getAllPhieuXuat = () => fetchData('http://localhost:3005/');
 export const createPhieuXuat = (data) => fetchData('http://localhost:3005/', 'POST', data);
 
 // Phieu Thu

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Button, Form, Card, Alert } from "react-bootstrap";
 import { useForm } from "react-hook-form";
 import "../styles/FormComponent.css";
-import { getAllDaily, createPhieuXuat, getAllMatHang } from '../services/api';
+import { getAllDaily, createPhieuXuat, getAllMatHang, getAllPhieuXuat } from '../services/api';
 
 export const LapPhieuXuatHang = () => {
   const { register, handleSubmit, setValue, reset, clearErrors, formState: { errors } } = useForm();
@@ -24,10 +24,13 @@ export const LapPhieuXuatHang = () => {
   const [showSuccess, setShowSuccess] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState('');
   const [showLoading, setShowLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [showError, setShowError] = useState(false);
 
   useEffect(() => {
     fetchDaiLyList();
     fetchMatHangList();
+    generateMaPhieuXuat();
     setValue("ngayLap", getCurrentDate());
   }, [setValue]);
 
@@ -46,6 +49,28 @@ export const LapPhieuXuatHang = () => {
       setMatHangList(data);
     } catch (error) {
       console.error('Error fetching product list:', error);
+    }
+  };
+
+  const generateMaPhieuXuat = async () => {
+    try {
+      const phieuXuatList = await getAllPhieuXuat();
+      console.log('Current phieu xuat list:', phieuXuatList);
+      
+      // Get the count and add 1 for next ID
+      const currentCount = Array.isArray(phieuXuatList) ? phieuXuatList.length : 0;
+      const nextNumber = currentCount + 1;
+      
+      // Format with leading zeros (5 digits total)
+      const formattedNumber = nextNumber.toString().padStart(5, '0');
+      const newMaPhieuXuat = `PX${formattedNumber}`;
+      
+      console.log('Generated new MaPhieuXuat:', newMaPhieuXuat);
+      setValue("maPhieuXuat", newMaPhieuXuat);
+    } catch (error) {
+      console.error('Error generating export receipt ID:', error);
+      // Fallback to manual input if API fails
+      setValue("maPhieuXuat", "");
     }
   };
 
@@ -164,6 +189,58 @@ export const LapPhieuXuatHang = () => {
   };
 
   const submitHandler = async (data) => {
+    // Validation checks before submission
+    const validationErrors = [];
+    
+    // Check inventory for each item
+    chiTietPhieu.forEach((item, index) => {
+      if (item.tenMatHang && item.soLuongXuat) {
+        const soLuongTon = parseInt(item.soLuongTon) || 0;
+        const soLuongXuat = parseInt(item.soLuongXuat) || 0;
+        
+        if (soLuongXuat > soLuongTon) {
+          const selectedProduct = matHangList.find(mh => mh.mamathang === item.tenMatHang);
+          const tenMatHang = selectedProduct ? selectedProduct.tenmathang : item.tenMatHang;
+          validationErrors.push(`Mặt hàng "${tenMatHang}" có số lượng tồn (${soLuongTon}) nhỏ hơn số lượng xuất (${soLuongXuat})`);
+        }
+      }
+    });
+    
+    // Check debt limit
+    const noDaiLy = parseFloat(String(data.noDaiLy || '0').replace(/\./g, '').replace(/,/g, '')) || 0;
+    const tongTien = parseFloat(String(data.tongTien || '0').replace(/\./g, '').replace(/,/g, '')) || 0;
+    const noToiDa = parseFloat(String(data.noToiDa || '0').replace(/\./g, '').replace(/,/g, '')) || 0;
+    const noSauGiaoDich = noDaiLy + tongTien;
+    
+    // Debug logging
+    console.log('=== DEBT VALIDATION DEBUG ===');
+    console.log('Original data:', { noDaiLy: data.noDaiLy, tongTien: data.tongTien, noToiDa: data.noToiDa });
+    console.log('Parsed values:', { noDaiLy, tongTien, noToiDa, noSauGiaoDich });
+    console.log('Types:', { 
+      noDaiLy: typeof noDaiLy, 
+      tongTien: typeof tongTien, 
+      noToiDa: typeof noToiDa, 
+      noSauGiaoDich: typeof noSauGiaoDich 
+    });
+    console.log('Comparison: noSauGiaoDich > noToiDa:', noSauGiaoDich > noToiDa, `(${noSauGiaoDich} > ${noToiDa})`);
+    console.log('=============================');
+    
+    if (noSauGiaoDich > noToiDa) {
+      validationErrors.push(`Nợ sau giao dịch (${noSauGiaoDich.toLocaleString('vi-VN')} VNĐ) vượt quá nợ tối đa (${noToiDa.toLocaleString('vi-VN')} VNĐ)`);
+    }
+    
+    // Show validation errors if any
+    if (validationErrors.length > 0) {
+      const errorMsg = `Không thể lập phiếu xuất:\n\n${validationErrors.join('\n')}`;
+      setErrorMessage(errorMsg);
+      setShowError(true);
+      
+      setTimeout(() => {
+        setShowError(false);
+      }, 8000);
+      return;
+    }
+    
     setLoadingMessage("Đang lập phiếu xuất...");
     setShowLoading(true);
     try {
@@ -220,6 +297,7 @@ export const LapPhieuXuatHang = () => {
   const handleThoat = () => {
     reset();
     setValue("ngayLap", getCurrentDate());
+    generateMaPhieuXuat();
     setChiTietPhieu([
       { stt: 1, tenMatHang: '', tenDonViTinh: '', soLuongTon: '', soLuongXuat: '', donGiaXuat: '', thanhTien: '' }
     ]);
@@ -239,6 +317,14 @@ export const LapPhieuXuatHang = () => {
         <Alert variant="info">
           <pre style={{ whiteSpace: 'pre-wrap', marginBottom: 0 }}>
             {loadingMessage}
+          </pre>
+        </Alert>
+      )}
+      
+      {showError && (
+        <Alert variant="danger" onClose={() => setShowError(false)} dismissible>
+          <pre style={{ whiteSpace: 'pre-wrap', marginBottom: 0 }}>
+            {errorMessage}
           </pre>
         </Alert>
       )}

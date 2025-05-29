@@ -32,98 +32,30 @@ export const createpx = async (event, context) => {
     }
 };
 
-// export const getallldl = async (event, context) => {
-//     context.callbackWaitsForEmptyEventLoop = false;
-//     try {
-//         const LoaiDaiLy = await loaiDaiLyService.getAllLoaiDaiLy();
-//         if (!LoaiDaiLy) {
-//             return {
-//                 statusCode: 404,
-//                 headers,
-//                 body: JSON.stringify({ message: 'Không tìm thấy loại đại lý nào.' }),
-//             };
-//         }
-//         console.log('Tra cứu loại đại lý thành công:', JSON.stringify(LoaiDaiLy));
-//         return {
-//             statusCode: 200,
-//             headers,
-//             body: JSON.stringify(LoaiDaiLy),
-//         };
-//     } catch (error) {
-//         console.error('Lỗi khi tra cứu loại đại lý: ', error);
-//         return {
-//             statusCode: 500,
-//             headers,
-//             body: JSON.stringify({ message: 'Lỗi khi tra cứu loại đại lý: ', error: error.message }),
-//         };
-//     }
-// };
+export const getallpx = async (event, context) => {
+    context.callbackWaitsForEmptyEventLoop = false;
+    try {
+        const phieuXuat = await phieuXuatService.getAllPhieuXuat();
+        if (!phieuXuat || phieuXuat.length === 0) {
+            return {
+                statusCode: 404,
+                headers,
+                body: JSON.stringify({ message: 'Không tìm thấy phiếu xuất nào.' }),
+            };
+        }
+        console.log('Tra cứu phiếu xuất thành công:', JSON.stringify(phieuXuat));
+        return {
+            statusCode: 200,
+            headers,
+            body: JSON.stringify(phieuXuat),
+        };
+    } catch (error) {
+        console.error('Lỗi khi tra cứu phiếu xuất: ', error);
+        return {
+            statusCode: 500,
+            headers,
+            body: JSON.stringify({ message: 'Lỗi khi tra cứu phiếu xuất: ', error: error.message }),
+        };
+    }
+};
 
-// export const getldlbyid = async (event, context) => {
-//     context.callbackWaitsForEmptyEventLoop = false;
-//     try {
-//         const { maLoaiDaiLy } = event.pathParameters;
-//         const LoaiDaiLy = await loaiDaiLyService.getLoaiDaiLy(maLoaiDaiLy);
-//         if (!LoaiDaiLy) {
-//             return {
-//                 statusCode: 404,
-//                 headers,
-//                 body: JSON.stringify({ message: 'Không tìm thấy loại đại lý.' }),
-//             };
-//         }
-//         console.log('Tra cứu loại đại lý thành công:', LoaiDaiLy);
-//         return {
-//             statusCode: 200,
-//             headers,
-//             body: JSON.stringify(LoaiDaiLy),
-//         };
-//     } catch (error) {
-//         console.error('Lỗi khi tra cứu loại đại lý: ', error);
-//         return {
-//             statusCode: 500,
-//             headers,
-//             body: JSON.stringify({ message: 'Lỗi khi tra cứu loại đại lý: ', error: error.message }),
-//         };
-//     }
-// };
-
-// export const updateldl = async (event, context) => {
-//     context.callbackWaitsForEmptyEventLoop = false;
-//     try {
-//         const { maLoaiDaiLy } = event.pathParameters;
-//         const { tenLoaiDaiLy } = JSON.parse(event.body);
-//         await loaiDaiLyService.updateLoaiDaiLy(maLoaiDaiLy, tenLoaiDaiLy);
-//         return {
-//             statusCode: 200,
-//             headers,
-//             body: JSON.stringify({ message: 'Cập nhật loại đại lý thành công.' }),
-//         };
-//     } catch (error) {
-//         console.error('Lỗi khi cập nhật loại đại lý: ', error);
-//         return {
-//             statusCode: error.message.includes('Không tìm thấy') ? 404 : 500,
-//             headers,
-//             body: JSON.stringify({ message: 'Lỗi khi cập nhật loại đại lý: ', error: error.message }),
-//         };
-//     }
-// };
-
-// export const deleteldl = async (event, context) => {
-//     context.callbackWaitsForEmptyEventLoop = false;
-//     try {
-//         const { maLoaiDaiLy } = event.pathParameters;
-//         await loaiDaiLyService.deleteLoaiDaiLy(maLoaiDaiLy);
-//         return {
-//             statusCode: 200,
-//             headers,
-//             body: JSON.stringify({ message: 'Xóa loại đại lý thành công.' }),
-//         };
-//     } catch (error) {
-//         console.error('Lỗi khi xóa loại đại lý: ', error);
-//         return {
-//             statusCode: error.message.includes('Không tìm thấy') ? 404 : 500,
-//             headers,
-//             body: JSON.stringify({ message: 'Lỗi khi xóa loại đại lý: ', error: error.message }),
-//         };
-//     }
-// };
