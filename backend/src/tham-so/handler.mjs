@@ -57,6 +57,27 @@ export const getlastts = async (event, context) => {
     }
 };
 
+export const updatets = async (event, context) => {
+    context.callbackWaitsForEmptyEventLoop = false;
+    try {
+        const { soluongdailytoida, quydinhtienthutienno } = JSON.parse(event.body);
+        const updatedThamSo = await thamSoService.updateThamSo(soluongdailytoida, quydinhtienthutienno);
+        console.log('Cập nhật tham số thành công:', updatedThamSo);
+        return {
+            statusCode: 200,
+            headers,
+            body: JSON.stringify({ message: 'Cập nhật tham số thành công.', updatedThamSo }),
+        };
+    } catch (error) {
+        console.error('Lỗi khi cập nhật tham số: ', error);
+        return {
+            statusCode: error.message.includes('Không tìm thấy') ? 404 : 500,
+            headers,
+            body: JSON.stringify({ message: 'Lỗi khi cập nhật tham số: ', error: error.message }),
+        };
+    }
+};
+
 export const deletets = async (event, context) => {
     context.callbackWaitsForEmptyEventLoop = false;
     try {

@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
 import { Card, Form, Button, Alert } from "react-bootstrap";
+import { useNavigate } from "react-router-dom";
+import "../styles/FormComponent.css";
 import { insertData, queryData } from '../services/api';
 
 export const ThaoTacDb = () => {
+  const navigate = useNavigate();
   const [sqlCommand, setSqlCommand] = useState('');
   const [operationType, setOperationType] = useState('query'); // 'query' or 'insert'
   const [results, setResults] = useState(null);
@@ -39,6 +42,10 @@ export const ThaoTacDb = () => {
     setSqlCommand('');
     setResults(null);
     setError('');
+  };
+
+  const handleExitToHome = () => {
+    navigate("/");
   };
 
   const renderResults = () => {
@@ -114,79 +121,107 @@ export const ThaoTacDb = () => {
   };
 
   return (
-    <div className="container mt-4">
-      <Card>
-        <Card.Header>
-          <h4>Thao Tác Database</h4>
-          <small className="text-muted">Hỗ trợ lệnh SELECT (truy vấn) và INSERT (chèn dữ liệu)</small>
-        </Card.Header>
-        <Card.Body>
-          <Form>
-            {/* Operation Type Selection */}
-            <Form.Group className="mb-3">
-              <Form.Label>Loại thao tác:</Form.Label>
-              <div className="d-flex gap-3">
-                <Form.Check
-                  type="radio"
-                  id="query-radio"
-                  name="operationType"
-                  label="Query (Truy vấn)"
-                  checked={operationType === 'query'}
-                  onChange={() => setOperationType('query')}
-                />
-                <Form.Check
-                  type="radio"
-                  id="insert-radio"
-                  name="operationType"
-                  label="Insert (Chèn dữ liệu)"
-                  checked={operationType === 'insert'}
-                  onChange={() => setOperationType('insert')}
-                />
-              </div>
-            </Form.Group>
+    <div className="container-fluid px-0 mt-4">
+      <h1 className="ms-3">Thao tác Database</h1>
+      
+      {/* Error Alert */}
+      {error && (
+        <div className="alert alert-danger mx-3" role="alert">
+          <div className="d-flex justify-content-between align-items-center">
+            <span>{error}</span>
+            <button
+              className="btn btn-outline-primary btn-sm ms-2"
+              onClick={() => setError('')}
+            >
+              <i className="bi bi-x"></i>
+            </button>
+          </div>
+        </div>
+      )}
 
-            <Form.Group className="mb-3">
-              <Form.Label>Lệnh SQL:</Form.Label>
-              <Form.Control
-                as="textarea"
-                rows={5}
-                value={sqlCommand}
-                onChange={(e) => setSqlCommand(e.target.value)}
-                placeholder={
-                  operationType === 'query' 
-                    ? "Nhập lệnh SELECT&#10;Ví dụ: SELECT * FROM daily;"
-                    : "Nhập lệnh INSERT&#10;Ví dụ: INSERT INTO daily (tendaily, diachi) VALUES ('Đại lý A', '123 ABC');"
-                }
-              />
-            </Form.Group>
+      <div className="px-3">
+        <div className="form-component">
+          <Card>
+            <Card.Header>
+              <h4>🛠️ Thao Tác Database</h4>
+              <small className="text-muted">Hỗ trợ lệnh SELECT (truy vấn) và INSERT (chèn dữ liệu)</small>
+            </Card.Header>
+            <Card.Body>
+              <Form>
+                <div className="form-layout">
+                  <div className="form-section">
+                    <h6>Cấu hình thao tác</h6>
 
-            {error && (
-              <Alert variant="danger">
-                {error}
-              </Alert>
-            )}
+                    {/* Operation Type Selection */}
+                    <Form.Group className="mb-3">
+                      <Form.Label>Loại thao tác:</Form.Label>
+                      <div className="d-flex gap-3">
+                        <Form.Check
+                          type="radio"
+                          id="query-radio"
+                          name="operationType"
+                          label="Query (Truy vấn)"
+                          checked={operationType === 'query'}
+                          onChange={() => setOperationType('query')}
+                        />
+                        <Form.Check
+                          type="radio"
+                          id="insert-radio"
+                          name="operationType"
+                          label="Insert (Chèn dữ liệu)"
+                          checked={operationType === 'insert'}
+                          onChange={() => setOperationType('insert')}
+                        />
+                      </div>
+                    </Form.Group>
 
-            <div className="d-flex gap-2">
-              <Button 
-                variant="primary" 
-                onClick={handleExecuteSQL}
-                disabled={loading}
-              >
-                {loading ? 'Đang thực thi...' : `Thực thi ${operationType === 'query' ? 'Query' : 'Insert'}`}
-              </Button>
-              <Button 
-                variant="secondary" 
-                onClick={handleClear}
-                disabled={loading}
-              >
-                Xóa
-              </Button>
-            </div>
+                    <Form.Group className="mb-3">
+                      <Form.Label>Lệnh SQL:</Form.Label>
+                      <Form.Control
+                        as="textarea"
+                        rows={5}
+                        value={sqlCommand}
+                        onChange={(e) => setSqlCommand(e.target.value)}
+                        placeholder={
+                          operationType === 'query' 
+                            ? "Nhập lệnh SELECT&#10;Ví dụ: SELECT * FROM daily;"
+                            : "Nhập lệnh INSERT&#10;Ví dụ: INSERT INTO daily (tendaily, diachi) VALUES ('Đại lý A', '123 ABC');"
+                        }
+                      />
+                    </Form.Group>
+                  </div>
 
-            {renderResults()}
-          </Form>
-        </Card.Body>
-      </Card>
+                  <div className="form-buttons">
+                    <Button 
+                      variant="primary" 
+                      onClick={handleExecuteSQL}
+                      disabled={loading}
+                    >
+                      {loading ? 'Đang thực thi...' : `🚀 Thực thi ${operationType === 'query' ? 'Query' : 'Insert'}`}
+                    </Button>
+                    <Button 
+                      variant="outline-secondary" 
+                      onClick={handleClear}
+                      disabled={loading}
+                    >
+                      🗑️ Xóa
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline-secondary"
+                      onClick={handleExitToHome}
+                    >
+                      ❌ Thoát
+                    </Button>
+                  </div>
+                </div>
+
+                {renderResults()}
+              </Form>
+            </Card.Body>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 };

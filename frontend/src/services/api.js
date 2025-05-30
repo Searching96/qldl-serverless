@@ -1,8 +1,8 @@
 // src/services/api.js
-const API_DOMAIN = ' http://localhost:3001';
+const API_DOMAIN = 'https://testapi.thinhuit.id.vn';
 
 async function fetchData(endpoint, method = 'GET', body = null) {
-  const url = endpoint;
+  const url = `${API_DOMAIN}${endpoint}`;
   const headers = {
     'Content-Type': 'application/json',
   };
@@ -23,7 +23,7 @@ async function fetchData(endpoint, method = 'GET', body = null) {
 }
 
 async function fetchSqlData(endpoint, sqlCommand) {
-  const response = await fetch(endpoint, {
+  const response = await fetch(`${API_DOMAIN}${endpoint}`, {
     method: 'POST',
     headers: {
       'Content-Type': 'text/plain',
@@ -38,14 +38,14 @@ async function fetchSqlData(endpoint, sqlCommand) {
   return response.text();
 }
 
-export const insertData = (sqlCommand) => fetchSqlData('http://localhost:3001/insert', sqlCommand);
-export const queryData = (sqlCommand) => fetchSqlData('http://localhost:3001/query', sqlCommand);
-export const getAllDaily = () => fetchData('http://localhost:3001/');
+export const insertData = (sqlCommand) => fetchSqlData('/insert', sqlCommand);
+export const queryData = (sqlCommand) => fetchSqlData('/query', sqlCommand);
+export const getAllDaily = () => fetchData('/daily/');
 export const getDaily = (maDaiLy) => fetchData(`/daily/${maDaiLy}`);
 export const createDaily = (data) => fetchData('/daily/', 'POST', data);
 export const updateDaily = (maDaiLy, data) => fetchData(`/daily/${maDaiLy}`, 'PUT', data);
 export const deleteDaily = (maDaiLy) => fetchData(`/daily/${maDaiLy}`, 'DELETE');
-export const getMonthlyRevenueReport = (data) => fetchData('http://localhost:3001/mrr', 'POST', data);
+export const getMonthlyRevenueReport = (data) => fetchData('/daily/mrr', 'POST', data);
 export const searchDaiLy = (searchParams) => {
   const queryString = new URLSearchParams(searchParams).toString();
   return fetchData(`/daily/search?${queryString}`);
@@ -71,14 +71,14 @@ export const updateDonViTinh = (maDonViTinh, data) => fetchData(`/donvitinh/${ma
 export const deleteDonViTinh = (maDonViTinh) => fetchData(`/donvitinh/${maDonViTinh}`, 'DELETE');
 
 // Phieu Xuat
-export const getAllPhieuXuat = () => fetchData('http://localhost:3005/');
-export const createPhieuXuat = (data) => fetchData('http://localhost:3005/', 'POST', data);
+export const getAllPhieuXuat = () => fetchData('/phieuxuat/');
+export const createPhieuXuat = (data) => fetchData('/phieuxuat/', 'POST', data);
 
 // Phieu Thu
-export const createPhieuThu = (data) => fetchData('http://localhost:3003/', 'POST', data);
+export const createPhieuThu = (data) => fetchData('/phieuthu/', 'POST', data);
 
 // Mat Hang
-export const getAllMatHang = () => fetchData('http://localhost:3007/');
+export const getAllMatHang = () => fetchData('/mathang/');
 export const getMatHang = (maMatHang) => fetchData(`/mathang/${maMatHang}`);
 export const createMatHang = (data) => fetchData('/mathang/', 'POST', data);
 export const updateMatHang = (maMatHang, data) => fetchData(`/mathang/${maMatHang}`, 'PUT', data);
@@ -91,3 +91,8 @@ export const getLatestMaQuan = () => fetchData('/idmaphieuxuat/maquan');
 export const getLatestMaMatHang = () => fetchData('/idmaphieuxuat/mamh');
 export const getLatestMaPhieuThu = () => fetchData('/idmaphieuxuat/mapt');
 export const getLatestMaPhieuXuat = () => fetchData('/idmaphieuxuat/mapx');
+
+// Tham So
+export const getLastThamSo = () => fetchData('/thamso/');
+export const createThamSo = (data) => fetchData('/thamso/', 'POST', data);
+export const updateThamSo = (data) => fetchData('/thamso/', 'PUT', data);

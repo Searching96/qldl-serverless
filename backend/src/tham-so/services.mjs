@@ -25,6 +25,22 @@ class ThamSoService {
     return result.rows[0];
   }
 
+  async updateThamSo(soluongdailytoida, quydinhtienthutienno) {
+    console.log('Inside updateThamSo service with data:', { soluongdailytoida, quydinhtienthutienno });
+
+    // Update the latest record (since there's only one active record)
+    const queryString = 'UPDATE inventory.ThamSo SET SoLuongDaiLyToiDa = $1, QuyDinhTienThuTienNo = $2 WHERE DeletedAt IS NULL';
+    console.log('Executing update query:', queryString, [soluongdailytoida, quydinhtienthutienno]);
+    const result = await query(queryString, [soluongdailytoida, quydinhtienthutienno]);
+    
+    if (result.rowCount === 0) {
+      throw new Error('Không tìm thấy tham số để cập nhật.');
+    }
+    
+    console.log('Update query executed successfully');
+    return { success: true };
+  }
+
   async deleteThamSo(maThamSo) {
     const queryString = 'UPDATE inventory.ThamSo SET DeletedAt = NOW() WHERE MaThamSo = $1 AND DeletedAt IS NULL';
     const result = await query(queryString, [maThamSo]);

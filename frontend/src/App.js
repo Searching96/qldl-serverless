@@ -3,21 +3,16 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { Header } from "./components/Header.js";
 import { TiepNhanDaiLy } from "./components/TiepNhanDaiLy.js";
+import { TimKiemDaiLy } from "./components/TimKiemDaiLy.js";
 import { LapPhieuXuatHang } from "./components/LapPhieuXuatHang.js";
 import { LapPhieuThuTien } from "./components/LapPhieuThuTien.js";
 import { LapBaoCaoDoanhSo } from "./components/LapBaoCaoDoanhSo";
 import { ThaoTacDb } from "./components/ThaoTacDb.js";
+import { ThayDoiQuyDinh } from "./components/ThayDoiQuyDinh.js";
 import "bootstrap-icons/font/bootstrap-icons.css";
-import Navbar from "./components/Navbar.js";
-import ManagementPage from "./pages/ManagementPage.js";
-import SearchPage from "./pages/SearchPage.js";
 import "./styles/App.css";
 import "./styles/Navbar.css";
-import {
-    createDaily, getAllDaily, getAllLoaiDaiLy, getAllQuan,
-    getDaily, updateDaily, deleteDaily, getLatestMaDaiLy
-} from "./services/api.js";
-import { Quan, LoaiDaiLy } from "./models";
+
 
 function App() {
     return (
@@ -30,11 +25,15 @@ function App() {
                     <Route path="/tiep-nhan-dai-ly" element={<TiepNhanDaiLy />} />
                     <Route path="/sprint02" element={<LapPhieuXuatHang />} />
                     <Route path="/lap-phieu-xuat-hang" element={<LapPhieuXuatHang />} />
+                    <Route path="/sprint03" element={<TimKiemDaiLy/> } />
+                    <Route path="/tim-kiem-dai-ly" element={ <TimKiemDaiLy/> } />
                     <Route path="/sprint04" element={<LapPhieuThuTien />} />
                     <Route path="/lap-phieu-thu-tien" element={<LapPhieuThuTien />} />
                     <Route path="/sprint05" element={<LapBaoCaoDoanhSo />} />
                     <Route path="/lap-bao-cao-doanh-so" element={<LapBaoCaoDoanhSo />} />
-                    <Route path="/thao-tac-db" element={<ThaoTacDb />} />
+                    <Route path="/sprint06" element={<ThayDoiQuyDinh />} />
+                    <Route path="/thay-doi-quy-dinh" element={<ThayDoiQuyDinh />} />
+                    {/* <Route path="/thao-tac-db" element={<ThaoTacDb />} /> */}
                 </Routes>
             </div>
         </Router>

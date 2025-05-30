@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Button, Form, Card, Alert } from "react-bootstrap";
 import { useForm } from "react-hook-form";
+import { useNavigate } from "react-router-dom";
 import "../styles/FormComponent.css";
 import { getAllDaily, createPhieuThu } from '../services/api';
 
 export const LapPhieuThuTien = () => {
   const { register, handleSubmit, setValue, reset, clearErrors, formState: { errors } } = useForm();
+  const navigate = useNavigate();
   
   const getCurrentDate = () => {
     const today = new Date();
@@ -150,179 +152,220 @@ export const LapPhieuThuTien = () => {
     setValue("ngayThuTien", getCurrentDate());
   };
 
+  const handleExitToHome = () => {
+    navigate("/");
+  };
+
   return (
-    <div className="container mt-4">
+    <div className="container-fluid px-0 mt-4">
+      <h1 className="ms-3">Lập phiếu thu tiền</h1>
+      
+      {/* Alert messages */}
       {showSuccess && (
-        <Alert variant="success" onClose={() => setShowSuccess(false)} dismissible>
-          <pre style={{ whiteSpace: 'pre-wrap', marginBottom: 0 }}>
-            {successMessage}
-          </pre>
-        </Alert>
+        <div className="alert alert-success mx-3" role="alert">
+          <div className="d-flex justify-content-between align-items-center">
+            <span>{successMessage}</span>
+            <button
+              className="btn btn-outline-primary btn-sm ms-2"
+              onClick={() => setShowSuccess(false)}
+            >
+              <i className="bi bi-x"></i>
+            </button>
+          </div>
+        </div>
       )}
       
       {showLoading && (
-        <Alert variant="info">
-          <pre style={{ whiteSpace: 'pre-wrap', marginBottom: 0 }}>
-            {loadingMessage}
-          </pre>
-        </Alert>
+        <div className="alert alert-info mx-3" role="alert">
+          <div className="d-flex justify-content-between align-items-center">
+            <span>{loadingMessage}</span>
+            <button
+              className="btn btn-outline-primary btn-sm ms-2"
+              onClick={() => setShowLoading(false)}
+            >
+              <i className="bi bi-x"></i>
+            </button>
+          </div>
+        </div>
       )}
       
       {showError && (
-        <Alert variant="danger" onClose={() => setShowError(false)} dismissible>
-          <pre style={{ whiteSpace: 'pre-wrap', marginBottom: 0 }}>
-            {errorMessage}
-          </pre>
-        </Alert>
+        <div className="alert alert-danger mx-3" role="alert">
+          <div className="d-flex justify-content-between align-items-center">
+            <span>{errorMessage}</span>
+            <button
+              className="btn btn-outline-primary btn-sm ms-2"
+              onClick={() => setShowError(false)}
+            >
+              <i className="bi bi-x"></i>
+            </button>
+          </div>
+        </div>
       )}
-      
-      <Card>
-        <Card.Header>Lập Phiếu Thu Tiền</Card.Header>
-        <Card.Body>
-          <Form onSubmit={handleSubmit(submitHandler)}>
-            <section className="form-layout">
-              {/* Dòng 1: Tên đại lý và Nợ của đại lý */}
-              <div className="header">
-                <div className="left">
-                  <Form.Group className="mb-3">
-                    <Form.Label>Tên đại lý</Form.Label>
-                    <Form.Select
-                      {...register("tenDaiLy", { required: "Vui lòng chọn đại lý" })}
-                      onChange={handleDaiLyChange}
-                    >
-                      <option value="">-- Chọn đại lý --</option>
-                      {daiLyList && daiLyList.map((daiLy) => (
-                        <option key={daiLy.madaily} value={daiLy.madaily}>
-                          {daiLy.tendaily}
-                        </option>
-                      ))}
-                    </Form.Select>
-                    {errors.tenDaiLy && <span className="text-danger">{errors.tenDaiLy.message}</span>}
-                  </Form.Group>
-                </div>
-                <div className="leftcenter">
-                  <Form.Group className="mb-3">
-                    <Form.Label>Nợ của đại lý</Form.Label>
-                    <Form.Control
-                      type="text"
-                      {...register("noCuaDaiLy")}
-                      readOnly
-                      placeholder="Nợ hiện tại"
-                    />
-                  </Form.Group>
-                </div>
-              </div>
-              {/* Dòng 2: Điện thoại và Email */}
-              <div className="body d-flex gap-3">
-                <div className="left">
-                  <Form.Group className="mb-3">
-                    <Form.Label>Điện thoại</Form.Label>
-                    <Form.Control
-                      type="tel"
-                      {...register("dienThoai")}
-                      placeholder="Số điện thoại"
-                      readOnly
-                    />
-                  </Form.Group>
-                </div>
-                <div className="center">
-                  <Form.Group className="mb-3">
-                    <Form.Label>Email</Form.Label>
-                    <Form.Control
-                      type="email"
-                      {...register("email")}
-                      placeholder="Địa chỉ email"
-                      readOnly
-                    />
-                  </Form.Group>
-                </div>
-              </div>
-              {/* Dòng 3: Địa chỉ */}
-              <div className="footer d-flex gap-3">
-                <div className="left flex-fill">
-                  <Form.Group className="mb-3">
-                    <Form.Label>Địa chỉ</Form.Label>
-                    <Form.Control
-                      type="text"
-                      {...register("diaChi")}
-                      placeholder="Địa chỉ"
-                      readOnly
-                    />
-                  </Form.Group>
-                </div>
-              </div>
-              {/* Dòng 4: Ngày thu tiền và Số tiền thu */}
-              <div className="content d-flex gap-3">  
-                <div className="left flex-fill">
-                  <Form.Group className="mb-3">
-                    <Form.Label>Ngày thu tiền</Form.Label>
-                    <Form.Control
-                      type="text"
-                      {...register("ngayThuTien", { 
-                        required: "Ngày thu tiền là bắt buộc",
-                        pattern: {
-                          value: /^(0[1-9]|[12][0-9]|3[01])\/(0[1-9]|1[012])\/\d{4}$/,
-                          message: "Định dạng ngày không hợp lệ (dd/mm/yyyy)"
-                        }
-                      })}
-                      placeholder="dd/mm/yyyy"
-                    />
-                    {errors.ngayThuTien && <span className="text-danger">{errors.ngayThuTien.message}</span>}
-                  </Form.Group>
-                </div>
 
-                <div className="center flex-fill">
-                  <Form.Group className="mb-3">
-                    <Form.Label>Số tiền thu</Form.Label>
-                    <Form.Control
-                      type="number"
-                      {...register("soTienThu", { 
-                        required: "Số tiền thu là bắt buộc",
-                        min: {
-                          value: 0,
-                          message: "Số tiền thu không được âm"
-                        }
-                      })}
-                      min="0"
-                      step="1"
-                      placeholder="Nhập số tiền thu"
-                    />
-                    {errors.soTienThu && <span className="text-danger">{errors.soTienThu.message}</span>}
-                  </Form.Group>
+      <div className="px-3">
+        <div className="form-component">
+          <Card>
+            <Card.Header>
+              <h4>💰 Lập Phiếu Thu Tiền</h4>
+            </Card.Header>
+            <Card.Body>
+              <Form onSubmit={handleSubmit(submitHandler)}>
+                <div className="form-layout">
+                  <div className="form-section">
+                    <h6>Thông tin phiếu thu</h6>
+                    <div className="form-grid">
+                      {/* Dòng 1: Tên đại lý và Nợ của đại lý */}
+                      <div className="row mb-3">
+                        <div className="col-md-6">
+                          <Form.Group className="mb-3">
+                            <Form.Label>Tên đại lý</Form.Label>
+                            <Form.Select
+                              {...register("tenDaiLy", { required: "Vui lòng chọn đại lý" })}
+                              onChange={handleDaiLyChange}
+                            >
+                              <option value="">-- Chọn đại lý --</option>
+                              {daiLyList && daiLyList.map((daiLy) => (
+                                <option key={daiLy.madaily} value={daiLy.madaily}>
+                                  {daiLy.tendaily}
+                                </option>
+                              ))}
+                            </Form.Select>
+                            {errors.tenDaiLy && <span className="text-danger">{errors.tenDaiLy.message}</span>}
+                          </Form.Group>
+                        </div>
+                        <div className="col-md-6">
+                          <Form.Group className="mb-3">
+                            <Form.Label>Nợ của đại lý</Form.Label>
+                            <Form.Control
+                              type="text"
+                              {...register("noCuaDaiLy")}
+                              readOnly
+                              placeholder="Nợ hiện tại"
+                            />
+                          </Form.Group>
+                        </div>
+                      </div>
+                      
+                      {/* Dòng 2: Số điện thoại và Email */}
+                      <div className="row mb-3">
+                        <div className="col-md-6">
+                          <Form.Group className="mb-3">
+                            <Form.Label>Số điện thoại</Form.Label>
+                            <Form.Control
+                              type="tel"
+                              {...register("dienThoai")}
+                              placeholder="Số điện thoại"
+                              readOnly
+                            />
+                          </Form.Group>
+                        </div>
+                        <div className="col-md-6">
+                          <Form.Group className="mb-3">
+                            <Form.Label>Email</Form.Label>
+                            <Form.Control
+                              type="email"
+                              {...register("email")}
+                              placeholder="Địa chỉ email"
+                              readOnly
+                            />
+                          </Form.Group>
+                        </div>
+                      </div>
+                      
+                      {/* Dòng 3: Địa chỉ */}
+                      <div className="row mb-3">
+                        <div className="col-md-12">
+                          <Form.Group className="mb-3">
+                            <Form.Label>Địa chỉ</Form.Label>
+                            <Form.Control
+                              type="text"
+                              {...register("diaChi")}
+                              placeholder="Địa chỉ"
+                              readOnly
+                            />
+                          </Form.Group>
+                        </div>
+                      </div>
+                      
+                      {/* Dòng 4: Ngày thu tiền và Số tiền thu */}
+                      <div className="row mb-3">
+                        <div className="col-md-6">
+                          <Form.Group className="mb-3">
+                            <Form.Label>Ngày thu tiền</Form.Label>
+                            <Form.Control
+                              type="text"
+                              {...register("ngayThuTien", { 
+                                required: "Ngày thu tiền là bắt buộc",
+                                pattern: {
+                                  value: /^(0[1-9]|[12][0-9]|3[01])\/(0[1-9]|1[012])\/\d{4}$/,
+                                  message: "Định dạng ngày không hợp lệ (dd/mm/yyyy)"
+                                }
+                              })}
+                              placeholder="dd/mm/yyyy"
+                            />
+                            {errors.ngayThuTien && <span className="text-danger">{errors.ngayThuTien.message}</span>}
+                          </Form.Group>
+                        </div>
+                        <div className="col-md-6">
+                          <Form.Group className="mb-3">
+                            <Form.Label>Số tiền thu</Form.Label>
+                            <Form.Control
+                              type="number"
+                              {...register("soTienThu", { 
+                                required: "Số tiền thu là bắt buộc",
+                                min: {
+                                  value: 0,
+                                  message: "Số tiền thu không được âm"
+                                }
+                              })}
+                              min="0"
+                              step="1"
+                              placeholder="Nhập số tiền thu"
+                            />
+                            {errors.soTienThu && <span className="text-danger">{errors.soTienThu.message}</span>}
+                          </Form.Group>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="form-buttons">
+                    <Button
+                      type="submit"
+                      variant="primary"
+                      disabled={showLoading}
+                    >
+                      {showLoading ? 'Đang lập phiếu thu...' : '💰 Lập phiếu thu tiền'}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline-secondary"
+                      onClick={() => console.log('Tìm đại lý')}
+                    >
+                      🔍 Tìm đại lý
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline-secondary"
+                      onClick={handleThoat}
+                    >
+                      🗑️ Làm mới
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline-secondary"
+                      onClick={handleExitToHome}
+                    >
+                      ❌ Thoát
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            </section>
-            <div className="d-flex justify-content-between">
-              <div>
-                <Button
-                  type="submit"
-                  variant="primary"
-                  className="mt-3"
-                  disabled={showLoading}
-                >
-                  {showLoading ? 'Đang lập phiếu thu...' : 'Lập phiếu thu tiền'}
-                </Button>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  className="mt-3 ms-2"
-                  onClick={() => console.log('Tìm đại lý')}
-                >
-                  Tìm đại lý
-                </Button>
-              </div>
-              <Button
-                type="button"
-                variant="secondary"
-                className="mt-3"
-                onClick={handleThoat}
-              >
-                Thoát
-              </Button>
-            </div>
-          </Form>
-        </Card.Body>
-      </Card>
+              </Form>
+            </Card.Body>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 };

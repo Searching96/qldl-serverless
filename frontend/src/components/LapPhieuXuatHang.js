@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Button, Form, Card, Alert } from "react-bootstrap";
 import { useForm } from "react-hook-form";
+import { useNavigate } from "react-router-dom";
 import "../styles/FormComponent.css";
 import { getAllDaily, createPhieuXuat, getAllMatHang, getAllPhieuXuat } from '../services/api';
 
 export const LapPhieuXuatHang = () => {
   const { register, handleSubmit, setValue, reset, clearErrors, formState: { errors } } = useForm();
+  const navigate = useNavigate();
   
   const getCurrentDate = () => {
     const today = new Date();
@@ -334,250 +336,294 @@ export const LapPhieuXuatHang = () => {
     ]);
   };
 
+  const handleExitToHome = () => {
+    navigate("/");
+  };
+
   return (
-    <div className="container mt-4">
+    <div className="container-fluid px-0 mt-4">
+      <h1 className="ms-3">Lập phiếu xuất hàng</h1>
+      
+      {/* Alert messages */}
       {showSuccess && (
-        <Alert variant="success" onClose={() => setShowSuccess(false)} dismissible>
-          <pre style={{ whiteSpace: 'pre-wrap', marginBottom: 0 }}>
-            {successMessage}
-          </pre>
-        </Alert>
+        <div className="alert alert-success mx-3" role="alert">
+          <div className="d-flex justify-content-between align-items-center">
+            <span>{successMessage}</span>
+            <button
+              className="btn btn-outline-primary btn-sm ms-2"
+              onClick={() => setShowSuccess(false)}
+            >
+              <i className="bi bi-x"></i>
+            </button>
+          </div>
+        </div>
       )}
       
       {showLoading && (
-        <Alert variant="info">
-          <pre style={{ whiteSpace: 'pre-wrap', marginBottom: 0 }}>
-            {loadingMessage}
-          </pre>
-        </Alert>
+        <div className="alert alert-info mx-3" role="alert">
+          <div className="d-flex justify-content-between align-items-center">
+            <span>{loadingMessage}</span>
+            <button
+              className="btn btn-outline-primary btn-sm ms-2"
+              onClick={() => setShowLoading(false)}
+            >
+              <i className="bi bi-x"></i>
+            </button>
+          </div>
+        </div>
       )}
       
       {showError && (
-        <Alert variant="danger" onClose={() => setShowError(false)} dismissible>
-          <pre style={{ whiteSpace: 'pre-wrap', marginBottom: 0 }}>
-            {errorMessage}
-          </pre>
-        </Alert>
+        <div className="alert alert-danger mx-3" role="alert">
+          <div className="d-flex justify-content-between align-items-center">
+            <span>{errorMessage}</span>
+            <button
+              className="btn btn-outline-primary btn-sm ms-2"
+              onClick={() => setShowError(false)}
+            >
+              <i className="bi bi-x"></i>
+            </button>
+          </div>
+        </div>
       )}
-      
-      <Card>
-        <Card.Header>Lập Phiếu Xuất Hàng</Card.Header>
-        <Card.Body>
-          <Form onSubmit={handleSubmit(submitHandler)}>
-            <section className="form-layout">
-              {/* Dòng 1: 6 ô thông tin */}
-              <div className="row mb-3">
-                <div className="col-md-2">
-                  <Form.Group>
-                    <Form.Label>Mã phiếu xuất</Form.Label>
-                    <Form.Control
-                      type="text"
-                      {...register("maPhieuXuat", { required: "Mã phiếu xuất là bắt buộc" })}
-                      placeholder="Mã phiếu xuất"
-                    />
-                    {errors.maPhieuXuat && <span className="text-danger">{errors.maPhieuXuat.message}</span>}
-                  </Form.Group>
-                </div>
-                
-                <div className="col-md-2">
-                  <Form.Group>
-                    <Form.Label>Tên đại lý</Form.Label>
-                    <Form.Select
-                      {...register("tenDaiLy", { required: "Vui lòng chọn đại lý" })}
-                      onChange={handleDaiLyChange}
-                    >
-                      <option value="">-- Chọn đại lý --</option>
-                      {daiLyList && daiLyList.map((daiLy) => (
-                        <option key={daiLy.madaily} value={daiLy.madaily}>
-                          {daiLy.tendaily}
-                        </option>
-                      ))}
-                    </Form.Select>
-                    {errors.tenDaiLy && <span className="text-danger">{errors.tenDaiLy.message}</span>}
-                  </Form.Group>
-                </div>
-                
-                <div className="col-md-2">
-                  <Form.Group>
-                    <Form.Label>Nợ đại lý</Form.Label>
-                    <Form.Control
-                      type="text"
-                      {...register("noDaiLy")}
-                      readOnly
-                      placeholder="Nợ hiện tại"
-                    />
-                  </Form.Group>
-                </div>
-                
-                <div className="col-md-2">
-                  <Form.Group>
-                    <Form.Label>Nợ tối đa</Form.Label>
-                    <Form.Control
-                      type="text"
-                      {...register("noToiDa")}
-                      readOnly
-                      placeholder="Nợ tối đa"
-                    />
-                  </Form.Group>
-                </div>
-                
-                <div className="col-md-2">
-                  <Form.Group>
-                    <Form.Label>Ngày lập</Form.Label>
-                    <Form.Control
-                      type="date"
-                      {...register("ngayLap", { 
-                        required: "Ngày lập là bắt buộc"
-                      })}
-                    />
-                    {errors.ngayLap && <span className="text-danger">{errors.ngayLap.message}</span>}
-                  </Form.Group>
-                </div>
-                
-                <div className="col-md-2">
-                  <Form.Group>
-                    <Form.Label>Tổng tiền</Form.Label>
-                    <Form.Control
-                      type="text"
-                      {...register("tongTien")}
-                      readOnly
-                      placeholder="Tổng tiền"
-                    />
-                  </Form.Group>
-                </div>
-              </div>
-              
-              {/* Dòng 2: Chi tiết mặt hàng */}
-              <div className="row mb-3">
-                <div className="col-12">
-                  <h5>Chi tiết mặt hàng</h5>
-                  <div className="table-responsive">
-                    <table className="table table-bordered">
-                      <thead>
-                        <tr>
-                          <th width="5%">STT</th>
-                          <th width="23%">Tên mặt hàng</th>
-                          <th width="15%">Tên đơn vị tính</th>
-                          <th width="10%">Số lượng tồn</th>
-                          <th width="10%">Số lượng xuất</th>
-                          <th width="15%">Đơn giá xuất</th>
-                          <th width="15%">Thành tiền</th>
-                          <th width="7%">Thao tác</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {chiTietPhieu.map((item, index) => (
-                          <tr key={index}>
-                            <td>{item.stt}</td>
-                            <td>
-                              <Form.Select
-                                value={item.tenMatHang}
-                                onChange={(e) => handleMatHangChange(index, e.target.value)}
-                              >
-                                <option value="">-- Chọn mặt hàng --</option>
-                                {matHangList && matHangList.map((matHang) => (
-                                  <option key={matHang.mamathang} value={matHang.mamathang}>
-                                    {matHang.tenmathang}
-                                  </option>
-                                ))}
-                              </Form.Select>
-                            </td>
-                            <td>
-                              <Form.Control
-                                type="text"
-                                value={item.tenDonViTinh}
-                                readOnly
-                              />
-                            </td>
-                            <td>
-                              <Form.Control
-                                type="text"
-                                value={item.soLuongTon}
-                                readOnly
-                              />
-                            </td>
-                            <td>
-                              <Form.Control
-                                type="number"
-                                value={item.soLuongXuat}
-                                onChange={(e) => handleSoLuongXuatChange(index, e.target.value)}
-                                min="0"
-                                step="1"
-                              />
-                            </td>
-                            <td>
-                              <Form.Control
-                                type="number"
-                                value={item.donGiaXuat}
-                                onChange={(e) => handleDonGiaXuatChange(index, e.target.value)}
-                                min="0"
-                              />
-                            </td>
-                            <td>
-                              <Form.Control
-                                type="text"
-                                value={item.thanhTien}
-                                readOnly
-                              />
-                            </td>
-                            <td>
-                              <Button
-                                variant="danger"
-                                size="sm"
-                                onClick={() => removeRow(index)}
-                                disabled={chiTietPhieu.length === 1}
-                              >
-                                Xóa
-                              </Button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+
+      <div className="px-3">
+        <div className="form-component">
+          <Card>
+            <Card.Header>
+              <h4>📋 Lập Phiếu Xuất Hàng</h4>
+            </Card.Header>
+            <Card.Body>
+              <Form onSubmit={handleSubmit(submitHandler)}>
+                <div className="form-layout">
+                  <div className="form-section">
+                    <h6>Thông tin phiếu xuất</h6>
+                    <div className="form-grid">
+                      {/* Dòng 1: 6 ô thông tin */}
+                      <div className="row mb-3">
+                        <div className="col-md-2">
+                          <Form.Group>
+                            <Form.Label>Mã phiếu xuất</Form.Label>
+                            <Form.Control
+                              type="text"
+                              {...register("maPhieuXuat", { required: "Mã phiếu xuất là bắt buộc" })}
+                              placeholder="Mã phiếu xuất"
+                            />
+                            {errors.maPhieuXuat && <span className="text-danger">{errors.maPhieuXuat.message}</span>}
+                          </Form.Group>
+                        </div>
+                        
+                        <div className="col-md-2">
+                          <Form.Group>
+                            <Form.Label>Tên đại lý</Form.Label>
+                            <Form.Select
+                              {...register("tenDaiLy", { required: "Vui lòng chọn đại lý" })}
+                              onChange={handleDaiLyChange}
+                            >
+                              <option value="">-- Chọn đại lý --</option>
+                              {daiLyList && daiLyList.map((daiLy) => (
+                                <option key={daiLy.madaily} value={daiLy.madaily}>
+                                  {daiLy.tendaily}
+                                </option>
+                              ))}
+                            </Form.Select>
+                            {errors.tenDaiLy && <span className="text-danger">{errors.tenDaiLy.message}</span>}
+                          </Form.Group>
+                        </div>
+                        
+                        <div className="col-md-2">
+                          <Form.Group>
+                            <Form.Label>Nợ đại lý</Form.Label>
+                            <Form.Control
+                              type="text"
+                              {...register("noDaiLy")}
+                              readOnly
+                              placeholder="Nợ hiện tại"
+                            />
+                          </Form.Group>
+                        </div>
+                        
+                        <div className="col-md-2">
+                          <Form.Group>
+                            <Form.Label>Nợ tối đa</Form.Label>
+                            <Form.Control
+                              type="text"
+                              {...register("noToiDa")}
+                              readOnly
+                              placeholder="Nợ tối đa"
+                            />
+                          </Form.Group>
+                        </div>
+                        
+                        <div className="col-md-2">
+                          <Form.Group>
+                            <Form.Label>Ngày lập</Form.Label>
+                            <Form.Control
+                              type="date"
+                              {...register("ngayLap", { 
+                                required: "Ngày lập là bắt buộc"
+                              })}
+                            />
+                            {errors.ngayLap && <span className="text-danger">{errors.ngayLap.message}</span>}
+                          </Form.Group>
+                        </div>
+                        
+                        <div className="col-md-2">
+                          <Form.Group>
+                            <Form.Label>Tổng tiền</Form.Label>
+                            <Form.Control
+                              type="text"
+                              {...register("tongTien")}
+                              readOnly
+                              placeholder="Tổng tiền"
+                            />
+                          </Form.Group>
+                        </div>
+                      </div>
+                      
+                      {/* Dòng 2: Chi tiết mặt hàng */}
+                    </div>
                   </div>
+
+                  {/* Chi tiết mặt hàng - separate section */}
+                  <div className="form-section">
+                    <Card className="mt-3">
+                      <Card.Header>
+                        <h5>📦 Chi tiết mặt hàng</h5>
+                      </Card.Header>
+                      <Card.Body>
+                        <div className="table-responsive">
+                          <table className="table table-bordered table-hover">
+                            <thead className="table-light">
+                              <tr>
+                                <th width="5%">STT</th>
+                                <th width="23%">Tên mặt hàng</th>
+                                <th width="15%">Tên đơn vị tính</th>
+                                <th width="10%">Số lượng tồn</th>
+                                <th width="10%">Số lượng xuất</th>
+                                <th width="15%">Đơn giá xuất</th>
+                                <th width="15%">Thành tiền</th>
+                                <th width="7%">Thao tác</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {chiTietPhieu.map((item, index) => (
+                                <tr key={index}>
+                                  <td>{item.stt}</td>
+                                  <td>
+                                    <Form.Select
+                                      value={item.tenMatHang}
+                                      onChange={(e) => handleMatHangChange(index, e.target.value)}
+                                    >
+                                      <option value="">-- Chọn mặt hàng --</option>
+                                      {matHangList && matHangList.map((matHang) => (
+                                        <option key={matHang.mamathang} value={matHang.mamathang}>
+                                          {matHang.tenmathang}
+                                        </option>
+                                      ))}
+                                    </Form.Select>
+                                  </td>
+                                  <td>
+                                    <Form.Control
+                                      type="text"
+                                      value={item.tenDonViTinh}
+                                      readOnly
+                                    />
+                                  </td>
+                                  <td>
+                                    <Form.Control
+                                      type="text"
+                                      value={item.soLuongTon}
+                                      readOnly
+                                    />
+                                  </td>
+                                  <td>
+                                    <Form.Control
+                                      type="number"
+                                      value={item.soLuongXuat}
+                                      onChange={(e) => handleSoLuongXuatChange(index, e.target.value)}
+                                      min="0"
+                                      step="1"
+                                    />
+                                  </td>
+                                  <td>
+                                    <Form.Control
+                                      type="number"
+                                      value={item.donGiaXuat}
+                                      onChange={(e) => handleDonGiaXuatChange(index, e.target.value)}
+                                      min="0"
+                                    />
+                                  </td>
+                                  <td>
+                                    <Form.Control
+                                      type="text"
+                                      value={item.thanhTien}
+                                      readOnly
+                                    />
+                                  </td>
+                                  <td>
+                                    <Button
+                                      variant="danger"
+                                      size="sm"
+                                      onClick={() => removeRow(index)}
+                                      disabled={chiTietPhieu.length === 1}
+                                    >
+                                      Xóa
+                                    </Button>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                        <Button
+                          variant="success"
+                          size="sm"
+                          onClick={addRow}
+                          className="mb-3"
+                        >
+                          ➕ Thêm dòng
+                        </Button>
+                      </Card.Body>
+                    </Card>
+                  </div>
+                </div>
+                
+                <div className="form-buttons">
                   <Button
-                    variant="success"
-                    size="sm"
-                    onClick={addRow}
-                    className="mb-3"
+                    type="submit"
+                    variant="primary"
+                    disabled={showLoading}
                   >
-                    Thêm dòng
+                    {showLoading ? 'Đang lập phiếu xuất...' : '📋 Lập phiếu xuất hàng'}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline-secondary"
+                    onClick={() => console.log('Tìm đại lý')}
+                  >
+                    🔍 Tìm đại lý
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline-secondary"
+                    onClick={handleThoat}
+                  >
+                    🗑️ Làm mới
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline-secondary"
+                    onClick={handleExitToHome}
+                  >
+                    ❌ Thoát
                   </Button>
                 </div>
-              </div>
-            </section>
-            
-            <div className="d-flex justify-content-between">
-              <div>
-                <Button
-                  type="submit"
-                  variant="primary"
-                  className="mt-3"
-                  disabled={showLoading}
-                >
-                  {showLoading ? 'Đang lập phiếu xuất...' : 'Lập phiếu xuất hàng'}
-                </Button>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  className="mt-3 ms-2"
-                  onClick={() => console.log('Tìm đại lý')}
-                >
-                  Tìm đại lý
-                </Button>
-              </div>
-              <Button
-                type="button"
-                variant="secondary"
-                className="mt-3"
-                onClick={handleThoat}
-              >
-                Thoát
-              </Button>
-            </div>
-          </Form>
-        </Card.Body>
-      </Card>
+              </Form>
+            </Card.Body>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 };

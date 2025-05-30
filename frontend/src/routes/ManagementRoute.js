@@ -2,7 +2,7 @@ import React from 'react';
 import { FormComponent } from '../components/FormComponent.js';
 import { TableComponent } from '../components/TableComponent.js';
 
-const ManagementPage = ({
+const ManagementRoute = ({
     selectedDaily,
     onSubmit,
     dsQuan,
@@ -35,4 +35,4 @@ const ManagementPage = ({
     );
 };
 
-export default ManagementPage;
+export default ManagementRoute;

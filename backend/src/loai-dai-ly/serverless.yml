@@ -112,6 +112,3 @@ functions:
       - httpApi:
           path: /{maLoaiDaiLy}
           method: delete
-
-plugins:
-  - serverless-offline
