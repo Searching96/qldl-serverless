@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from "react";
-import { FormComponent } from "./FormComponent.js";
-import { TableComponent } from "./TableComponent.js";
+import React, { useState, useEffect, useCallback } from "react";
+import { useForm } from "react-hook-form";
+import { Button, Form, Card, Table, Row, Col } from "react-bootstrap";
+import { useNavigate } from "react-router-dom";
 import {
     createDaily, getAllDaily, getAllLoaiDaiLy, getAllQuan,
     getDaily, updateDaily, deleteDaily, getLatestMaDaiLy
@@ -8,6 +9,14 @@ import {
 import { Quan, LoaiDaiLy } from "../models";
 
 export const TiepNhanDaiLy = () => {
+    // Form state
+    const { register, handleSubmit, setValue, reset, formState: { errors } } = useForm();
+    const navigate = useNavigate();
+    const [editId, setEditId] = useState(null);
+    const [newId, setNewId] = useState(null);
+    const [cachedNextId, setCachedNextId] = useState(null);
+
+    // Component state
     const [dsDaiLy, setDSDaiLy] = useState([]);
     const [dsQuan, setDSQuan] = useState([]);
     const [dsLoaiDaiLy, setDSLoaiDaiLy] = useState([]);
@@ -166,7 +175,7 @@ export const TiepNhanDaiLy = () => {
         setSuccessMessage('');
         setErrorMessage('');
         let operationSuccess = false;
-        
+
         try {
             let result;
 
@@ -190,10 +199,10 @@ export const TiepNhanDaiLy = () => {
             const updatedDaily = await getAllDaily();
             setDSDaiLy(updatedDaily || []);
             setInfoMessage('');
-            
+
             // Trigger form reset after successful submission
             setResetFormTrigger(prev => prev + 1);
-            
+
             // Only clear selectedDaily after successful operation
             if (!selectedDaily) {
                 // For new creation, we need to clear the form by setting a fresh selected state
@@ -206,7 +215,7 @@ export const TiepNhanDaiLy = () => {
             setInfoMessage('');
             operationSuccess = false;
         }
-        
+
         // Call the callback with the operation result if provided
         if (callback && typeof callback === 'function') {
             callback(operationSuccess);
@@ -225,6 +234,45 @@ export const TiepNhanDaiLy = () => {
             setErrorMessage("Không thể cập nhật danh sách đại lý: " + error.message);
             setInfoMessage('');
         }
+    };
+
+    // Form logic (moved from FormComponent)
+    const resetForm = useCallback(() => {
+        reset();
+        setEditId(null);
+        setNewId(null);
+        setValue("tendaily", "");
+        setValue("diachi", "");
+        setValue("sodienthoai", "");
+        setValue("email", "");
+        setValue("maquan", "");
+        setValue("maloaidaily", "");
+        setValue("ngaytiepnhan", new Date().toISOString().split("T")[0]);
+    }, [reset, setValue]);
+
+    const getnewId = async () => {
+        try {
+            resetForm();
+            if (cachedNextId) {
+                setNewId(cachedNextId);
+                setValue("madaily", cachedNextId);
+            } else {
+                const nextId = await fetchLatestDaiLyId();
+                if (nextId) {
+                    setNewId(nextId);
+                    setValue("madaily", nextId);
+                    setCachedNextId(nextId);
+                }
+            }
+        } catch (error) {
+            console.error("Error using cached ID:", error);
+        }
+    };
+
+    const isFormEnabled = Boolean(editId || newId);
+
+    const handleExitToHome = () => {
+        navigate("/");
     };
 
     return (
@@ -278,24 +326,248 @@ export const TiepNhanDaiLy = () => {
                         </div>
                     )}
                     <div className="px-3">
-                        <FormComponent
-                            selectedDaily={selectedDaily}
-                            onSubmit={handleFormSubmit}
-                            dsQuan={dsQuan}
-                            dsLoaiDaiLy={dsLoaiDaiLy}
-                            resetTrigger={resetFormTrigger}
-                            getLatestId={fetchLatestDaiLyId}
-                        />
+                        {/* Form Component */}
+                        <div className="container-fluid mb-4">
+                            <Card>
+                                <Card.Header className="bg-primary text-white text-center py-3">
+                                    <h4 className="mb-0">{editId ? "✏️ Cập nhật đại lý" : "➕ Tiếp nhận đại lý"}</h4>
+                                </Card.Header>
+                                <Card.Body className="p-4">
+                                    <Form onSubmit={handleSubmit(handleFormSubmit)}>
+                                        <div className="bg-light rounded p-4 mb-4">
+                                            <h6 className="text-primary fw-semibold mb-3 border-bottom border-primary pb-2">Thông tin cơ bản</h6>
 
-                        <TableComponent
-                            data={dsDaiLy}
-                            onEdit={handleEditRow}
-                            onDelete={handleDeleteRow}
-                            onRefresh={handleRefresh}
-                        />
+                                            {/* First row - 4 inputs */}
+                                            <Row>
+                                                <Col>
+                                                    <Form.Group>
+                                                        <Form.Label className="fw-medium mb-2">Mã đại lý</Form.Label>
+                                                        <Form.Control
+                                                            type="text"
+                                                            placeholder="Mã đại lý"
+                                                            value={editId || newId || ""}
+                                                            readOnly />
+                                                        {errors.madaily && <div className="text-danger small mt-1">{errors.madaily.message}</div>}
+                                                    </Form.Group>
+                                                </Col>
+                                                <Col>
+
+                                                    <Form.Group>
+                                                        <Form.Label className="fw-medium mb-2">Tên đại lý</Form.Label>
+                                                        <Form.Control
+                                                            type="text"
+                                                            placeholder="Nhập tên đại lý"
+                                                            disabled={!isFormEnabled}
+                                                            {...register("tendaily", { required: "Tên đại lý là bắt buộc" })} />
+                                                        {errors.tendaily && <div className="text-danger small mt-1">{errors.tendaily.message}</div>}
+                                                    </Form.Group>
+                                                </Col>
+                                                <Col>
+                                                    <Form.Group>
+                                                        <Form.Label className="fw-medium mb-2">Quận/Huyện</Form.Label>
+                                                        <Form.Select
+                                                            disabled={!isFormEnabled}
+                                                            {...register("maquan", { required: "Vui lòng chọn quận/huyện" })}
+                                                        >
+                                                            <option value="">Chọn quận/huyện</option>
+                                                            {dsQuan.map(q => (
+                                                                <option key={q.maquan} value={q.maquan}>
+                                                                    {q.tenquan}
+                                                                </option>
+                                                            ))}
+                                                        </Form.Select>
+                                                        {errors.maquan && <div className="text-danger small mt-1">{errors.maquan.message}</div>}
+                                                    </Form.Group>
+                                                </Col>
+                                                <Col>
+                                                    <Form.Group>
+                                                        <Form.Label className="fw-medium mb-2">Loại đại lý</Form.Label>
+                                                        <Form.Select
+                                                            disabled={!isFormEnabled}
+                                                            {...register("maloaidaily", { required: "Vui lòng chọn loại đại lý" })}
+                                                        >
+                                                            <option value="">Chọn loại đại lý</option>
+                                                            {dsLoaiDaiLy.map(ldl => (
+                                                                <option key={ldl.maloaidaily} value={ldl.maloaidaily}>
+                                                                    {ldl.tenloaidaily}
+                                                                </option>
+                                                            ))}
+                                                        </Form.Select>
+                                                        {errors.maloaidaily && <div className="text-danger small mt-1">{errors.maloaidaily.message}</div>}
+                                                    </Form.Group>
+                                                </Col>
+                                            </Row>
+
+                                            {/* Second row - 3 inputs */}
+                                            <Row>
+                                                <Col>
+                                                    <Form.Group>
+                                                        <Form.Label className="fw-medium mb-2">Số điện thoại</Form.Label>
+                                                        <Form.Control
+                                                            type="text"
+                                                            placeholder="Nhập số điện thoại"
+                                                            disabled={!isFormEnabled}
+                                                            {...register("sodienthoai", { required: "Số điện thoại là bắt buộc" })} />
+                                                        {errors.sodienthoai && <div className="text-danger small mt-1">{errors.sodienthoai.message}</div>}
+                                                    </Form.Group>
+                                                </Col>
+                                                <Col>
+                                                    <Form.Group>
+                                                        <Form.Label className="fw-medium mb-2">Email</Form.Label>
+                                                        <Form.Control
+                                                            type="email"
+                                                            placeholder="Nhập email"
+                                                            disabled={!isFormEnabled}
+                                                            {...register("email", { required: "Email là bắt buộc" })} />
+                                                        {errors.email && <div className="text-danger small mt-1">{errors.email.message}</div>}
+                                                    </Form.Group>
+                                                </Col>
+                                                <Col>
+                                                    <Form.Group>
+                                                        <Form.Label className="fw-medium mb-2">Ngày tiếp nhận</Form.Label>
+                                                        <Form.Control
+                                                            type="date"
+                                                            disabled={!isFormEnabled}
+                                                            {...register("ngaytiepnhan", { required: "Ngày tiếp nhận là bắt buộc" })}
+                                                        />
+                                                        {errors.ngaytiepnhan && <div className="text-danger small mt-1">{errors.ngaytiepnhan.message}</div>}
+                                                    </Form.Group>
+                                                </Col>
+                                            </Row>
+                                            <Row>
+                                                <Col>
+                                                    <Form.Group>
+                                                        <Form.Label className="fw-medium mb-2">Địa chỉ</Form.Label>
+                                                        <Form.Control
+                                                            type="text"
+                                                            placeholder="Nhập địa chỉ"
+                                                            disabled={!isFormEnabled}
+                                                            {...register("diachi", { required: "Địa chỉ là bắt buộc" })} />
+                                                        {errors.diachi && <div className="text-danger small mt-1">{errors.diachi.message}</div>}
+                                                    </Form.Group>
+                                                </Col>
+                                            </Row>
+                                        </div>
+
+                                        <div className="d-flex flex-wrap gap-2 justify-content-center pt-3 border-top">
+
+                                            <Button
+                                                type="submit"
+                                                variant="primary"
+                                                disabled={!isFormEnabled}
+                                                className="px-4"
+                                            >
+                                                {editId ? "💾 Cập nhật đại lý" : "➕ Tiếp nhận đại lý"}
+                                            </Button>
+                                            <Button
+                                                type="button"
+                                                variant="outline-secondary"
+                                                onClick={resetForm}
+                                                disabled={!isFormEnabled}
+                                                className="px-4"
+                                            >
+                                                🗑️ Hủy
+                                            </Button>
+                                            <Button
+                                                type="button"
+                                                variant="outline-secondary"
+                                                onClick={handleExitToHome}
+                                                className="px-4"
+                                            >
+                                                ❌ Thoát
+                                            </Button>
+                                        </div>
+                                    </Form>
+                                </Card.Body>
+                            </Card>
+                        </div>
+
+                        {/* Table Component */}
+                        <div className="container-fluid mt-4">
+                            <Card>
+                                <Card.Header className="bg-primary text-white py-3">
+                                    <div className="d-flex justify-content-between align-items-center">
+                                        <h5 className="mb-0 text-white">Danh sách đại lý</h5>
+                                        <Button
+                                            variant="outline-light"
+                                            onClick={handleRefresh}
+                                            title="Làm mới danh sách đại lý"
+                                        >
+                                            <i className="bi bi-arrow-clockwise"></i> Làm mới dữ liệu
+                                        </Button>
+                                    </div>
+                                </Card.Header>
+                                <Card.Body className="p-0">
+                                    <div className="table-responsive">
+                                        <Table striped hover className="mb-0">
+                                            <thead className="table-light">
+                                                <tr>
+                                                    <th className="fw-semibold">Mã đại lý</th>
+                                                    <th className="fw-semibold">Tên đại lý</th>
+                                                    <th className="fw-semibold">Số điện thoại</th>
+                                                    <th className="fw-semibold">Địa chỉ</th>
+                                                    <th className="fw-semibold">Email</th>
+                                                    <th className="fw-semibold">Loại đại lý</th>
+                                                    <th className="fw-semibold">Quận</th>
+                                                    <th className="fw-semibold">Ngày tiếp nhận</th>
+                                                    <th className="fw-semibold text-center">Thao tác</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {dsDaiLy.length > 0 ? (
+                                                    dsDaiLy.map((row, index) => (
+                                                        <tr key={row.madaily || index} className="align-middle">
+                                                            <td className="fw-bold text-primary">{row.madaily}</td>
+                                                            <td>{row.tendaily}</td>
+                                                            <td>{row.sodienthoai || row.dienthoai}</td>
+                                                            <td>{row.diachi}</td>
+                                                            <td>{row.email}</td>
+                                                            <td>{row.tenloaidaily || "N/A"}</td>
+                                                            <td>{row.tenquan || "N/A"}</td>
+                                                            <td>
+                                                                {row.ngaytiepnhan ?
+                                                                    new Date(row.ngaytiepnhan).toLocaleDateString('vi-VN') :
+                                                                    "N/A"
+                                                                }
+                                                            </td>
+                                                            <td className="text-center">
+                                                                <div className="d-flex gap-1 justify-content-center">
+                                                                    <Button
+                                                                        size="sm"
+                                                                        variant="primary"
+                                                                        onClick={() => handleEditRow(row)}
+                                                                    >
+                                                                        <i className="bi bi-pencil-square"></i> Sửa
+                                                                    </Button>
+                                                                    <Button
+                                                                        size="sm"
+                                                                        variant="danger"
+                                                                        onClick={() => handleDeleteRow(row)}
+                                                                    >
+                                                                        <i className="bi bi-trash"></i> Xóa
+                                                                    </Button>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    ))
+                                                ) : (
+                                                    <tr>
+                                                        <td colSpan="9" className="text-center text-muted py-4">
+                                                            <i className="bi bi-inbox display-4 d-block mb-2"></i>
+                                                            Chưa có dữ liệu đại lý
+                                                        </td>
+                                                    </tr>
+                                                )}
+                                            </tbody>
+                                        </Table>
+                                    </div>
+                                </Card.Body>
+                            </Card>
+                        </div>
                     </div>
                 </>
-            )}
-        </div>
+            )
+            }
+        </div >
     );
 }

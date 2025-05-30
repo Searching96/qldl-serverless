@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Card, Form, Row, Col, Button, Alert } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
-import "../styles/FormComponent.css";
 import { getMonthlyRevenueReport } from '../services/api';
 
 export const LapBaoCaoDoanhSo = () => {
@@ -37,20 +36,20 @@ export const LapBaoCaoDoanhSo = () => {
   const handleLapBaoCao = async () => {
     setLoading(true);
     setError('');
-    
+
     try {
       const requestData = {
         month: selectedMonth,
         year: selectedYear
       };
-      
+
       console.log('=== REQUEST DEBUG ===');
       console.log('Request data:', requestData);
       console.log('JSON string:', JSON.stringify(requestData));
       console.log('====================');
-      
+
       const reportData = await getMonthlyRevenueReport(requestData);
-      
+
       console.log('=== RESPONSE DEBUG ===');
       console.log('Response data:', reportData);
       console.log('Response type:', typeof reportData);
@@ -63,11 +62,11 @@ export const LapBaoCaoDoanhSo = () => {
         console.log('tonggiatrigiaodich of first item:', reportData.chitiet[0].tonggiatrigiaodich, 'type:', typeof reportData.chitiet[0].tonggiatrigiaodich);
       }
       console.log('======================');
-      
+
       // Update state with received data - keep original values without formatting
       setTongDoanhSo(reportData.tongdoanhso || '0');
       setSoLuongDaiLy(reportData.soluongdaily || 0);
-      
+
       // Map the chitiet data to the expected format - keep original values
       const formattedData = reportData.chitiet?.map(item => ({
         tenDaiLy: item.tendaily,
@@ -75,9 +74,9 @@ export const LapBaoCaoDoanhSo = () => {
         tongGiaTriGiaoDich: item.tonggiatrigiaodich || '0',
         tiLe: `${item.tilephantramdoanhso}%`
       })) || [];
-      
+
       setBaoCaoData(formattedData);
-      
+
     } catch (err) {
       console.error('=== ERROR DEBUG ===');
       console.error('Full error object:', err);
@@ -107,7 +106,7 @@ export const LapBaoCaoDoanhSo = () => {
   return (
     <div className="container-fluid px-0 mt-4">
       <h1 className="ms-3">Lập báo cáo doanh số</h1>
-      
+
       {/* Error Alert */}
       {error && (
         <div className="alert alert-danger mx-3" role="alert">
@@ -124,150 +123,155 @@ export const LapBaoCaoDoanhSo = () => {
       )}
 
       <div className="px-3">
-        <div className="form-component">
+        <div className="container-fluid mb-4">
           <Card>
-            <Card.Header>
+            <Card.Header className="bg-primary text-white text-center py-3">
               <h4>📊 Lập Báo Cáo Doanh Số</h4>
             </Card.Header>
-            <Card.Body>
+            <Card.Body className="p-4">
               <Form>
-                <div className="form-layout">
-                  <div className="form-section">
-                    <h6>Thông tin báo cáo</h6>
-                    <div className="form-grid">
-                      <Row className="mb-3">
-                        <Col md={2}>
-                          <Form.Group>
-                            <Form.Label>Năm lập báo cáo</Form.Label>
-                            <Form.Select
-                              value={selectedYear}
-                              onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                            >
-                              {years.map(year => (
-                                <option key={year} value={year}>{year}</option>
-                              ))}
-                            </Form.Select>
-                          </Form.Group>
-                        </Col>
-                        
-                        <Col md={2}>
-                          <Form.Group>
-                            <Form.Label>Tháng lập báo cáo</Form.Label>
-                            <Form.Select
-                              value={selectedMonth}
-                              onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
-                            >
-                              {months.map(month => (
-                                <option key={month.value} value={month.value}>
-                                  {month.label}
-                                </option>
-                              ))}
-                            </Form.Select>
-                          </Form.Group>
-                        </Col>
-                        
-                        <Col md={2}>
-                          {/* Placeholder for 3rd column */}
-                        </Col>
-                        
-                        <Col md={3}>
-                          {/* Placeholder for 4th column */}
-                        </Col>
-                        
-                        <Col md={3}>
-                          {/* Placeholder for 5th column */}
-                        </Col>
-                      </Row>
-                    </div>
-                  </div>
+                <div className="bg-light rounded p-4 mb-4">
+                  <h6 className="text-primary fw-semibold mb-3 border-bottom border-primary pb-2">Thông tin báo cáo</h6>
+                  <Row>
+                    <Col>
+                      <Form.Group>
+                        <Form.Label>Năm lập báo cáo</Form.Label>
+                        <Form.Select
+                          value={selectedYear}
+                          onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                        >
+                          {years.map(year => (
+                            <option key={year} value={year}>{year}</option>
+                          ))}
+                        </Form.Select>
+                      </Form.Group>
+                    </Col>
 
-                  <div className="form-section">
-                    <h6>Kết quả báo cáo</h6>
-                    {/* Total sales row */}
-                    <Row className="mb-3">
-                      <Col className="d-flex justify-content-center align-items-center gap-3">
-                        <span style={{ fontWeight: 'bold' }}>
-                          Tổng doanh số trong tháng của tất cả đại lý ({soLuongDaiLy} đại lý):
-                        </span>
-                        <Form.Control
-                          type="text"
-                          value={tongDoanhSo}
-                          readOnly
-                          style={{ width: '200px' }}
-                          className="text-center"
-                        />
-                      </Col>
-                    </Row>
-                    
-                    {/* Report table */}
-                    <Row className="mb-3">
-                      <Col>
-                        <div className="table-responsive">
-                          <table className="table table-striped table-hover table-bordered">
-                            <thead className="table-light">
-                              <tr>
-                                <th width="8%">STT</th>
-                                <th width="30%">Tên đại lý</th>
-                                <th width="20%">Số lượng phiếu xuất</th>
-                                <th width="25%">Tổng giá trị giao dịch trong tháng</th>
-                                <th width="17%">Tỉ lệ</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {baoCaoData.length > 0 ? (
-                                baoCaoData.map((item, index) => (
-                                  <tr key={index}>
-                                    <td className="text-center">{index + 1}</td>
-                                    <td>{item.tenDaiLy}</td>
-                                    <td className="text-center">{item.soLuongPhieuXuat}</td>
-                                    <td className="text-end">{item.tongGiaTriGiaoDich}</td>
-                                    <td className="text-center">{item.tiLe}</td>
-                                  </tr>
-                                ))
-                              ) : (
-                                <tr>
-                                  <td colSpan="5" className="text-center text-muted">
-                                    Chưa có dữ liệu báo cáo. Nhấn "Lập báo cáo doanh số" để tạo báo cáo.
-                                  </td>
-                                </tr>
-                              )}
-                            </tbody>
-                          </table>
-                        </div>
-                      </Col>
-                    </Row>
-                  </div>
+                    <Col>
+                      <Form.Group>
+                        <Form.Label>Tháng lập báo cáo</Form.Label>
+                        <Form.Select
+                          value={selectedMonth}
+                          onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+                        >
+                          {months.map(month => (
+                            <option key={month.value} value={month.value}>
+                              {month.label}
+                            </option>
+                          ))}
+                        </Form.Select>
+                      </Form.Group>
+                    </Col>
 
-                  <div className="form-buttons">
-                    <Button
-                      type="button"
-                      variant="primary"
-                      onClick={handleLapBaoCao}
-                      disabled={loading}
-                    >
-                      {loading ? 'Đang lập báo cáo...' : '📊 Lập báo cáo doanh số'}
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline-secondary"
-                      onClick={handleThoat}
-                    >
-                      🗑️ Làm mới
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline-secondary"
-                      onClick={handleExitToHome}
-                    >
-                      ❌ Thoát
-                    </Button>
-                  </div>
+                    <Col>
+                      {/* Placeholder for 3rd column */}
+                    </Col>
+
+                    <Col md={3}>
+                      {/* Placeholder for 4th column */}
+                    </Col>
+
+                    <Col md={3}>
+                      {/* Placeholder for 5th column */}
+                    </Col>
+                  </Row>
                 </div>
               </Form>
             </Card.Body>
           </Card>
         </div>
-      </div>
-    </div>
+
+        <div className="container-fluid mt-4 mb-3">
+          <Card>
+            <Card.Body>
+              <div className="bg-light rounded p-4 mb-4">
+                <h6 className="text-primary fw-semibold mb-3 border-bottom border-primary pb-2">Kết quả báo cáo</h6>
+
+                {/* Total sales row */}
+                <Row className="mb-3">
+                  <Col className="d-flex justify-content-center align-items-center gap-3">
+                    <span style={{ fontWeight: 'bold' }}>
+                      Tổng doanh số trong tháng của tất cả đại lý ({soLuongDaiLy} đại lý):
+                    </span>
+                    <Form.Control
+                      type="text"
+                      value={tongDoanhSo}
+                      readOnly
+                      style={{ width: '200px' }}
+                      className="text-center"
+                    />
+                  </Col>
+                </Row>
+
+                {/* Report table */}
+                <Row>
+                  <Col>
+                    <div className="table-responsive">
+                      <table className="table table-striped table-hover table-bordered">
+                        <thead className="table-light">
+                          <tr>
+                            <th width="8%">STT</th>
+                            <th width="30%">Tên đại lý</th>
+                            <th width="20%">Số lượng phiếu xuất</th>
+                            <th width="25%">Tổng giá trị giao dịch trong tháng</th>
+                            <th width="17%">Tỉ lệ</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {baoCaoData.length > 0 ? (
+                            baoCaoData.map((item, index) => (
+                              <tr key={index}>
+                                <td className="text-center">{index + 1}</td>
+                                <td>{item.tenDaiLy}</td>
+                                <td className="text-center">{item.soLuongPhieuXuat}</td>
+                                <td className="text-end">{item.tongGiaTriGiaoDich}</td>
+                                <td className="text-center">{item.tiLe}</td>
+                              </tr>
+                            ))
+                          ) : (
+                            <tr>
+                              <td colSpan="5" className="text-center text-muted">
+                                Chưa có dữ liệu báo cáo. Nhấn "Lập báo cáo doanh số" để tạo báo cáo.
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </Col>
+                </Row>
+              </div>
+
+              <div className="d-flex flex-wrap gap-2 justify-content-center pt-3 border-top">
+                <Button
+                  type="button"
+                  variant="primary"
+                  onClick={handleLapBaoCao}
+                  disabled={loading}
+                >
+                  {loading ? 'Đang lập báo cáo...' : '📊 Lập báo cáo doanh số'}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline-secondary"
+                  onClick={handleThoat}
+                >
+                  🗑️ Làm mới
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline-secondary"
+                  onClick={handleExitToHome}
+                >
+                  ❌ Thoát
+                </Button>
+              </div>
+            </Card.Body>
+          </Card>
+        </div>
+
+
+      </div >
+    </div >
   );
 };

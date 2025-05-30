@@ -681,7 +681,6 @@ export const TimKiemDaiLy = () => {
                                                     </thead>
                                                     <tbody>
                                                         {searchResults.map((agent, index) => (
-                                                        {searchResults.map((agent, index) => (
                                                             <tr key={agent.madaily || index} className="align-middle">
                                                                 <td className="fw-bold text-primary">{agent.madaily}</td>
                                                                 <td>{agent.tendaily}</td>

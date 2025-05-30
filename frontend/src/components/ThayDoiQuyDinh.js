@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Button, Form, Card, Alert, Row, Col } from "react-bootstrap";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
-import "../styles/FormComponent.css";
 import { getLastThamSo, updateThamSo } from '../services/api';
 
 export const ThayDoiQuyDinh = () => {

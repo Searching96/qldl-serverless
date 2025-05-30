@@ -1,0 +1,14 @@
+/* DaiLySelectionModal Component Styles */
+@import './globals.css';
+
+.daily-selection-modal .table-responsive {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.daily-selection-modal .search-form {
+  background: var(--light);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-md);
+}

@@ -1,0 +1,45 @@
+/* LapPhieuXuatHang Component Styles */
+@import './globals.css';
+
+.form-component {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--spacing-md);
+  font-family: var(--font-family-base);
+}
+
+.form-component .card {
+  background: var(--bg-white);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border-light);
+  margin-bottom: var(--spacing-xl);
+}
+
+.form-component .form-section {
+  background: var(--light);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-lg);
+  border: 1px solid var(--border-light);
+}
+
+.form-component .form-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
+  justify-content: center;
+  margin-top: var(--spacing-xl);
+  padding-top: var(--spacing-lg);
+  border-top: 1px solid var(--border-light);
+}
+
+@media (max-width: 768px) {
+  .form-component .form-buttons {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+  
+  .form-component .form-buttons .btn {
+    width: 100%;
+  }
+}

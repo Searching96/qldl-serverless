@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Card, Form, Button, Alert } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
-import "../styles/FormComponent.css";
 import { insertData, queryData } from '../services/api';
 
 export const ThaoTacDb = () => {
