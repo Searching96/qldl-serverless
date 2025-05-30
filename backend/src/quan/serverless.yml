@@ -32,6 +32,16 @@ provider:
       managedPolicies:
         - 'arn:aws:iam::aws:policy/AmazonAuroraDSQLFullAccess'
 
+plugins:
+  - serverless-dotenv-plugin
+  - serverless-offline
+
+custom:
+  dotenv:
+    path: ../../.env
+  serverless-offline:
+    httpPort: 4001
+
 layers:
   Dependencies:
     path: ../../lambda-aurora-dsql

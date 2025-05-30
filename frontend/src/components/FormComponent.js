@@ -153,150 +153,157 @@ export const FormComponent = ({ selectedDaily, onSubmit, dsQuan, dsLoaiDaiLy, ne
     });
   };
 
-  // Check if form should be enabled (when we have an ID)
-  const isFormEnabled = Boolean(editId || newId);
+    // Check if form should be enabled (when we have an ID)
+    const isFormEnabled = Boolean(editId || newId);    return (
+        <div className="form-component">
+            <Card>
+                <Card.Header>
+                    <h4>{editId ? "✏️ Cập nhật đại lý" : "➕ Tiếp nhận đại lý"}</h4>
+                </Card.Header>
+                <Card.Body>
+                    <Form onSubmit={handleSubmit(submitHandler)}>
+                        <div className="form-layout">
+                            <div className="form-section">
+                                <h6>Thông tin cơ bản</h6>
+                                <div className="form-grid">
+                                    <div className="form-field">
+                                        <Form.Group className="mb-3">
+                                            <Form.Label>Mã đại lý</Form.Label>
+                                            <Form.Control
+                                                type="text"
+                                                placeholder="Mã đại lý"
+                                                value={editId || newId || ""}
+                                                readOnly />
+                                            {errors.madaily && <span className="text-danger">{errors.madaily.message}</span>}
+                                        </Form.Group>
+                                    </div>                                    <div className="form-field">
+                                        <Form.Group className="mb-3">
+                                            <Form.Label>Tên đại lý</Form.Label>
+                                            <Form.Control
+                                                type="text"
+                                                placeholder="Nhập tên đại lý"
+                                                disabled={!isFormEnabled}
+                                                {...register("tendaily", { required: "Tên đại lý là bắt buộc" })} />
+                                            {errors.tendaily && <span className="text-danger">{errors.tendaily.message}</span>}
+                                        </Form.Group>
+                                    </div>
+                                    <div className="form-field">
+                                        <Form.Group className="mb-3">
+                                            <Form.Label>Loại đại lý</Form.Label>
+                                            <Form.Select
+                                                disabled={!isFormEnabled}
+                                                {...register("maloaidaily", { required: "Loại đại lý là bắt buộc" })}>
+                                                <option value="">-- Chọn Loại đại lý --</option>
+                                                {dsLoaiDaiLy.map((loai) => (
+                                                    <option key={loai.maloaidaily} value={loai.maloaidaily}>
+                                                        {loai.tenloaidaily}
+                                                    </option>
+                                                ))}
+                                            </Form.Select>
+                                            {errors.maloaidaily && <span className="text-danger">{errors.maloaidaily.message}</span>}
+                                        </Form.Group>
+                                    </div>
+                                    <div className="form-field">
+                                        <Form.Group className="mb-3">
+                                            <Form.Label>Quận</Form.Label>
+                                            <Form.Select
+                                                disabled={!isFormEnabled}
+                                                {...register("maquan", { required: "Quận là bắt buộc" })}>
+                                                <option value="">-- Chọn Quận --</option>
+                                                {dsQuan.map((quan) => (
+                                                    <option key={quan.maquan} value={quan.maquan}>
+                                                        {quan.tenquan}
+                                                    </option>
+                                                ))}
+                                            </Form.Select>
+                                            {errors.maquan && <span className="text-danger">{errors.maquan.message}</span>}
+                                        </Form.Group>
+                                    </div>
+                                </div>
+                            </div>
 
-  return (
-    <>
-      <Card>
-        <Card.Header>{editId ? "Cập nhật đại lý" : "Tiếp nhận đại lý"}</Card.Header>
-        <Card.Body>
-          <Form onSubmit={handleSubmit(submitHandler)}>
-            <section className="form-layout">
-              <div className="header">
-                <div className="left">
-                  <Form.Group className="mb-3">
-                    <Form.Label>Mã đại lý</Form.Label>
-                    <Form.Control
-                      type="text"
-                      placeholder="Mã đại lý"
-                      value={editId || newId || ""}
-                      readOnly />
-                    {errors.madaily && <span className="text-danger">{errors.madaily.message}</span>}
-                  </Form.Group>
-                </div>
-                <div className="leftcenter">
-                  <Form.Group className="mb-3">
-                    <Form.Label>Tên đại lý</Form.Label>
-                    <Form.Control
-                      type="text"
-                      placeholder="Nhập tên đại lý"
-                      disabled={!isFormEnabled}
-                      {...register("tendaily", { required: "Tên đại lý là bắt buộc" })} />
-                    {errors.tendaily && <span className="text-danger">{errors.tendaily.message}</span>}
-                  </Form.Group>
-                </div>
-                <div className="rightcenter">
-                  <Form.Group className="mb-3">
-                    <Form.Label>Loại đại lý</Form.Label>
-                    <Form.Select
-                      disabled={!isFormEnabled}
-                      {...register("maloaidaily", { required: "Loại đại lý là bắt buộc" })}>
-                      <option value="">-- Chọn Loại đại lý --</option>
-                      {dsLoaiDaiLy.map((loai) => (
-                        <option key={loai.maloaidaily} value={loai.maloaidaily}>
-                          {loai.tenloaidaily}
-                        </option>
-                      ))}
-                    </Form.Select>
-                    {errors.maloaidaily && <span className="text-danger">{errors.maloaidaily.message}</span>}
-                  </Form.Group>
-                </div>
-                <div className="right">
-                  <Form.Group className="mb-3">
-                    <Form.Label>Quận</Form.Label>
-                    <Form.Select
-                      disabled={!isFormEnabled}
-                      {...register("maquan", { required: "Quận là bắt buộc" })}>
-                      <option value="">-- Chọn Quận --</option>
-                      {dsQuan.map((quan) => (
-                        <option key={quan.maquan} value={quan.maquan}>
-                          {quan.tenquan}
-                        </option>
-                      ))}
-                    </Form.Select>
-                    {errors.maquan && <span className="text-danger">{errors.maquan.message}</span>}
-                  </Form.Group>
-                </div>
-              </div>
-              <div className="body">
-                <div className="left">
-                  <Form.Group className="mb-3">
-                    <Form.Label>Số điện thoại</Form.Label>
-                    <Form.Control
-                      type="text"
-                      placeholder="Nhập số điện thoại"
-                      disabled={!isFormEnabled}
-                      {...register("sodienthoai", { required: "Số điện thoại là bắt buộc" })} />
-                    {errors.sodienthoai && <span className="text-danger">{errors.sodienthoai.message}</span>}
-                  </Form.Group>
-                </div>
-                <div className="center">
-                  <Form.Group className="mb-3">
-                    <Form.Label>Email</Form.Label>
-                    <Form.Control
-                      type="email"
-                      placeholder="Nhập email"
-                      disabled={!isFormEnabled}
-                      {...register("email", {
-                        required: "Email là bắt buộc",
-                        pattern: {
-                          value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                          message: "Email không hợp lệ"
-                        }
-                      })} />
-                    {errors.email && <span className="text-danger">{errors.email.message}</span>}
-                  </Form.Group>
-                </div>
-                <div className="right">
-                  <Form.Group className="mb-3">
-                    <Form.Label>Ngày tiếp nhận</Form.Label>
-                    <Form.Control
-                      type="date"
-                      disabled={!isFormEnabled}
-                      {...register("ngaytiepnhan", { required: "Ngày tiếp nhận là bắt buộc" })} />
-                    {errors.ngaytiepnhan && <span className="text-danger">{errors.ngaytiepnhan.message}</span>}
-                  </Form.Group>
-                </div>
-              </div>
-              <div className="footer">
-                <Form.Group className="mb-3">
-                  <Form.Label>Địa chỉ</Form.Label>
-                  <Form.Control
-                    type="text"
-                    placeholder="Nhập địa chỉ"
-                    disabled={!isFormEnabled}
-                    {...register("diachi", { required: "Địa chỉ là bắt buộc" })} />
-                  {errors.diachi && <span className="text-danger">{errors.diachi.message}</span>}
-                </Form.Group>
-              </div>
-            </section>
-            <div className="d-flex justify-content-between">
-              <div>
-                <Button
-                  type="submit"
-                  variant="primary"
-                  className="mt-3"
-                  disabled={!isFormEnabled}>
-                  {editId ? "Cập nhật đại lý" : "Tiếp nhận đại lý"}
-                </Button>
-                <Button type="button" variant="secondary" className="mt-3 ms-2" onClick={getnewId}>
-                  Đại lý mới
-                </Button>
-              </div>
+                            <div className="form-section">
+                                <h6>Thông tin liên hệ</h6>
+                                <div className="form-grid">
+                                    <div className="form-field">
+                                        <Form.Group className="mb-3">
+                                            <Form.Label>Số điện thoại</Form.Label>
+                                            <Form.Control
+                                                type="text"
+                                                placeholder="Nhập số điện thoại"
+                                                disabled={!isFormEnabled}
+                                                {...register("sodienthoai", { required: "Số điện thoại là bắt buộc" })} />
+                                            {errors.sodienthoai && <span className="text-danger">{errors.sodienthoai.message}</span>}
+                                        </Form.Group>
+                                    </div>
+                                    <div className="form-field">
+                                        <Form.Group className="mb-3">
+                                            <Form.Label>Email</Form.Label>
+                                            <Form.Control
+                                                type="email"
+                                                placeholder="Nhập email"
+                                                disabled={!isFormEnabled}
+                                                {...register("email", {
+                                                    required: "Email là bắt buộc",
+                                                    pattern: {
+                                                        value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                                                        message: "Email không hợp lệ"
+                                                    }
+                                                })} />
+                                            {errors.email && <span className="text-danger">{errors.email.message}</span>}
+                                        </Form.Group>
+                                    </div>
+                                    <div className="form-field">
+                                        <Form.Group className="mb-3">
+                                            <Form.Label>Ngày tiếp nhận</Form.Label>
+                                            <Form.Control
+                                                type="date"
+                                                disabled={!isFormEnabled}
+                                                {...register("ngaytiepnhan", { required: "Ngày tiếp nhận là bắt buộc" })} />
+                                            {errors.ngaytiepnhan && <span className="text-danger">{errors.ngaytiepnhan.message}</span>}
+                                        </Form.Group>
+                                    </div>
+                                    <div className="form-field form-field-full">
+                                        <Form.Group className="mb-3">
+                                            <Form.Label>Địa chỉ</Form.Label>
+                                            <Form.Control
+                                                type="text"
+                                                placeholder="Nhập địa chỉ"
+                                                disabled={!isFormEnabled}
+                                                {...register("diachi", { required: "Địa chỉ là bắt buộc" })} />
+                                            {errors.diachi && <span className="text-danger">{errors.diachi.message}</span>}
+                                        </Form.Group>
+                                    </div>
+                                </div>
+                            </div>
 
-              <Button
-                type="button"
-                variant="secondary"
-                className="mt-3"
-                onClick={resetForm}
-                disabled={!isFormEnabled}>
-                Hủy
-              </Button>
-            </div>
-          </Form>
-        </Card.Body>
-      </Card>
-    </>
-  );
+                            <div className="form-buttons">
+                                <Button 
+                                    type="submit" 
+                                    variant="primary" 
+                                    disabled={!isFormEnabled}
+                                >
+                                    {editId ? "💾 Cập nhật đại lý" : "➕ Tiếp nhận đại lý"}
+                                </Button>
+                                <Button 
+                                    type="button" 
+                                    variant="secondary" 
+                                    onClick={getnewId}
+                                >
+                                    🆕 Đại lý mới
+                                </Button>
+                                <Button 
+                                    type="button" 
+                                    variant="outline-secondary" 
+                                    onClick={resetForm}
+                                    disabled={!isFormEnabled}
+                                >
+                                    🗑️ Hủy
+                                </Button>
+                            </div>                        </div>
+                    </Form>
+                </Card.Body>
+            </Card>
+        </div>
+    );
 };

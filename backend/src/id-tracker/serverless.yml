@@ -5,6 +5,16 @@ app: quan-ly-dai-ly
 # "service" is the name of this project. This will also be added to your AWS resource names.
 service: id-tracker
 
+plugins:
+  - serverless-dotenv-plugin
+  - serverless-offline
+
+custom:
+  dotenv:
+    path: ../../.env
+  serverless-offline:
+    httpPort: 4004
+
 provider:
   name: aws
   runtime: nodejs22.x
@@ -56,8 +66,6 @@ layers:
     #   - '*'
     # note: uncommenting this will give all AWS users access to this layer unconditionally.
     retain: false
-
-# ...existing code...
 
 functions:
   getlatestmadl:
@@ -116,4 +124,4 @@ functions:
       - httpApi:
           path: /mapx
           method: get
-  
+

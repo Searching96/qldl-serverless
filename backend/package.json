@@ -4,7 +4,15 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start:dai-ly": "cd src/dai-ly && serverless offline --httpPort 8080",
+    "start:quan": "cd src/quan && serverless offline --httpPort 4001",
+    "start:loai-dai-ly": "cd src/loai-dai-ly && serverless offline --httpPort 4002",
+    "start:don-vi-tinh": "cd src/don-vi-tinh && serverless offline --httpPort 4003",
+    "start:id-tracker": "cd src/id-tracker && serverless offline --httpPort 4004",
+    "start:tham-so": "cd src/tham-so && serverless offline --httpPort 4005",
+    "start:all": "powershell -ExecutionPolicy Bypass -File ./start-all-services.ps1",
+    "start:service": "powershell -ExecutionPolicy Bypass -File ./start-service.ps1"
   },
   "keywords": [],
   "author": "",

@@ -43,6 +43,16 @@ provider:
 #     - 'database.mjs'
 #     - 'src/dai-ly/**' # Include everything in this directory
 
+plugins:
+  - serverless-dotenv-plugin
+  - serverless-offline
+
+custom:
+  dotenv:
+    path: ../../.env
+  serverless-offline:
+    httpPort: 8080
+
 layers:
   Dependencies:
     path: ../../lambda-aurora-dsql # required, path to layer contents on disk
@@ -121,6 +131,15 @@ functions:
           path: /{maDaiLy}
           method: delete
 
+  searchdl:
+    handler: handler.searchdl
+    layers:
+    - !Ref DependenciesLambdaLayer
+    events:
+      - httpApi:
+          path: /search
+          method: get
+
   getmrr:
     handler: handler.getmrr
     layers:
@@ -129,6 +148,3 @@ functions:
       - httpApi:
           path: /mrr
           method: post
-
-plugins:
-  - serverless-offline

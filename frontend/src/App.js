@@ -7,6 +7,17 @@ import { LapPhieuXuatHang } from "./components/LapPhieuXuatHang.js";
 import { LapPhieuThuTien } from "./components/LapPhieuThuTien.js";
 import { LapBaoCaoDoanhSo } from "./components/LapBaoCaoDoanhSo";
 import { ThaoTacDb } from "./components/ThaoTacDb.js";
+import "bootstrap-icons/font/bootstrap-icons.css";
+import Navbar from "./components/Navbar.js";
+import ManagementPage from "./pages/ManagementPage.js";
+import SearchPage from "./pages/SearchPage.js";
+import "./styles/App.css";
+import "./styles/Navbar.css";
+import {
+    createDaily, getAllDaily, getAllLoaiDaiLy, getAllQuan,
+    getDaily, updateDaily, deleteDaily, getLatestMaDaiLy
+} from "./services/api.js";
+import { Quan, LoaiDaiLy } from "./models";
 
 function App() {
     return (
