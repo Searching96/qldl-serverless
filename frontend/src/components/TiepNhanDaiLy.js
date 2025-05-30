@@ -462,6 +462,13 @@ export const TiepNhanDaiLy = () => {
                                             <Button
                                                 type="button"
                                                 variant="outline-secondary"
+                                                onClick={getnewId}
+                                            >
+                                                🆕 Đại lý mới
+                                            </Button>
+                                            <Button
+                                                type="button"
+                                                variant="outline-secondary"
                                                 onClick={resetForm}
                                                 disabled={!isFormEnabled}
                                                 className="px-4"
