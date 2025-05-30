@@ -341,6 +341,7 @@ class DaiLyService {
     }
 
     let idQuan = null;
+    let isQuanChanging = false;
     if (maquan) {
       // Get IDQuan from MaQuan
       const quanCheckQuery = 'SELECT IDQuan FROM inventory.QUAN WHERE MaQuan = $1 AND DeletedAt IS NULL';
@@ -349,6 +350,7 @@ class DaiLyService {
         throw new Error(`Mã quận ${maquan} không tồn tại hoặc đã bị xóa`);
       }
       idQuan = quanCheck.rows[0].idquan;
+      isQuanChanging = idQuan !== currentQuan;
     }
 
     const updates = [];
@@ -359,26 +361,27 @@ class DaiLyService {
     if (sodienthoai) { updates.push(`SoDienThoai = $${paramIndex++}`); values.push(sodienthoai); }
     if (diachi) { updates.push(`DiaChi = $${paramIndex++}`); values.push(diachi); }
     if (email) { updates.push(`Email = $${paramIndex++}`); values.push(email); }
-    if (idLoaiDaiLy) { updates.push(`IDLoaiDaiLy = $${paramIndex++}`); values.push(idLoaiDaiLy); }    
+    if (idLoaiDaiLy) { updates.push(`IDLoaiDaiLy = $${paramIndex++}`); values.push(idLoaiDaiLy); }
     if (ngaytiepnhan) { updates.push(`NgayTiepNhan = $${paramIndex++}`); values.push(ngaytiepnhan); }
+    if (idQuan) { updates.push(`IDQuan = $${paramIndex++}`); values.push(idQuan); }
 
-    if (updates.length === 0 && !idQuan) {
+    if (updates.length === 0) {
       throw new Error('Không có trường nào để cập nhật.');
     }
 
+    values.push(idDaiLy);
+    
     let updateQuery;
-      // If district is changing, use the combined limit check + update query
-    if (idQuan && idQuan !== currentQuan) {
+    
+    // If district is changing, use the combined limit check + update query
+    if (isQuanChanging) {
       console.log("Thay đổi quận từ " + currentQuan + " sang " + idQuan);
-      values.push(idQuan);
-      const idQuanParamIndex = paramIndex++;
-      values.push(idDaiLy);
       
       updateQuery = `
         WITH validation_check AS (
           SELECT 
-            (SELECT COUNT(*) FROM inventory.QUAN WHERE IDQuan = $${idQuanParamIndex} AND DeletedAt IS NULL) as district_valid,
-            (SELECT COUNT(*) FROM inventory.DAILY WHERE IDQuan = $${idQuanParamIndex} AND DeletedAt IS NULL) as current_agents,
+            (SELECT COUNT(*) FROM inventory.QUAN WHERE IDQuan = $${paramIndex - 1} AND DeletedAt IS NULL) as district_valid,
+            (SELECT COUNT(*) FROM inventory.DAILY WHERE IDQuan = $${paramIndex - 1} AND DeletedAt IS NULL) as current_agents,
             (SELECT SoLuongDaiLyToiDa FROM inventory.THAMSO WHERE DeletedAt IS NULL ORDER BY CreatedAt DESC LIMIT 1) as max_agents
         ),
         update_check AS (
@@ -395,7 +398,7 @@ class DaiLyService {
         ),
         update_op AS (
           UPDATE inventory.DAILY 
-          SET ${updates.join(', ')}, IDQuan = $${idQuanParamIndex}
+          SET ${updates.join(', ')}
           WHERE IDDaiLy = $${paramIndex} 
             AND DeletedAt IS NULL
             AND (SELECT validation_result FROM update_check) = 'VALID'
@@ -410,23 +413,23 @@ class DaiLyService {
         FROM update_check uc
         LEFT JOIN update_op u ON TRUE;`;
     } else {
-      // Standard update without district change
-      values.push(idDaiLy);
-      
+      // Standard update without district change validation
       updateQuery = `
         UPDATE inventory.DAILY 
-        SET ${updates.join(', ')} ${idQuan ? `, IDQuan = ${idQuan}` : ''}
+        SET ${updates.join(', ')}
         WHERE IDDaiLy = $${paramIndex} AND DeletedAt IS NULL
-        RETURNING MaDaiLy as madaily, TRUE as update_successful;
+        RETURNING MaDaiLy as madaily, 'VALID' as validation_result;
       `;
-    }    console.log('Executing query:', updateQuery, values);
+    }
+
+    console.log('Executing query:', updateQuery, values);
     const result = await query(updateQuery, values);
 
-    if (result.rowCount === 0 || result.rows[0].validation_result !== 'VALID') {
+    if (result.rowCount === 0 || (result.rows[0].validation_result && result.rows[0].validation_result !== 'VALID')) {
       const row = result.rows[0];
-      if (row.validation_result === 'INVALID_DISTRICT') {
+      if (row && row.validation_result === 'INVALID_DISTRICT') {
         throw new Error('Mã quận không tồn tại hoặc đã bị xóa');
-      } else if (row.validation_result === 'MAX_AGENTS_EXCEEDED') {
+      } else if (row && row.validation_result === 'MAX_AGENTS_EXCEEDED') {
         throw new Error(`Số lượng đại lý trong quận đã đạt giới hạn tối đa (${row.max_agents}).`);
       } else {
         throw new Error('Không tìm thấy đại lý hoặc không thể cập nhật.');

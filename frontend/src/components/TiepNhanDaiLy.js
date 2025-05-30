@@ -85,6 +85,23 @@ export const TiepNhanDaiLy = () => {
         fetchData();
     }, []);
 
+    useEffect(() => {
+    if (selectedDaily) {
+        setEditId(selectedDaily.madaily || selectedDaily.maDaiLy);
+        setValue("madaily", selectedDaily.madaily || selectedDaily.maDaiLy);
+        setValue("tendaily", selectedDaily.tendaily || "");
+        setValue("diachi", selectedDaily.diachi || "");
+        setValue("sodienthoai", selectedDaily.sodienthoai || selectedDaily.dienthoai || "");
+        setValue("email", selectedDaily.email || "");
+        setValue("maquan", selectedDaily.maquan || "");
+        setValue("maloaidaily", selectedDaily.maloaidaily || "");
+        setValue("ngaytiepnhan", selectedDaily.ngaytiepnhan ? 
+            new Date(selectedDaily.ngaytiepnhan).toISOString().split("T")[0] : 
+            new Date().toISOString().split("T")[0]
+        );
+    }
+}, [selectedDaily, setValue]);
+
     // Function to get the latest DaiLy ID
     const fetchLatestDaiLyId = async () => {
         try {
