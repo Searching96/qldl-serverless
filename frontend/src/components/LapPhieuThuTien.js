@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Form, Card, Alert, Row,Col } from "react-bootstrap";
+import { Button, Form, Card, Alert, Row, Col } from "react-bootstrap";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { getAllDaily, createPhieuThu } from '../services/api';
+import { DaiLySelectionModal } from './DaiLySelectionModal';
 
 export const LapPhieuThuTien = () => {
   const { register, handleSubmit, setValue, reset, clearErrors, formState: { errors } } = useForm();
@@ -33,6 +34,8 @@ export const LapPhieuThuTien = () => {
   const [showLoading, setShowLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [showError, setShowError] = useState(false);
+  const [showDaiLyModal, setShowDaiLyModal] = useState(false);
+  const [selectedDaiLy, setSelectedDaiLy] = useState(null);
 
   useEffect(() => {
     fetchDaiLyList();
@@ -155,6 +158,21 @@ export const LapPhieuThuTien = () => {
     navigate("/");
   };
 
+  const handleDaiLySelect = (daiLy) => {
+    setSelectedDaiLy(daiLy);
+    setValue("tenDaiLy", daiLy.madaily);
+    setValue("noCuaDaiLy", daiLy.congno || '0');
+    setValue("dienThoai", daiLy.sodienthoai || daiLy.dienthoai || '');
+    setValue("email", daiLy.email || '');
+    setValue("diaChi", daiLy.diachi || '');
+    setShowDaiLyModal(false);
+    clearErrors("tenDaiLy");
+  };
+
+  const handleShowDaiLyModal = () => {
+    setShowDaiLyModal(true);
+  };
+
   return (
     <div className="container-fluid px-0 mt-4">
       <h1 className="ms-3">Lập phiếu thu tiền</h1>
@@ -203,37 +221,54 @@ export const LapPhieuThuTien = () => {
       )}
 
       <div className="px-3">
-        <div className="form-component">
+        <div className="container-fluid">
           <Card>
             <Card.Header className="bg-primary text-white text-center py-3">
-              <h4>💰 Lập Phiếu Thu Tiền</h4>
+              <h4 className="mb-0">💰 Lập Phiếu Thu Tiền</h4>
             </Card.Header>
-            <Card.Body>
+            <Card.Body className="p-4">
               <Form onSubmit={handleSubmit(submitHandler)}>
                 <div className="bg-light rounded p-4 mb-4">
                   <h6 className="text-primary fw-semibold mb-3 border-bottom border-primary pb-2">Thông tin phiếu thu</h6>
-                  <Row>
-                    <Col>
-                      {/* Dòng 1: Tên đại lý và Nợ của đại lý */}
-                      <Form.Group className="mb-3">
-                        <Form.Label>Tên đại lý</Form.Label>
-                        <Form.Select
-                          {...register("tenDaiLy", { required: "Vui lòng chọn đại lý" })}
-                          onChange={handleDaiLyChange}
-                        >
-                          <option value="">-- Chọn đại lý --</option>
-                          {daiLyList && daiLyList.map((daiLy) => (
-                            <option key={daiLy.madaily} value={daiLy.madaily}>
-                              {daiLy.tendaily}
-                            </option>
-                          ))}
-                        </Form.Select>
-                        {errors.tenDaiLy && <span className="text-danger">{errors.tenDaiLy.message}</span>}
+                  
+                  {/* First row */}
+                  <div className="row g-3 mb-3">
+                    <div className="col-md-6">
+                      <Form.Group>
+                        <Form.Label className="fw-medium mb-2">Tên đại lý</Form.Label>
+                        <div className="d-flex gap-2">
+                          <Form.Select
+                            {...register("tenDaiLy", { required: "Vui lòng chọn đại lý" })}
+                            onChange={handleDaiLyChange}
+                          >
+                            <option value="">-- Chọn đại lý --</option>
+                            {daiLyList && daiLyList.map((daiLy) => (
+                              <option key={daiLy.madaily} value={daiLy.madaily}>
+                                {daiLy.tendaily}
+                              </option>
+                            ))}
+                            {selectedDaiLy && (
+                              <option value={selectedDaiLy.madaily} selected>
+                                {selectedDaiLy.tendaily}
+                              </option>
+                            )}
+                          </Form.Select>
+                          <Button
+                            type="button"
+                            variant="outline-primary"
+                            size="sm"
+                            onClick={handleShowDaiLyModal}
+                            title="Tìm kiếm đại lý"
+                          >
+                            🔍
+                          </Button>
+                        </div>
+                        {errors.tenDaiLy && <div className="text-danger small mt-1">{errors.tenDaiLy.message}</div>}
                       </Form.Group>
-                    </Col>
-                    <Col>
-                      <Form.Group className="mb-3">
-                        <Form.Label>Nợ của đại lý</Form.Label>
+                    </div>
+                    <div className="col-md-6">
+                      <Form.Group>
+                        <Form.Label className="fw-medium mb-2">Nợ của đại lý</Form.Label>
                         <Form.Control
                           type="text"
                           {...register("noCuaDaiLy")}
@@ -241,14 +276,14 @@ export const LapPhieuThuTien = () => {
                           placeholder="Nợ hiện tại"
                         />
                       </Form.Group>
-                    </Col>
-                  </Row>
+                    </div>
+                  </div>
 
-                  {/* Dòng 2: Số điện thoại và Email */}
-                  <Row>
-                    <Col>
-                      <Form.Group className="mb-3">
-                        <Form.Label>Số điện thoại</Form.Label>
+                  {/* Second row */}
+                  <div className="row g-3 mb-3">
+                    <div className="col-md-6">
+                      <Form.Group>
+                        <Form.Label className="fw-medium mb-2">Số điện thoại</Form.Label>
                         <Form.Control
                           type="tel"
                           {...register("dienThoai")}
@@ -256,10 +291,10 @@ export const LapPhieuThuTien = () => {
                           readOnly
                         />
                       </Form.Group>
-                    </Col>
-                    <Col>
-                      <Form.Group className="mb-3">
-                        <Form.Label>Email</Form.Label>
+                    </div>
+                    <div className="col-md-6">
+                      <Form.Group>
+                        <Form.Label className="fw-medium mb-2">Email</Form.Label>
                         <Form.Control
                           type="email"
                           {...register("email")}
@@ -267,14 +302,14 @@ export const LapPhieuThuTien = () => {
                           readOnly
                         />
                       </Form.Group>
-                    </Col>
-                  </Row>
+                    </div>
+                  </div>
 
-                  {/* Dòng 3: Địa chỉ */}
-                  <Row>
-                    <Col>
-                      <Form.Group className="mb-3">
-                        <Form.Label>Địa chỉ</Form.Label>
+                  {/* Third row */}
+                  <div className="row g-3 mb-3">
+                    <div className="col-12">
+                      <Form.Group>
+                        <Form.Label className="fw-medium mb-2">Địa chỉ</Form.Label>
                         <Form.Control
                           type="text"
                           {...register("diaChi")}
@@ -282,14 +317,14 @@ export const LapPhieuThuTien = () => {
                           readOnly
                         />
                       </Form.Group>
-                    </Col>
-                  </Row>
+                    </div>
+                  </div>
 
-                  {/* Dòng 4: Ngày thu tiền và Số tiền thu */}
-                  <Row>
-                    <Col>
-                      <Form.Group className="mb-3">
-                        <Form.Label>Ngày thu tiền</Form.Label>
+                  {/* Fourth row */}
+                  <div className="row g-3">
+                    <div className="col-md-6">
+                      <Form.Group>
+                        <Form.Label className="fw-medium mb-2">Ngày thu tiền</Form.Label>
                         <Form.Control
                           type="text"
                           {...register("ngayThuTien", {
@@ -301,12 +336,12 @@ export const LapPhieuThuTien = () => {
                           })}
                           placeholder="dd/mm/yyyy"
                         />
-                        {errors.ngayThuTien && <span className="text-danger">{errors.ngayThuTien.message}</span>}
+                        {errors.ngayThuTien && <div className="text-danger small mt-1">{errors.ngayThuTien.message}</div>}
                       </Form.Group>
-                    </Col>
-                    <Col>
-                      <Form.Group className="mb-3">
-                        <Form.Label>Số tiền thu</Form.Label>
+                    </div>
+                    <div className="col-md-6">
+                      <Form.Group>
+                        <Form.Label className="fw-medium mb-2">Số tiền thu</Form.Label>
                         <Form.Control
                           type="number"
                           {...register("soTienThu", {
@@ -320,31 +355,26 @@ export const LapPhieuThuTien = () => {
                           step="1"
                           placeholder="Nhập số tiền thu"
                         />
-                        {errors.soTienThu && <span className="text-danger">{errors.soTienThu.message}</span>}
+                        {errors.soTienThu && <div className="text-danger small mt-1">{errors.soTienThu.message}</div>}
                       </Form.Group>
-                    </Col>
-                  </Row>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="form-buttons">
+                <div className="d-flex flex-wrap gap-2 justify-content-center pt-3 border-top">
                   <Button
                     type="submit"
                     variant="primary"
                     disabled={showLoading}
+                    className="px-4"
                   >
                     {showLoading ? 'Đang lập phiếu thu...' : '💰 Lập phiếu thu tiền'}
                   </Button>
                   <Button
                     type="button"
                     variant="outline-secondary"
-                    onClick={() => console.log('Tìm đại lý')}
-                  >
-                    🔍 Tìm đại lý
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline-secondary"
                     onClick={handleThoat}
+                    className="px-4"
                   >
                     🗑️ Làm mới
                   </Button>
@@ -352,6 +382,7 @@ export const LapPhieuThuTien = () => {
                     type="button"
                     variant="outline-secondary"
                     onClick={handleExitToHome}
+                    className="px-4"
                   >
                     ❌ Thoát
                   </Button>
@@ -360,7 +391,14 @@ export const LapPhieuThuTien = () => {
             </Card.Body>
           </Card>
         </div>
-      </div >
-    </div >
+      </div>
+
+      {/* DaiLy Selection Modal */}
+      <DaiLySelectionModal
+        show={showDaiLyModal}
+        onHide={() => setShowDaiLyModal(false)}
+        onSelect={handleDaiLySelect}
+      />
+    </div>
   );
 };

@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Form, Card, Alert, Table } from "react-bootstrap";
+import { Button, Form, Card, Alert, Table, Row, Col } from "react-bootstrap";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { getAllDaily, createPhieuXuat, getAllMatHang, getAllPhieuXuat } from '../services/api';
+import { DaiLySelectionModal } from './DaiLySelectionModal';
 
 export const LapPhieuXuatHang = () => {
   const { register, handleSubmit, setValue, reset, clearErrors, formState: { errors } } = useForm();
@@ -27,6 +28,8 @@ export const LapPhieuXuatHang = () => {
   const [showLoading, setShowLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [showError, setShowError] = useState(false);
+  const [showDaiLyModal, setShowDaiLyModal] = useState(false);
+  const [selectedDaiLy, setSelectedDaiLy] = useState(null);
 
   useEffect(() => {
     fetchDaiLyList();
@@ -339,6 +342,19 @@ export const LapPhieuXuatHang = () => {
     navigate("/");
   };
 
+  const handleDaiLySelect = (daiLy) => {
+    setSelectedDaiLy(daiLy);
+    setValue("tenDaiLy", daiLy.madaily);
+    setValue("noDaiLy", daiLy.congno || '0');
+    setValue("noToiDa", daiLy.notoida || '0');
+    setShowDaiLyModal(false);
+    clearErrors("tenDaiLy");
+  };
+
+  const handleOpenDaiLyModal = () => {
+    setShowDaiLyModal(true);
+  };
+
   return (
     <div className="container-fluid px-0 mt-4">
       <h1 className="ms-3">Lập phiếu xuất hàng</h1>
@@ -398,8 +414,8 @@ export const LapPhieuXuatHang = () => {
                   <h6 className="text-primary fw-semibold mb-3 border-bottom border-primary pb-2">Thông tin phiếu xuất</h6>
                   
                   {/* Form fields in rows */}
-                  <div className="row g-3">
-                    <div className="col-lg-2 col-md-4 col-sm-6">
+                  <Row>
+                    <Col>
                       <Form.Group>
                         <Form.Label className="fw-medium mb-2">Mã phiếu xuất</Form.Label>
                         <Form.Control
@@ -409,27 +425,43 @@ export const LapPhieuXuatHang = () => {
                         />
                         {errors.maPhieuXuat && <div className="text-danger small mt-1">{errors.maPhieuXuat.message}</div>}
                       </Form.Group>
-                    </div>
+                    </Col>
                     
-                    <div className="col-lg-2 col-md-4 col-sm-6">
+                    <Col>
                       <Form.Group>
                         <Form.Label className="fw-medium mb-2">Tên đại lý</Form.Label>
-                        <Form.Select
-                          {...register("tenDaiLy", { required: "Vui lòng chọn đại lý" })}
-                          onChange={handleDaiLyChange}
-                        >
-                          <option value="">-- Chọn đại lý --</option>
-                          {daiLyList && daiLyList.map((daiLy) => (
-                            <option key={daiLy.madaily} value={daiLy.madaily}>
-                              {daiLy.tendaily}
-                            </option>
-                          ))}
-                        </Form.Select>
+                        <div className="d-flex gap-2">
+                          <Form.Select
+                            {...register("tenDaiLy", { required: "Vui lòng chọn đại lý" })}
+                            onChange={handleDaiLyChange}
+                          >
+                            <option value="">-- Chọn đại lý --</option>
+                            {daiLyList && daiLyList.map((daiLy) => (
+                              <option key={daiLy.madaily} value={daiLy.madaily}>
+                                {daiLy.tendaily}
+                              </option>
+                            ))}
+                            {selectedDaiLy && (
+                              <option value={selectedDaiLy.madaily} selected>
+                                {selectedDaiLy.tendaily}
+                              </option>
+                            )}
+                          </Form.Select>
+                          <Button
+                            type="button"
+                            variant="outline-primary"
+                            size="sm"
+                            onClick={handleOpenDaiLyModal}
+                            title="Tìm kiếm đại lý"
+                          >
+                            🔍
+                          </Button>
+                        </div>
                         {errors.tenDaiLy && <div className="text-danger small mt-1">{errors.tenDaiLy.message}</div>}
                       </Form.Group>
-                    </div>
+                    </Col>
                     
-                    <div className="col-lg-2 col-md-4 col-sm-6">
+                    <Col>
                       <Form.Group>
                         <Form.Label className="fw-medium mb-2">Nợ đại lý</Form.Label>
                         <Form.Control
@@ -439,9 +471,9 @@ export const LapPhieuXuatHang = () => {
                           placeholder="Nợ hiện tại"
                         />
                       </Form.Group>
-                    </div>
+                    </Col>
                     
-                    <div className="col-lg-2 col-md-4 col-sm-6">
+                    <Col>
                       <Form.Group>
                         <Form.Label className="fw-medium mb-2">Nợ tối đa</Form.Label>
                         <Form.Control
@@ -451,9 +483,9 @@ export const LapPhieuXuatHang = () => {
                           placeholder="Nợ tối đa"
                         />
                       </Form.Group>
-                    </div>
+                    </Col>
                     
-                    <div className="col-lg-2 col-md-4 col-sm-6">
+                    <Col>
                       <Form.Group>
                         <Form.Label className="fw-medium mb-2">Ngày lập</Form.Label>
                         <Form.Control
@@ -464,9 +496,9 @@ export const LapPhieuXuatHang = () => {
                         />
                         {errors.ngayLap && <div className="text-danger small mt-1">{errors.ngayLap.message}</div>}
                       </Form.Group>
-                    </div>
+                    </Col>
                     
-                    <div className="col-lg-2 col-md-4 col-sm-6">
+                    <Col>
                       <Form.Group>
                         <Form.Label className="fw-medium mb-2">Tổng tiền</Form.Label>
                         <Form.Control
@@ -476,8 +508,8 @@ export const LapPhieuXuatHang = () => {
                           placeholder="Tổng tiền"
                         />
                       </Form.Group>
-                    </div>
-                  </div>
+                    </Col>
+                  </Row>
                 </div>
 
                 {/* Chi tiết mặt hàng */}
@@ -594,14 +626,6 @@ export const LapPhieuXuatHang = () => {
                   <Button
                     type="button"
                     variant="outline-secondary"
-                    onClick={() => console.log('Tìm đại lý')}
-                    className="px-4"
-                  >
-                    🔍 Tìm đại lý
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline-secondary"
                     onClick={handleThoat}
                     className="px-4"
                   >
@@ -621,6 +645,13 @@ export const LapPhieuXuatHang = () => {
           </Card>
         </div>
       </div>
+
+      {/* DaiLy Selection Modal */}
+      <DaiLySelectionModal
+        show={showDaiLyModal}
+        onHide={() => setShowDaiLyModal(false)}
+        onSelect={handleDaiLySelect}
+      />
     </div>
   );
 };

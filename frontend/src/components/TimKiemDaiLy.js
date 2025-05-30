@@ -7,7 +7,7 @@ import {
 } from "../services/api.js";
 import { Quan, LoaiDaiLy } from "../models/index.js";
 
-export const TimKiemDaiLy = () => {
+export const TimKiemDaiLy = ({ isModal = false, onSelect = null, onClose = null }) => {
     const navigate = useNavigate();
     const [dsQuan, setDSQuan] = useState([]);
     const [dsLoaiDaiLy, setDSLoaiDaiLy] = useState([]);
@@ -56,6 +56,9 @@ export const TimKiemDaiLy = () => {
 
     const [searchResults, setSearchResults] = useState([]);
     const [searchPerformed, setSearchPerformed] = useState(false);
+
+    // Add selection state for modal mode
+    const [selectedAgent, setSelectedAgent] = useState(null);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -179,8 +182,33 @@ export const TimKiemDaiLy = () => {
         setSearchPerformed(false);
     };
 
+    const handleSelectAgent = (agent) => {
+        if (isModal) {
+            // In modal mode, immediately select and return
+            if (onSelect) {
+                onSelect(agent);
+            }
+            if (onClose) {
+                onClose();
+            }
+        }
+    };
+
+    const handleConfirmSelection = () => {
+        if (selectedAgent && onSelect) {
+            onSelect(selectedAgent);
+        }
+        if (onClose) {
+            onClose();
+        }
+    };
+
     const handleExitToHome = () => {
-        navigate("/");
+        if (isModal && onClose) {
+            onClose();
+        } else {
+            navigate("/");
+        }
     };
 
     const formatCurrency = (amount) => {
@@ -197,7 +225,7 @@ export const TimKiemDaiLy = () => {
 
     return (
         <div className="container-fluid px-0 mt-4">
-            <h1 className="ms-3">Tìm kiếm đại lý</h1>
+            <h1 className="ms-3">{isModal ? "Chọn đại lý" : "Tìm kiếm đại lý"}</h1>
 
             {isLoading ? (
                 <div className="text-center">
@@ -253,7 +281,7 @@ export const TimKiemDaiLy = () => {
                         <div className="container-fluid mb-4">
                             <Card>
                                 <Card.Header className="bg-primary text-white text-center py-3">
-                                    <h4 className="mb-0">🔍 Tra cứu đại lý</h4>
+                                    <h4 className="mb-0">{isModal ? "🔍 Chọn đại lý" : "🔍 Tra cứu đại lý"}</h4>
                                 </Card.Header>
                                 <Card.Body className="p-4">
                                     <Form onSubmit={handleSearch}>
@@ -642,7 +670,7 @@ export const TimKiemDaiLy = () => {
                                                 onClick={handleExitToHome}
                                                 className="px-4"
                                             >
-                                                ❌ Thoát
+                                                ❌ {isModal ? "Đóng" : "Thoát"}
                                             </Button>
                                         </div>
                                     </Form>
@@ -655,7 +683,9 @@ export const TimKiemDaiLy = () => {
                             <div className="container-fluid mt-4">
                                 <Card>
                                     <Card.Header className="bg-primary text-white py-3">
-                                        <h5 className="mb-0 text-white">📋 Kết quả tìm kiếm ({searchResults.length} kết quả)</h5>
+                                        <div className="d-flex justify-content-between align-items-center">
+                                            <h5 className="mb-0 text-white">📋 Kết quả tìm kiếm ({searchResults.length} kết quả)</h5>
+                                        </div>
                                     </Card.Header>
                                     <Card.Body className="p-0">
                                         {searchResults.length === 0 ? (
@@ -677,6 +707,7 @@ export const TimKiemDaiLy = () => {
                                                             <th className="fw-semibold">Loại đại lý</th>
                                                             <th className="fw-semibold">Ngày tiếp nhận</th>
                                                             <th className="fw-semibold">Công nợ</th>
+                                                            {isModal && <th className="fw-semibold text-center">Thao tác</th>}
                                                         </tr>
                                                     </thead>
                                                     <tbody>
@@ -693,6 +724,17 @@ export const TimKiemDaiLy = () => {
                                                                 <td className={agent.congno > 0 ? 'text-danger fw-bold' : 'text-success'}>
                                                                     {formatCurrency(agent.congno || 0)}
                                                                 </td>
+                                                                {isModal && (
+                                                                    <td className="text-center">
+                                                                        <Button
+                                                                            variant="primary"
+                                                                            size="sm"
+                                                                            onClick={() => handleSelectAgent(agent)}
+                                                                        >
+                                                                            ✅ Chọn
+                                                                        </Button>
+                                                                    </td>
+                                                                )}
                                                             </tr>
                                                         ))}
                                                     </tbody>
