@@ -7,7 +7,7 @@ export const Header = () => {
   const location = useLocation();
 
   return (
-    <Navbar bg="dark" variant="dark" expand="lg">
+    <Navbar bg="primary" variant="dark" expand="lg">
       <Container>
         <Link className="navbar-brand" to="/">
           QLDL
