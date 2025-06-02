@@ -10,7 +10,8 @@ provider:
   runtime: nodejs22.x
   region: ${env:AWS_REGION}
   stage: ${opt:stage, 'dev'}
-  timeout: 29
+  memorySize: 128
+  timeout: 10
   environment:
     DATABASE_REGION: ${env:DB_REGION}
     DATABASE_USER: ${env:DB_USER}
