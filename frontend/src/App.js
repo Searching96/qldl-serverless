@@ -13,14 +13,20 @@ import "bootstrap-icons/font/bootstrap-icons.css";
 import "./styles/App.css";
 import "./styles/Navbar.css";
 
-
 function App() {
     return (
         <Router>
             <div>
                 <Header/>
                 <Routes>
-                    <Route path="/" element={<div className="container mt-4"><h1>Chào mừng đến với hệ thống quản lý đại lý</h1></div>} />
+                    <Route
+                        path="/"
+                        element={
+                            <div className="container mt-4 d-flex justify-content-center align-items-center" style={{ minHeight: "60vh" }}>
+                                <h1 className="text-center">Chào mừng đến với hệ thống quản lý đại lý</h1>
+                            </div>
+                        }
+                    />
                     <Route path="/sprint01" element={<TiepNhanDaiLy />} />
                     <Route path="/tiep-nhan-dai-ly" element={<TiepNhanDaiLy />} />
                     <Route path="/sprint02" element={<LapPhieuXuatHang />} />
