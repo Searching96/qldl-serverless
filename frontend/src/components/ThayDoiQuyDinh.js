@@ -133,40 +133,24 @@ export const ThayDoiQuyDinh = () => {
 
             {/* Alert messages */}
             {showSuccess && (
-                <div className="alert alert-success mx-3" role="alert">
-                    <div className="d-flex justify-content-between align-items-center">
-                        <span>{successMessage}</span>
-                        <button
-                            className="btn btn-outline-primary btn-sm ms-2"
-                            onClick={() => setShowSuccess(false)}
-                        >
-                            <i className="bi bi-x"></i>
-                        </button>
-                    </div>
-                </div>
+                <Alert variant="success" className="mx-3" dismissible onClose={() => setShowSuccess(false)}>
+                    {successMessage}
+                </Alert>
             )}
 
             {showError && (
-                <div className="alert alert-danger mx-3" role="alert">
-                    <div className="d-flex justify-content-between align-items-center">
-                        <span>{errorMessage}</span>
-                        <button
-                            className="btn btn-outline-primary btn-sm ms-2"
-                            onClick={() => setShowError(false)}
-                        >
-                            <i className="bi bi-x"></i>
-                        </button>
-                    </div>
-                </div>
+                <Alert variant="danger" className="mx-3" dismissible onClose={() => setShowError(false)}>
+                    {errorMessage}
+                </Alert>
             )}
 
             <div className="px-3">
-                <div className="form-component">
-                    <Card>
-                        <Card.Header>
-                            <h4>⚙️ Cấu hình tham số hệ thống</h4>
+                <div className="container-fluid">
+                    <Card className="shadow">
+                        <Card.Header className="bg-primary text-white text-center py-3">
+                            <h4 className="mb-0">⚙️ Cấu hình tham số hệ thống</h4>
                         </Card.Header>
-                        <Card.Body>
+                        <Card.Body className="p-4">
                             {loading && (
                                 <div className="text-center mb-3">
                                     <div className="spinner-border text-primary" role="status">
@@ -177,97 +161,96 @@ export const ThayDoiQuyDinh = () => {
                             )}
 
                             <Form onSubmit={handleSubmit(submitHandler)}>
-                                <div className="form-layout">
-                                    <div className="form-section">
-                                        <h6>Quy định về đại lý</h6>
-                                        <Row className="mb-4">
-                                            <Col md={6}>
-                                                <Form.Group className="mb-3">
-                                                    <Form.Label>
-                                                        <strong>Số lượng đại lý tối đa trong một quận</strong>
-                                                    </Form.Label>
-                                                    <Form.Control
-                                                        type="number"
-                                                        {...register("soluongdailytoida", {
-                                                            required: "Số lượng đại lý tối đa là bắt buộc",
-                                                            min: { value: 1, message: "Số lượng tối thiểu là 1" },
-                                                            max: { value: 100, message: "Số lượng tối đa là 100" }
-                                                        })}
-                                                        placeholder="Nhập số lượng đại lý tối đa"
-                                                        min="1"
-                                                        max="100"
-                                                        onChange={(e) => handleParameterChange("soluongdailytoida", e.target.value)}
-                                                    />
-                                                    {errors.soluongdailytoida && (
-                                                        <span className="text-danger">{errors.soluongdailytoida.message}</span>
-                                                    )}
-                                                    <Form.Text className="text-muted">
-                                                        Quy định số lượng đại lý tối đa có thể tiếp nhận trong một quận (1-100)
-                                                    </Form.Text>
-                                                </Form.Group>
-                                            </Col>
-                                            <Col md={6}>
-                                                <div className="alert alert-info">
-                                                    <h6><i className="bi bi-info-circle"></i> Thông tin</h6>
-                                                    <p className="mb-1"><strong>Giá trị hiện tại:</strong> {parameters.soluongdailytoida || 'Chưa thiết lập'} đại lý/quận</p>
-                                                    <p className="mb-0">Tham số này ảnh hưởng đến việc tiếp nhận đại lý mới trong hệ thống.</p>
-                                                </div>
-                                            </Col>
-                                        </Row>
-                                    </div>
-
-                                    <div className="form-section">
-                                        <h6>Quy định về thu tiền</h6>
-                                        <Row className="mb-4">
-                                            <Col md={6}>
-                                                <Form.Group className="mb-3">
-                                                    <Form.Label>
-                                                        <strong>Quy định về việc thu tiền nợ</strong>
-                                                    </Form.Label>
-                                                    <Form.Select
-                                                        {...register("quydinhtienthutienno", {
-                                                            required: "Quy định thu tiền nợ là bắt buộc"
-                                                        })}
-                                                        onChange={(e) => handleParameterChange("quydinhtienthutienno", e.target.value)}
-                                                    >
-                                                        <option value="">-- Chọn quy định --</option>
-                                                        <option value="1">Chỉ thu tiền không vượt quá số tiền nợ</option>
-                                                        <option value="0">Cho phép thu tiền vượt quá số tiền nợ</option>
-                                                    </Form.Select>
-                                                    {errors.quydinhtienthutienno && (
-                                                        <span className="text-danger">{errors.quydinhtienthutienno.message}</span>
-                                                    )}
-                                                    <Form.Text className="text-muted">
-                                                        Quy định về cách thu tiền từ đại lý khi có công nợ
-                                                    </Form.Text>
-                                                </Form.Group>
-                                            </Col>
-                                            <Col md={6}>
-                                                <div className="alert alert-warning">
-                                                    <h6><i className="bi bi-exclamation-triangle"></i> Lưu ý</h6>
-                                                    <p className="mb-1">
-                                                        <strong>Quy định hiện tại:</strong>
-                                                        {parameters.quydinhtienthutienno === 1
-                                                            ? " Chỉ thu tiền không vượt quá số tiền nợ"
-                                                            : parameters.quydinhtienthutienno === 0
-                                                            ? " Cho phép thu tiền vượt quá số tiền nợ"
-                                                            : " Chưa thiết lập"
-                                                        }
-                                                    </p>
-                                                    <p className="mb-0">
-                                                        Thay đổi quy định này sẽ ảnh hưởng đến tất cả các giao dịch thu tiền trong tương lai.
-                                                    </p>
-                                                </div>
-                                            </Col>
-                                        </Row>
-                                    </div>
+                                <div className="bg-light rounded p-4 mb-4">
+                                    <h6 className="text-primary fw-semibold mb-3 border-bottom border-primary pb-2">Quy định về đại lý</h6>
+                                    <Row className="mb-4">
+                                        <Col md={6}>
+                                            <Form.Group className="mb-3">
+                                                <Form.Label className="fw-medium mb-2">
+                                                    Số lượng đại lý tối đa trong một quận
+                                                </Form.Label>
+                                                <Form.Control
+                                                    type="number"
+                                                    {...register("soluongdailytoida", {
+                                                        required: "Số lượng đại lý tối đa là bắt buộc",
+                                                        min: { value: 1, message: "Số lượng tối thiểu là 1" },
+                                                        max: { value: 100, message: "Số lượng tối đa là 100" }
+                                                    })}
+                                                    placeholder="Nhập số lượng đại lý tối đa"
+                                                    min="1"
+                                                    max="100"
+                                                    onChange={(e) => handleParameterChange("soluongdailytoida", e.target.value)}
+                                                />
+                                                {errors.soluongdailytoida && (
+                                                    <span className="text-danger">{errors.soluongdailytoida.message}</span>
+                                                )}
+                                                <Form.Text className="text-muted">
+                                                    Quy định số lượng đại lý tối đa có thể tiếp nhận trong một quận (1-100)
+                                                </Form.Text>
+                                            </Form.Group>
+                                        </Col>
+                                        <Col md={6}>
+                                            <Alert variant="info" className="h-100 d-flex flex-column justify-content-center">
+                                                <h6><i className="bi bi-info-circle"></i> Thông tin</h6>
+                                                <p className="mb-1"><strong>Giá trị hiện tại:</strong> {parameters.soluongdailytoida || 'Chưa thiết lập'} đại lý/quận</p>
+                                                <p className="mb-0">Tham số này ảnh hưởng đến việc tiếp nhận đại lý mới trong hệ thống.</p>
+                                            </Alert>
+                                        </Col>
+                                    </Row>
                                 </div>
 
-                                <div className="form-buttons">
+                                <div className="bg-light rounded p-4 mb-4">
+                                    <h6 className="text-primary fw-semibold mb-3 border-bottom border-primary pb-2">Quy định về thu tiền</h6>
+                                    <Row className="mb-4">
+                                        <Col md={6}>
+                                            <Form.Group className="mb-3">
+                                                <Form.Label className="fw-medium mb-2">
+                                                    Quy định về việc thu tiền nợ
+                                                </Form.Label>
+                                                <Form.Select
+                                                    {...register("quydinhtienthutienno", {
+                                                        required: "Quy định thu tiền nợ là bắt buộc"
+                                                    })}
+                                                    onChange={(e) => handleParameterChange("quydinhtienthutienno", e.target.value)}
+                                                >
+                                                    <option value="">-- Chọn quy định --</option>
+                                                    <option value="1">Chỉ thu tiền không vượt quá số tiền nợ</option>
+                                                    <option value="0">Cho phép thu tiền vượt quá số tiền nợ</option>
+                                                </Form.Select>
+                                                {errors.quydinhtienthutienno && (
+                                                    <span className="text-danger">{errors.quydinhtienthutienno.message}</span>
+                                                )}
+                                                <Form.Text className="text-muted">
+                                                    Quy định về cách thu tiền từ đại lý khi có công nợ
+                                                </Form.Text>
+                                            </Form.Group>
+                                        </Col>
+                                        <Col md={6}>
+                                            <Alert variant="warning" className="h-100 d-flex flex-column justify-content-center">
+                                                <h6><i className="bi bi-exclamation-triangle"></i> Lưu ý</h6>
+                                                <p className="mb-1">
+                                                    <strong>Quy định hiện tại:</strong>
+                                                    {parameters.quydinhtienthutienno === 1
+                                                        ? " Chỉ thu tiền không vượt quá số tiền nợ"
+                                                        : parameters.quydinhtienthutienno === 0
+                                                            ? " Cho phép thu tiền vượt quá số tiền nợ"
+                                                            : " Chưa thiết lập"
+                                                    }
+                                                </p>
+                                                <p className="mb-0">
+                                                    Thay đổi quy định này sẽ ảnh hưởng đến tất cả các giao dịch thu tiền trong tương lai.
+                                                </p>
+                                            </Alert>
+                                        </Col>
+                                    </Row>
+                                </div>
+
+                                <div className="d-flex flex-wrap gap-2 justify-content-center pt-3 border-top">
                                     <Button
                                         type="submit"
                                         variant="primary"
                                         disabled={loading || !hasChanges}
+                                        className="px-4"
                                     >
                                         {loading ? 'Đang cập nhật...' : '💾 Lưu thay đổi'}
                                     </Button>
@@ -276,6 +259,7 @@ export const ThayDoiQuyDinh = () => {
                                         variant="outline-secondary"
                                         onClick={handleReset}
                                         disabled={loading || !hasChanges}
+                                        className="px-4"
                                     >
                                         🔄 Khôi phục
                                     </Button>
@@ -284,6 +268,7 @@ export const ThayDoiQuyDinh = () => {
                                         variant="outline-secondary"
                                         onClick={fetchParameters}
                                         disabled={loading}
+                                        className="px-4"
                                     >
                                         🔃 Tải lại
                                     </Button>
@@ -291,6 +276,7 @@ export const ThayDoiQuyDinh = () => {
                                         type="button"
                                         variant="outline-secondary"
                                         onClick={handleExitToHome}
+                                        className="px-4"
                                     >
                                         ❌ Thoát
                                     </Button>

@@ -236,33 +236,22 @@ export const LapPhieuThuTien = () => {
                     <div className="col-md-6">
                       <Form.Group>
                         <Form.Label className="fw-medium mb-2">Tên đại lý</Form.Label>
-                        <div className="d-flex gap-2">
-                          <Form.Select
-                            {...register("tenDaiLy", { required: "Vui lòng chọn đại lý" })}
-                            onChange={handleDaiLyChange}
-                          >
-                            <option value="">-- Chọn đại lý --</option>
-                            {daiLyList && daiLyList.map((daiLy) => (
-                              <option key={daiLy.madaily} value={daiLy.madaily}>
-                                {daiLy.tendaily}
-                              </option>
-                            ))}
-                            {selectedDaiLy && (
-                              <option value={selectedDaiLy.madaily} selected>
-                                {selectedDaiLy.tendaily}
-                              </option>
-                            )}
-                          </Form.Select>
-                          <Button
-                            type="button"
-                            variant="outline-primary"
-                            size="sm"
-                            onClick={handleShowDaiLyModal}
-                            title="Tìm kiếm đại lý"
-                          >
-                            🔍
-                          </Button>
-                        </div>
+                        <Form.Select
+                          {...register("tenDaiLy", { required: "Vui lòng chọn đại lý" })}
+                          onChange={handleDaiLyChange}
+                        >
+                          <option value="">-- Chọn đại lý --</option>
+                          {daiLyList && daiLyList.map((daiLy) => (
+                            <option key={daiLy.madaily} value={daiLy.madaily}>
+                              {daiLy.tendaily}
+                            </option>
+                          ))}
+                          {selectedDaiLy && (
+                            <option value={selectedDaiLy.madaily} selected>
+                              {selectedDaiLy.tendaily}
+                            </option>
+                          )}
+                        </Form.Select>
                         {errors.tenDaiLy && <div className="text-danger small mt-1">{errors.tenDaiLy.message}</div>}
                       </Form.Group>
                     </div>
@@ -369,6 +358,14 @@ export const LapPhieuThuTien = () => {
                     className="px-4"
                   >
                     {showLoading ? 'Đang lập phiếu thu...' : '💰 Lập phiếu thu tiền'}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline-primary"
+                    onClick={handleShowDaiLyModal}
+                    className="px-4"
+                  >
+                    🔍 Tìm đại lý
                   </Button>
                   <Button
                     type="button"

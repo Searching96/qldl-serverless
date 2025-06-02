@@ -123,100 +123,110 @@ export const ThaoTacDb = () => {
     <div className="container-fluid px-0 mt-4">
       <h1 className="ms-3">Thao tác Database</h1>
       
-      {/* Error Alert */}
+      {/* Alert messages */}
+      {results && (
+        <Alert variant="success" className="mx-3" dismissible onClose={() => setResults(null)}>
+          <strong>Thực thi thành công!</strong> Kết quả hiển thị bên dưới.
+        </Alert>
+      )}
+
       {error && (
-        <div className="alert alert-danger mx-3" role="alert">
-          <div className="d-flex justify-content-between align-items-center">
-            <span>{error}</span>
-            <button
-              className="btn btn-outline-primary btn-sm ms-2"
-              onClick={() => setError('')}
-            >
-              <i className="bi bi-x"></i>
-            </button>
+        <Alert variant="danger" className="mx-3" dismissible onClose={() => setError('')}>
+          <strong>Lỗi:</strong> {error}
+        </Alert>
+      )}
+
+      {loading && (
+        <Alert variant="info" className="mx-3">
+          <div className="d-flex align-items-center">
+            <div className="spinner-border spinner-border-sm me-2" role="status">
+              <span className="visually-hidden">Đang thực thi...</span>
+            </div>
+            Đang thực thi lệnh SQL...
           </div>
-        </div>
+        </Alert>
       )}
 
       <div className="px-3">
-        <div className="form-component">
-          <Card>
-            <Card.Header>
-              <h4>🛠️ Thao Tác Database</h4>
-              <small className="text-muted">Hỗ trợ lệnh SELECT (truy vấn) và INSERT (chèn dữ liệu)</small>
+        <div className="container-fluid">
+          <Card className="shadow">
+            <Card.Header className="bg-primary text-white text-center py-3">
+              <h4 className="mb-0">🛠️ Thao Tác Database</h4>
+              <small className="d-block mt-1 opacity-75">Hỗ trợ lệnh SELECT (truy vấn) và INSERT (chèn dữ liệu)</small>
             </Card.Header>
-            <Card.Body>
+            <Card.Body className="p-4">
               <Form>
-                <div className="form-layout">
-                  <div className="form-section">
-                    <h6>Cấu hình thao tác</h6>
+                <div className="bg-light rounded p-4 mb-4">
+                  <h6 className="text-primary fw-semibold mb-3 border-bottom border-primary pb-2">Cấu hình thao tác</h6>
 
-                    {/* Operation Type Selection */}
-                    <Form.Group className="mb-3">
-                      <Form.Label>Loại thao tác:</Form.Label>
-                      <div className="d-flex gap-3">
-                        <Form.Check
-                          type="radio"
-                          id="query-radio"
-                          name="operationType"
-                          label="Query (Truy vấn)"
-                          checked={operationType === 'query'}
-                          onChange={() => setOperationType('query')}
-                        />
-                        <Form.Check
-                          type="radio"
-                          id="insert-radio"
-                          name="operationType"
-                          label="Insert (Chèn dữ liệu)"
-                          checked={operationType === 'insert'}
-                          onChange={() => setOperationType('insert')}
-                        />
-                      </div>
-                    </Form.Group>
-
-                    <Form.Group className="mb-3">
-                      <Form.Label>Lệnh SQL:</Form.Label>
-                      <Form.Control
-                        as="textarea"
-                        rows={5}
-                        value={sqlCommand}
-                        onChange={(e) => setSqlCommand(e.target.value)}
-                        placeholder={
-                          operationType === 'query' 
-                            ? "Nhập lệnh SELECT&#10;Ví dụ: SELECT * FROM daily;"
-                            : "Nhập lệnh INSERT&#10;Ví dụ: INSERT INTO daily (tendaily, diachi) VALUES ('Đại lý A', '123 ABC');"
-                        }
+                  {/* Operation Type Selection */}
+                  <Form.Group className="mb-3">
+                    <Form.Label className="fw-medium mb-2">Loại thao tác:</Form.Label>
+                    <div className="d-flex gap-3">
+                      <Form.Check
+                        type="radio"
+                        id="query-radio"
+                        name="operationType"
+                        label="Query (Truy vấn)"
+                        checked={operationType === 'query'}
+                        onChange={() => setOperationType('query')}
                       />
-                    </Form.Group>
-                  </div>
+                      <Form.Check
+                        type="radio"
+                        id="insert-radio"
+                        name="operationType"
+                        label="Insert (Chèn dữ liệu)"
+                        checked={operationType === 'insert'}
+                        onChange={() => setOperationType('insert')}
+                      />
+                    </div>
+                  </Form.Group>
 
-                  <div className="form-buttons">
-                    <Button 
-                      variant="primary" 
-                      onClick={handleExecuteSQL}
-                      disabled={loading}
-                    >
-                      {loading ? 'Đang thực thi...' : `🚀 Thực thi ${operationType === 'query' ? 'Query' : 'Insert'}`}
-                    </Button>
-                    <Button 
-                      variant="outline-secondary" 
-                      onClick={handleClear}
-                      disabled={loading}
-                    >
-                      🗑️ Xóa
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline-secondary"
-                      onClick={handleExitToHome}
-                    >
-                      ❌ Thoát
-                    </Button>
-                  </div>
+                  <Form.Group className="mb-3">
+                    <Form.Label className="fw-medium mb-2">Lệnh SQL:</Form.Label>
+                    <Form.Control
+                      as="textarea"
+                      rows={5}
+                      value={sqlCommand}
+                      onChange={(e) => setSqlCommand(e.target.value)}
+                      placeholder={
+                        operationType === 'query' 
+                          ? "Nhập lệnh SELECT\nVí dụ: SELECT * FROM daily;"
+                          : "Nhập lệnh INSERT\nVí dụ: INSERT INTO daily (tendaily, diachi) VALUES ('Đại lý A', '123 ABC');"
+                      }
+                    />
+                  </Form.Group>
                 </div>
 
-                {renderResults()}
+                <div className="d-flex flex-wrap gap-2 justify-content-center pt-3 border-top">
+                  <Button 
+                    variant="primary" 
+                    onClick={handleExecuteSQL}
+                    disabled={loading}
+                    className="px-4"
+                  >
+                    {loading ? 'Đang thực thi...' : `🚀 Thực thi ${operationType === 'query' ? 'Query' : 'Insert'}`}
+                  </Button>
+                  <Button 
+                    variant="outline-secondary" 
+                    onClick={handleClear}
+                    disabled={loading}
+                    className="px-4"
+                  >
+                    🗑️ Xóa
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline-secondary"
+                    onClick={handleExitToHome}
+                    className="px-4"
+                  >
+                    ❌ Thoát
+                  </Button>
+                </div>
               </Form>
+
+              {renderResults()}
             </Card.Body>
           </Card>
         </div>

@@ -413,13 +413,14 @@ export const LapPhieuXuatHang = () => {
                 <div className="bg-light rounded p-4 mb-4">
                   <h6 className="text-primary fw-semibold mb-3 border-bottom border-primary pb-2">Thông tin phiếu xuất</h6>
                   
-                  {/* Form fields in rows */}
-                  <Row>
+                  {/* Form fields in responsive rows */}
+                  <Row className="g-3 mb-3">
                     <Col>
                       <Form.Group>
                         <Form.Label className="fw-medium mb-2">Mã phiếu xuất</Form.Label>
                         <Form.Control
                           type="text"
+                          readOnly
                           {...register("maPhieuXuat", { required: "Mã phiếu xuất là bắt buộc" })}
                           placeholder="Mã phiếu xuất"
                         />
@@ -430,38 +431,42 @@ export const LapPhieuXuatHang = () => {
                     <Col>
                       <Form.Group>
                         <Form.Label className="fw-medium mb-2">Tên đại lý</Form.Label>
-                        <div className="d-flex gap-2">
-                          <Form.Select
-                            {...register("tenDaiLy", { required: "Vui lòng chọn đại lý" })}
-                            onChange={handleDaiLyChange}
-                          >
-                            <option value="">-- Chọn đại lý --</option>
-                            {daiLyList && daiLyList.map((daiLy) => (
-                              <option key={daiLy.madaily} value={daiLy.madaily}>
-                                {daiLy.tendaily}
-                              </option>
-                            ))}
-                            {selectedDaiLy && (
-                              <option value={selectedDaiLy.madaily} selected>
-                                {selectedDaiLy.tendaily}
-                              </option>
-                            )}
-                          </Form.Select>
-                          <Button
-                            type="button"
-                            variant="outline-primary"
-                            size="sm"
-                            onClick={handleOpenDaiLyModal}
-                            title="Tìm kiếm đại lý"
-                          >
-                            🔍
-                          </Button>
-                        </div>
+                        <Form.Select
+                          {...register("tenDaiLy", { required: "Vui lòng chọn đại lý" })}
+                          onChange={handleDaiLyChange}
+                        >
+                          <option value="">-- Chọn đại lý --</option>
+                          {daiLyList && daiLyList.map((daiLy) => (
+                            <option key={daiLy.madaily} value={daiLy.madaily}>
+                              {daiLy.tendaily}
+                            </option>
+                          ))}
+                          {selectedDaiLy && (
+                            <option value={selectedDaiLy.madaily} selected>
+                              {selectedDaiLy.tendaily}
+                            </option>
+                          )}
+                        </Form.Select>
                         {errors.tenDaiLy && <div className="text-danger small mt-1">{errors.tenDaiLy.message}</div>}
                       </Form.Group>
                     </Col>
                     
                     <Col>
+                      <Form.Group>
+                        <Form.Label className="fw-medium mb-2">Ngày lập</Form.Label>
+                        <Form.Control
+                          type="date"
+                          {...register("ngayLap", { 
+                            required: "Ngày lập là bắt buộc"
+                          })}
+                        />
+                        {errors.ngayLap && <div className="text-danger small mt-1">{errors.ngayLap.message}</div>}
+                      </Form.Group>
+                    </Col>
+                  </Row>
+
+                  <Row className="g-3">
+                    <Col md={3}>
                       <Form.Group>
                         <Form.Label className="fw-medium mb-2">Nợ đại lý</Form.Label>
                         <Form.Control
@@ -622,6 +627,14 @@ export const LapPhieuXuatHang = () => {
                     className="px-4"
                   >
                     {showLoading ? 'Đang lập phiếu xuất...' : '📋 Lập phiếu xuất hàng'}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline-primary"
+                    onClick={handleOpenDaiLyModal}
+                    className="px-4"
+                  >
+                    🔍 Tìm đại lý
                   </Button>
                   <Button
                     type="button"

@@ -31,11 +31,3 @@ code {
   padding-left: 0;
   padding-right: 0;
 }
-
-/* Add some padding to table and form for better mobile readability */
-@media (max-width: 768px) {
-  .px-3 {
-    padding-left: 0.5rem !important;
-    padding-right: 0.5rem !important;
-  }
-}

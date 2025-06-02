@@ -1,14 +1,19 @@
-/* DaiLySelectionModal Component Styles */
-@import './globals.css';
+/* DaiLySelectionModal Component Styles - Minimal Custom Styling */
 
+/* Only essential custom styles that Bootstrap doesn't provide */
 .daily-selection-modal .table-responsive {
   max-height: 400px;
   overflow-y: auto;
 }
 
-.daily-selection-modal .search-form {
-  background: var(--light);
-  border-radius: var(--border-radius);
-  padding: var(--spacing-lg);
-  margin-bottom: var(--spacing-md);
+.daily-selection-modal .table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+@media (max-width: 768px) {
+  .daily-selection-modal .table-responsive {
+    max-height: 300px;
+  }
 }

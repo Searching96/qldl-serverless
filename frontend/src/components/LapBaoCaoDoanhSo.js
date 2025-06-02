@@ -107,26 +107,35 @@ export const LapBaoCaoDoanhSo = () => {
     <div className="container-fluid px-0 mt-4">
       <h1 className="ms-3">Lập báo cáo doanh số</h1>
 
-      {/* Error Alert */}
+      {/* Alert messages */}
+      {baoCaoData.length > 0 && (
+        <Alert variant="success" className="mx-3" dismissible onClose={() => setBaoCaoData([])}>
+          <strong>Lập báo cáo thành công!</strong> Báo cáo cho tháng {selectedMonth}/{selectedYear} đã được tạo.
+        </Alert>
+      )}
+
       {error && (
-        <div className="alert alert-danger mx-3" role="alert">
-          <div className="d-flex justify-content-between align-items-center">
-            <span>{error}</span>
-            <button
-              className="btn btn-primary btn-sm ms-2"
-              onClick={() => setError('')}
-            >
-              <i className="bi bi-x"></i>
-            </button>
+        <Alert variant="danger" className="mx-3" dismissible onClose={() => setError('')}>
+          <strong>Lỗi:</strong> {error}
+        </Alert>
+      )}
+
+      {loading && (
+        <Alert variant="info" className="mx-3">
+          <div className="d-flex align-items-center">
+            <div className="spinner-border spinner-border-sm me-2" role="status">
+              <span className="visually-hidden">Đang lập báo cáo...</span>
+            </div>
+            Đang lập báo cáo doanh số cho tháng {selectedMonth}/{selectedYear}...
           </div>
-        </div>
+        </Alert>
       )}
 
       <div className="px-3">
         <div className="container-fluid mb-4">
-          <Card>
+          <Card className="shadow">
             <Card.Header className="bg-primary text-white text-center py-3">
-              <h4>📊 Lập Báo Cáo Doanh Số</h4>
+              <h4 className="mb-0">📊 Lập Báo Cáo Doanh Số</h4>
             </Card.Header>
             <Card.Body className="p-4">
               <Form>
@@ -248,6 +257,7 @@ export const LapBaoCaoDoanhSo = () => {
                   variant="primary"
                   onClick={handleLapBaoCao}
                   disabled={loading}
+                  className="px-4"
                 >
                   {loading ? 'Đang lập báo cáo...' : '📊 Lập báo cáo doanh số'}
                 </Button>
@@ -255,6 +265,7 @@ export const LapBaoCaoDoanhSo = () => {
                   type="button"
                   variant="outline-secondary"
                   onClick={handleThoat}
+                  className="px-4"
                 >
                   🗑️ Làm mới
                 </Button>
@@ -262,6 +273,7 @@ export const LapBaoCaoDoanhSo = () => {
                   type="button"
                   variant="outline-secondary"
                   onClick={handleExitToHome}
+                  className="px-4"
                 >
                   ❌ Thoát
                 </Button>
