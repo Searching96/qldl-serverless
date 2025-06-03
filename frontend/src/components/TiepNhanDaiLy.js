@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useForm } from "react-hook-form";
-import { Button, Form, Card, Table, Row, Col, Modal } from "react-bootstrap";
+import { Button, Form, Card, Row, Col, Modal } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import {
     createDaily, getAllDaily, getAllLoaiDaiLy, getAllQuan,
@@ -8,6 +8,7 @@ import {
 } from "../services/api.js";
 import { Quan, LoaiDaiLy } from "../models";
 import { TimKiemDaiLy } from "./TimKiemDaiLy";
+import { DataTable } from "./DataTable";
 
 export const TiepNhanDaiLy = () => {
     // Form state
@@ -25,7 +26,6 @@ export const TiepNhanDaiLy = () => {
     const [errorMessage, setErrorMessage] = useState('');
     const [infoMessage, setInfoMessage] = useState('');
     const [selectedDaily, setSelectedDaily] = useState(null);
-    const [resetFormTrigger, setResetFormTrigger] = useState(0);
     const [showSearchModal, setShowSearchModal] = useState(false);
 
     useEffect(() => {
@@ -302,6 +302,81 @@ export const TiepNhanDaiLy = () => {
         navigate("/");
     };
 
+    // Define columns for DataTable
+    const columns = [
+        {
+            header: 'Mã đại lý',
+            accessor: 'madaily',
+            width: '12%',
+            cellClassName: 'fw-bold text-primary'
+        },
+        {
+            header: 'Tên đại lý',
+            accessor: 'tendaily',
+            width: '18%'
+        },
+        {
+            header: 'Số điện thoại',
+            accessor: 'sodienthoai',
+            width: '12%',
+            render: (row) => row.sodienthoai || row.dienthoai
+        },
+        {
+            header: 'Địa chỉ',
+            accessor: 'diachi',
+            width: '20%'
+        },
+        {
+            header: 'Email',
+            accessor: 'email',
+            width: '15%'
+        },
+        {
+            header: 'Loại đại lý',
+            accessor: 'tenloaidaily',
+            width: '10%',
+            render: (row) => row.tenloaidaily || "N/A"
+        },
+        {
+            header: 'Quận',
+            accessor: 'tenquan',
+            width: '8%',
+            render: (row) => row.tenquan || "N/A"
+        },
+        {
+            header: 'Ngày tiếp nhận',
+            accessor: 'ngaytiepnhan',
+            width: '10%',
+            render: (row) => row.ngaytiepnhan ?
+                new Date(row.ngaytiepnhan).toLocaleDateString('vi-VN') : "N/A"
+        },
+        {
+            header: 'Thao tác',
+            accessor: 'actions',
+            width: '15%',
+            sortable: false,
+            cellClassName: 'text-center',
+            render: (row) => (
+                <div className="d-flex gap-1 justify-content-center">
+                    <Button
+                        size="sm"
+                        variant="primary"
+                        onClick={() => handleEditRow(row)}
+                    >
+                        <i className="bi bi-pencil-square"></i> Sửa
+                    </Button>
+                    <Button
+                        size="sm"
+                        variant="danger"
+                        onClick={() => handleDeleteRow(row)}
+                    >
+                        <i className="bi bi-trash"></i> Xóa
+                    </Button>
+                </div>
+            )
+        }
+    ];
+
     return (
         <div className="container-fluid px-0 mt-4">
             <h1 className="ms-3">Thông tin đại lý</h1>
@@ -486,6 +561,14 @@ export const TiepNhanDaiLy = () => {
                                     >
                                         🆕 Đại lý mới
                                     </Button>
+                                                                        <Button
+                                        type="button"
+                                        variant="outline-primary"
+                                        onClick={handleShowSearchModal}
+                                        className="px-4"
+                                    >
+                                        🔍 Tìm đại lý
+                                    </Button>
                                     <Button
                                         type="button"
                                         variant="outline-secondary"
@@ -494,14 +577,6 @@ export const TiepNhanDaiLy = () => {
                                         className="px-4"
                                     >
                                         🗑️ Hủy
-                                    </Button>
-                                    <Button
-                                        type="button"
-                                        variant="outline-primary"
-                                        onClick={handleShowSearchModal}
-                                        className="px-4"
-                                    >
-                                        🔍 Tìm đại lý
                                     </Button>
                                     <Button
                                         type="button"
@@ -521,81 +596,20 @@ export const TiepNhanDaiLy = () => {
                 <div className="container-fluid mt-4">
                     <Card>
                         <Card.Header className="bg-primary text-white py-3">
-                            <div className="d-flex justify-content-between align-items-center">
-                                <h5 className="mb-0 text-white">Danh sách đại lý</h5>
-                                <Button
-                                    variant="outline-light"
-                                    onClick={handleRefresh}
-                                    title="Làm mới danh sách đại lý"
-                                >
-                                    <i className="bi bi-arrow-clockwise"></i> Làm mới dữ liệu
-                                </Button>
-                            </div>
+                            <h5 className="mb-0 text-white">Danh sách đại lý</h5>
                         </Card.Header>
-                        <Card.Body className="p-0">
-                            <div className="table-responsive">
-                                <Table striped hover className="mb-0">
-                                    <thead className="table-light">
-                                        <tr>
-                                            <th className="fw-semibold">Mã đại lý</th>
-                                            <th className="fw-semibold">Tên đại lý</th>
-                                            <th className="fw-semibold">Số điện thoại</th>
-                                            <th className="fw-semibold">Địa chỉ</th>
-                                            <th className="fw-semibold">Email</th>
-                                            <th className="fw-semibold">Loại đại lý</th>
-                                            <th className="fw-semibold">Quận</th>
-                                            <th className="fw-semibold">Ngày tiếp nhận</th>
-                                            <th className="fw-semibold text-center">Thao tác</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {dsDaiLy.length > 0 ? (
-                                            dsDaiLy.map((row, index) => (
-                                                <tr key={row.madaily || index} className="align-middle">
-                                                    <td className="fw-bold text-primary">{row.madaily}</td>
-                                                    <td>{row.tendaily}</td>
-                                                    <td>{row.sodienthoai || row.dienthoai}</td>
-                                                    <td>{row.diachi}</td>
-                                                    <td>{row.email}</td>
-                                                    <td>{row.tenloaidaily || "N/A"}</td>
-                                                    <td>{row.tenquan || "N/A"}</td>
-                                                    <td>
-                                                        {row.ngaytiepnhan ?
-                                                            new Date(row.ngaytiepnhan).toLocaleDateString('vi-VN') :
-                                                            "N/A"
-                                                        }
-                                                    </td>
-                                                    <td className="text-center">
-                                                        <div className="d-flex gap-1 justify-content-center">
-                                                            <Button
-                                                                size="sm"
-                                                                variant="primary"
-                                                                onClick={() => handleEditRow(row)}
-                                                            >
-                                                                <i className="bi bi-pencil-square"></i> Sửa
-                                                            </Button>
-                                                            <Button
-                                                                size="sm"
-                                                                variant="danger"
-                                                                onClick={() => handleDeleteRow(row)}
-                                                            >
-                                                                <i className="bi bi-trash"></i> Xóa
-                                                            </Button>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            ))
-                                        ) : (
-                                            <tr>
-                                                <td colSpan="9" className="text-center text-muted py-4">
-                                                    <i className="bi bi-inbox display-4 d-block mb-2"></i>
-                                                    Chưa có dữ liệu đại lý
-                                                </td>
-                                            </tr>
-                                        )}
-                                    </tbody>
-                                </Table>
-                            </div>
+                        <Card.Body className="p-3">
+                                <DataTable
+                                    data={dsDaiLy}
+                                    columns={columns}
+                                    pageSize={10}
+                                    searchable={true}
+                                    sortable={true}
+                                    refreshable={true}
+                                    onRefresh={handleRefresh}
+                                    refreshButtonText="Làm mới dữ liệu"
+                                    refreshButtonIcon="bi bi-arrow-clockwise"
+                                />
                         </Card.Body>
                     </Card>
                 </div>

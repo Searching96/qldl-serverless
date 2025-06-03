@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { Form, Button, Card, Row, Col, Table, Alert, Accordion } from 'react-bootstrap';
+import { Form, Button, Card, Row, Col, Alert, Accordion } from 'react-bootstrap';
 import { useNavigate } from "react-router-dom";
 import {
     getAllLoaiDaiLy, getAllQuan, searchDaiLy,
     getAllMatHang, getAllDonViTinh
 } from "../services/api.js";
 import { Quan, LoaiDaiLy } from "../models/index.js";
+import { DataTable } from './DataTable';
 
 export const TimKiemDaiLy = ({ isModal = false, onSelect = null, onClose = null }) => {
     const navigate = useNavigate();
@@ -42,7 +43,7 @@ export const TimKiemDaiLy = ({ isModal = false, onSelect = null, onClose = null 
         tonggiatri_from: '',
         tonggiatri_to: '',
         // Product/item criteria
-        tenmathang: '',
+        mamathang: '',
         soluongxuat_from: '',
         soluongxuat_to: '',
         dongiaxuat_from: '',
@@ -51,7 +52,7 @@ export const TimKiemDaiLy = ({ isModal = false, onSelect = null, onClose = null 
         thanhtien_to: '',
         soluongton_from: '',
         soluongton_to: '',
-        tendonvitinh: ''
+        madonvitinh: ''
     });
 
     const [searchResults, setSearchResults] = useState([]);
@@ -166,7 +167,7 @@ export const TimKiemDaiLy = ({ isModal = false, onSelect = null, onClose = null 
             ngaylap_to: '',
             tonggiatri_from: '',
             tonggiatri_to: '',
-            tenmathang: '',
+            mamathang: '',
             soluongxuat_from: '',
             soluongxuat_to: '',
             dongiaxuat_from: '',
@@ -175,7 +176,7 @@ export const TimKiemDaiLy = ({ isModal = false, onSelect = null, onClose = null 
             thanhtien_to: '',
             soluongton_from: '',
             soluongton_to: '',
-            tendonvitinh: ''
+            madonvitinh: ''
         });
         setSearchResults([]);
         setErrorMessage('');
@@ -223,8 +224,75 @@ export const TimKiemDaiLy = ({ isModal = false, onSelect = null, onClose = null 
         return new Date(dateString).toLocaleDateString('vi-VN');
     };
 
+    // Define columns for search results DataTable
+    const searchColumns = [
+        {
+            header: isModal ? 'Chọn' : 'STT',
+            accessor: isModal ? 'select' : 'stt',
+            width: '8%',
+            sortable: false,
+            cellClassName: 'text-center',
+            render: (row, index) => isModal ? (
+                <Form.Check
+                    type="radio"
+                    name="selectedAgent"
+                    checked={selectedAgent?.madaily === row.madaily}
+                    onChange={() => handleSelectAgent(row)}
+                />
+            ) : (index + 1)
+        },
+        {
+            header: 'Mã đại lý',
+            accessor: 'madaily',
+            width: '10%',
+            cellClassName: 'fw-bold text-primary'
+        },
+        {
+            header: 'Tên đại lý',
+            accessor: 'tendaily',
+            width: '15%'
+        },
+        {
+            header: 'Địa chỉ',
+            accessor: 'diachi',
+            width: '18%'
+        },
+        {
+            header: 'Số điện thoại',
+            accessor: 'sodienthoai',
+            width: '12%'
+        },
+        {
+            header: 'Email',
+            accessor: 'email',
+            width: '15%'
+        },
+        {
+            header: 'Quận',
+            accessor: 'tenquan',
+            width: '10%'
+        },
+        {
+            header: 'Ngày tiếp nhận',
+            accessor: 'ngaytiepnhan',
+            width: '12%',
+            render: (row) => formatDate(row.ngaytiepnhan)
+        }
+    ];
+
+    // Add debt column if congno exists
+    if (searchResults.some(item => item.congno !== undefined)) {
+        searchColumns.splice(-1, 0, {
+            header: 'Công nợ',
+            accessor: 'congno',
+            width: '12%',
+            cellClassName: 'text-end',
+            render: (row) => formatCurrency(row.congno)
+        });
+    }
+
     return (
-        <div className={isModal ? '' : 'container-fluid px-0 mt-4'}>
+        <div className={`container-fluid ${isModal ? '' : 'px-0 mt-4'}`}>
             {!isModal && <h1 className="ms-3">Tìm kiếm đại lý</h1>}
 
             {/* Alert messages */}
@@ -249,19 +317,17 @@ export const TimKiemDaiLy = ({ isModal = false, onSelect = null, onClose = null 
             <div className={isModal ? 'p-3' : 'px-3'}>
                 <div className="container-fluid">
                     <Card className="shadow">
-                        <Card.Header className="bg-primary text-white">
-                            <div className="d-flex justify-content-between align-items-center">
-                                <h4 className="mb-0">🔍 {isModal ? 'Chọn đại lý' : 'Tìm kiếm đại lý'}</h4>
-                                {isModal && onClose && (
-                                    <Button
-                                        variant="outline-light"
-                                        size="sm"
-                                        onClick={onClose}
-                                    >
-                                        <i className="bi bi-x-lg"></i>
-                                    </Button>
-                                )}
-                            </div>
+                        <Card.Header className="bg-primary text-white text-center py-3">
+                            <h4 className="mb-0">🔍 {isModal ? 'Chọn đại lý' : 'Tìm kiếm đại lý'}</h4>
+                            {isModal && onClose && (
+                                <Button
+                                    variant="outline-light"
+                                    size="sm"
+                                    onClick={onClose}
+                                >
+                                    <i className="bi bi-x-lg"></i>
+                                </Button>
+                            )}
                         </Card.Header>
                         <Card.Body className="p-4">
                             {/* Search form content */}
@@ -509,8 +575,8 @@ export const TimKiemDaiLy = ({ isModal = false, onSelect = null, onClose = null 
                                                                     <Form.Group>
                                                                         <Form.Label className="fw-medium mb-2">Tên mặt hàng</Form.Label>
                                                                         <Form.Select
-                                                                            value={searchCriteria.tenmathang}
-                                                                            onChange={(e) => handleInputChange('tenmathang', e.target.value)}
+                                                                            value={searchCriteria.mamathang}
+                                                                            onChange={(e) => handleInputChange('mamathang', e.target.value)}
                                                                         >
                                                                             <option value="">Chọn mặt hàng</option>
                                                                             {dsMatHang.map((mathang) => (
@@ -525,8 +591,8 @@ export const TimKiemDaiLy = ({ isModal = false, onSelect = null, onClose = null 
                                                                     <Form.Group>
                                                                         <Form.Label className="fw-medium mb-2">Đơn vị tính</Form.Label>
                                                                         <Form.Select
-                                                                            value={searchCriteria.tendonvitinh}
-                                                                            onChange={(e) => handleInputChange('tendonvitinh', e.target.value)}
+                                                                            value={searchCriteria.madonvitinh}
+                                                                            onChange={(e) => handleInputChange('madonvitinh', e.target.value)}
                                                                         >
                                                                             <option value="">Chọn đơn vị tính</option>
                                                                             {dsDonViTinh.map((dvt) => (
@@ -662,68 +728,38 @@ export const TimKiemDaiLy = ({ isModal = false, onSelect = null, onClose = null 
                                     </Accordion.Body>
                                 </Accordion.Item>
                             </Accordion>
-
-                            {/* Results section */}
-                            {searchPerformed && (
-                                <Card className="mt-4">
-                                    <Card.Header className="bg-secondary text-white">
-                                        <h6 className="mb-0">📋 Kết quả tìm kiếm ({searchResults.length} kết quả)</h6>
-                                    </Card.Header>
-                                    <Card.Body className="p-0">
-                                        <div className="table-responsive">
-                                            <Table striped hover className="mb-0">
-                                                <thead className="table-light">
-                                                    <tr>
-                                                        <th className="fw-semibold">Mã đại lý</th>
-                                                        <th className="fw-semibold">Tên đại lý</th>
-                                                        <th className="fw-semibold">Địa chỉ</th>
-                                                        <th className="fw-semibold">Điện thoại</th>
-                                                        <th className="fw-semibold">Email</th>
-                                                        <th className="fw-semibold">Công nợ</th>
-                                                        {isModal && <th className="fw-semibold text-center">Thao tác</th>}
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    {searchResults.length > 0 ? (
-                                                        searchResults.map((agent, index) => (
-                                                            <tr key={agent.madaily || index} className="align-middle">
-                                                                <td className="fw-bold text-primary">{agent.madaily}</td>
-                                                                <td>{agent.tendaily}</td>
-                                                                <td>{agent.diachi}</td>
-                                                                <td>{agent.sodienthoai}</td>
-                                                                <td>{agent.email}</td>
-                                                                <td className={parseFloat(agent.congno || 0) > 0 ? 'text-danger fw-bold' : 'text-success fw-medium'}>
-                                                                    {formatCurrency(agent.congno || 0)}
-                                                                </td>
-                                                                {isModal && (
-                                                                    <td className="text-center">
-                                                                        <Button
-                                                                            size="sm"
-                                                                            variant="primary"
-                                                                            onClick={() => handleSelectAgent(agent)}
-                                                                        >
-                                                                            <i className="bi bi-check-circle"></i> Chọn
-                                                                        </Button>
-                                                                    </td>
-                                                                )}
-                                                            </tr>
-                                                        ))
-                                                    ) : (
-                                                        <tr>
-                                                            <td colSpan={isModal ? "7" : "6"} className="text-center text-muted py-4">
-                                                                <i className="bi bi-search display-4 d-block mb-2"></i>
-                                                                Không tìm thấy đại lý nào phù hợp với tiêu chí tìm kiếm
-                                                            </td>
-                                                        </tr>
-                                                    )}
-                                                </tbody>
-                                            </Table>
-                                        </div>
-                                    </Card.Body>
-                                </Card>
-                            )}
                         </Card.Body>
                     </Card>
+                    {/* Results section */}
+                    {searchPerformed && (
+                        <Card className={isModal ? "mt-3" : "container-fluid mt-4"}>
+                            <Card.Header className="bg-primary text-white py-3">
+                                <div className="d-flex justify-content-between align-items-center">
+                                    <h5 className="mb-0">
+                                        📋 Kết quả tìm kiếm ({searchResults.length} kết quả)
+                                    </h5>
+                                    {isModal && selectedAgent && (
+                                        <Button
+                                            variant="outline-light"
+                                            size="sm"
+                                            onClick={handleConfirmSelection}
+                                        >
+                                            ✓ Chọn đại lý này
+                                        </Button>
+                                    )}
+                                </div>
+                            </Card.Header>
+                            <Card.Body className="p-3">
+                                <DataTable
+                                    data={searchResults}
+                                    columns={searchColumns}
+                                    pageSize={10}
+                                    searchable={false}
+                                    sortable={true}
+                                />
+                            </Card.Body>
+                        </Card>
+                    )}
                 </div>
             </div>
         </div>

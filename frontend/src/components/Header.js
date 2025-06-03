@@ -32,7 +32,7 @@ export const Header = () => {
                   : ""
               }
             >
-              Sprint 01
+              Tiếp nhận đại lý
             </Nav.Link>
             <Nav.Link
               as={Link}
@@ -44,7 +44,7 @@ export const Header = () => {
                   : ""
               }
             >
-              Sprint 02
+              Lập phiếu xuất hàng
             </Nav.Link>
             <Nav.Link
               as={Link}
@@ -56,7 +56,7 @@ export const Header = () => {
                   : ""
               }
             >
-              Sprint 03
+              Tìm kiếm đại lý
             </Nav.Link>
             <Nav.Link
               as={Link}
@@ -68,7 +68,7 @@ export const Header = () => {
                   : ""
               }
             >
-              Sprint 04
+              Lập phiếu thu tiền
             </Nav.Link>
             <Nav.Link
               as={Link}
@@ -80,7 +80,7 @@ export const Header = () => {
                   : ""
               }
             >
-              Sprint 05
+              Lập báo cáo doanh số
             </Nav.Link>
             <Nav.Link
               as={Link}
@@ -92,7 +92,7 @@ export const Header = () => {
                   : ""
               }
             >
-              Sprint 06
+              Thay đổi quy định
             </Nav.Link>
             {/* <Nav.Link
               as={Link}

@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Form, Card, Alert, Table, Row, Col } from "react-bootstrap";
+import { Button, Form, Card, Alert, Row, Col } from "react-bootstrap";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { getAllDaily, createPhieuXuat, getAllMatHang, getAllPhieuXuat } from '../services/api';
 import { DaiLySelectionModal } from './DaiLySelectionModal';
+import { DataTable } from './DataTable';
 
 export const LapPhieuXuatHang = () => {
   const { register, handleSubmit, setValue, reset, clearErrors, formState: { errors } } = useForm();
@@ -30,13 +31,6 @@ export const LapPhieuXuatHang = () => {
   const [showError, setShowError] = useState(false);
   const [showDaiLyModal, setShowDaiLyModal] = useState(false);
   const [selectedDaiLy, setSelectedDaiLy] = useState(null);
-
-  useEffect(() => {
-    fetchDaiLyList();
-    fetchMatHangList();
-    generateMaPhieuXuat();
-    setValue("ngayLap", getCurrentDate());
-  }, [setValue]);
 
   const fetchDaiLyList = async () => {
     try {
@@ -104,6 +98,13 @@ export const LapPhieuXuatHang = () => {
       console.error('Error loading agent info:', error);
     }
   };
+
+  useEffect(() => {
+    fetchDaiLyList();
+    fetchMatHangList();
+    generateMaPhieuXuat();
+    setValue("ngayLap", getCurrentDate());
+  }, [setValue]);
 
   const handleMatHangChange = (index, selectedMatHang) => {
     const selectedProduct = matHangList.find(mh => mh.mamathang === selectedMatHang);
@@ -355,6 +356,138 @@ export const LapPhieuXuatHang = () => {
     setShowDaiLyModal(true);
   };
 
+  // Define columns for chi tiết mặt hàng DataTable
+  const chiTietColumns = [
+    {
+      header: 'STT',
+      accessor: 'stt',
+      width: '5%',
+      cellClassName: 'text-center'
+    },
+    {
+      header: 'Tên mặt hàng',
+      accessor: 'tenMatHang',
+      width: '23%',
+      sortable: false,
+      render: (row, index) => (
+        <Form.Select
+          value={row.tenMatHang}
+          onChange={(e) => handleMatHangChange(index, e.target.value)}
+        >
+          <option value="">-- Chọn mặt hàng --</option>
+          {matHangList && matHangList.map((matHang) => (
+            <option key={matHang.mamathang} value={matHang.mamathang}>
+              {matHang.tenmathang}
+            </option>
+          ))}
+        </Form.Select>
+      )
+    },
+    {
+      header: 'Tên đơn vị tính',
+      accessor: 'tenDonViTinh',
+      width: '15%',
+      sortable: false,
+      render: (row) => (
+        <Form.Control
+          type="text"
+          value={row.tenDonViTinh}
+          readOnly
+        />
+      )
+    },
+    {
+      header: 'Số lượng tồn',
+      accessor: 'soLuongTon',
+      width: '10%',
+      sortable: false,
+      render: (row) => (
+        <Form.Control
+          type="text"
+          value={row.soLuongTon}
+          readOnly
+        />
+      )
+    },
+    {
+      header: 'Số lượng xuất',
+      accessor: 'soLuongXuat',
+      width: '10%',
+      sortable: false,
+      render: (row, index) => (
+        <Form.Control
+          type="number"
+          value={row.soLuongXuat}
+          onChange={(e) => handleSoLuongXuatChange(index, e.target.value)}
+          min="0"
+          step="1"
+        />
+      )
+    },
+    {
+      header: 'Đơn giá xuất',
+      accessor: 'donGiaXuat',
+      width: '15%',
+      sortable: false,
+      render: (row, index) => (
+        <Form.Control
+          type="number"
+          value={row.donGiaXuat}
+          onChange={(e) => handleDonGiaXuatChange(index, e.target.value)}
+          min="0"
+        />
+      )
+    },
+    {
+      header: 'Thành tiền',
+      accessor: 'thanhTien',
+      width: '15%',
+      sortable: false,
+      render: (row) => (
+        <Form.Control
+          type="text"
+          value={row.thanhTien}
+          readOnly
+        />
+      )
+    },
+    {
+      header: 'Thao tác',
+      accessor: 'actions',
+      width: '7%',
+      sortable: false,
+      cellClassName: 'text-center',
+      render: (row, index) => (
+        <Button
+          variant="danger"
+          size="sm"
+          onClick={() => removeRow(index)}
+          disabled={chiTietPhieu.length === 1}
+        >
+          Xóa
+        </Button>
+      )
+    }
+  ];
+
+  const handleRefreshProducts = async () => {
+    try {
+      await fetchMatHangList();
+      setSuccessMessage('Danh sách mặt hàng đã được cập nhật');
+      setShowSuccess(true);
+      setTimeout(() => {
+        setShowSuccess(false);
+      }, 3000);
+    } catch (error) {
+      console.error('Error refreshing product list:', error);
+      setErrorMessage('Không thể cập nhật danh sách mặt hàng: ' + error.message);
+      setShowError(true);
+      setTimeout(() => {
+        setShowError(false);
+      }, 5000);
+    }
+  };
+
   return (
     <div className="container-fluid px-0 mt-4">
       <h1 className="ms-3">Lập phiếu xuất hàng</h1>
@@ -453,19 +586,6 @@ export const LapPhieuXuatHang = () => {
 
                     <Col>
                       <Form.Group>
-                        <Form.Label className="fw-medium mb-2">Ngày lập</Form.Label>
-                        <Form.Control
-                          type="date"
-                          {...register("ngayLap", {
-                            required: "Ngày lập là bắt buộc"
-                          })}
-                        />
-                        {errors.ngayLap && <div className="text-danger small mt-1">{errors.ngayLap.message}</div>}
-                      </Form.Group>
-                    </Col>
-
-                    <Col>
-                      <Form.Group>
                         <Form.Label className="fw-medium mb-2">Nợ đại lý</Form.Label>
                         <Form.Control
                           type="text"
@@ -516,106 +636,28 @@ export const LapPhieuXuatHang = () => {
                 </div>
 
                 {/* Chi tiết mặt hàng */}
-                <Card className="mt-3">
-                  <Card.Header className="bg-secondary text-white py-3">
-                    <h6 className="mb-0">📦 Chi tiết mặt hàng</h6>
-                  </Card.Header>
-                  <Card.Body className="p-0">
-                    <div className="table-responsive">
-                      <Table bordered hover className="mb-0">
-                        <thead className="table-light">
-                          <tr>
-                            <th width="5%">STT</th>
-                            <th width="23%">Tên mặt hàng</th>
-                            <th width="15%">Tên đơn vị tính</th>
-                            <th width="10%">Số lượng tồn</th>
-                            <th width="10%">Số lượng xuất</th>
-                            <th width="15%">Đơn giá xuất</th>
-                            <th width="15%">Thành tiền</th>
-                            <th width="7%">Thao tác</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {chiTietPhieu.map((item, index) => (
-                            <tr key={index}>
-                              <td>{item.stt}</td>
-                              <td>
-                                <Form.Select
-                                  value={item.tenMatHang}
-                                  onChange={(e) => handleMatHangChange(index, e.target.value)}
-                                >
-                                  <option value="">-- Chọn mặt hàng --</option>
-                                  {matHangList && matHangList.map((matHang) => (
-                                    <option key={matHang.mamathang} value={matHang.mamathang}>
-                                      {matHang.tenmathang}
-                                    </option>
-                                  ))}
-                                </Form.Select>
-                              </td>
-                              <td>
-                                <Form.Control
-                                  type="text"
-                                  value={item.tenDonViTinh}
-                                  readOnly
-                                />
-                              </td>
-                              <td>
-                                <Form.Control
-                                  type="text"
-                                  value={item.soLuongTon}
-                                  readOnly
-                                />
-                              </td>
-                              <td>
-                                <Form.Control
-                                  type="number"
-                                  value={item.soLuongXuat}
-                                  onChange={(e) => handleSoLuongXuatChange(index, e.target.value)}
-                                  min="0"
-                                  step="1"
-                                />
-                              </td>
-                              <td>
-                                <Form.Control
-                                  type="number"
-                                  value={item.donGiaXuat}
-                                  onChange={(e) => handleDonGiaXuatChange(index, e.target.value)}
-                                  min="0"
-                                />
-                              </td>
-                              <td>
-                                <Form.Control
-                                  type="text"
-                                  value={item.thanhTien}
-                                  readOnly
-                                />
-                              </td>
-                              <td>
-                                <Button
-                                  variant="danger"
-                                  size="sm"
-                                  onClick={() => removeRow(index)}
-                                  disabled={chiTietPhieu.length === 1}
-                                >
-                                  Xóa
-                                </Button>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </Table>
+                    <div className="bg-light rounded p-4 mb-4">
+                      <h6 className="text-primary fw-semibold mb-3 border-bottom border-primary pb-2">
+                        Danh sách mặt hàng
+                        </h6>
+                      <DataTable
+                        data={chiTietPhieu}
+                        columns={chiTietColumns}
+                        pageSize={20}
+                        searchable={false}
+                        sortable={false}
+                        bordered={true}
+                      />
+                      <div className="mt-3">
+                        <Button
+                          variant="success"
+                          size="sm"
+                          onClick={addRow}
+                        >
+                          ➕ Thêm dòng
+                        </Button>
+                      </div>
                     </div>
-                    <div className="p-3">
-                      <Button
-                        variant="success"
-                        size="sm"
-                        onClick={addRow}
-                      >
-                        ➕ Thêm dòng
-                      </Button>
-                    </div>
-                  </Card.Body>
-                </Card>
 
                 <div className="d-flex flex-wrap gap-2 justify-content-center mt-4 pt-3 border-top">
                   <Button

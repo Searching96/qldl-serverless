@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Card, Form, Row, Col, Button, Alert } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import { getMonthlyRevenueReport } from '../services/api';
+import { DataTable } from './DataTable';
 
 export const LapBaoCaoDoanhSo = () => {
   const navigate = useNavigate();
@@ -103,6 +104,46 @@ export const LapBaoCaoDoanhSo = () => {
     navigate("/");
   };
 
+  const handleRefreshReport = () => {
+    if (baoCaoData.length > 0) {
+      handleLapBaoCao(); // Re-run the report with current month/year
+    }
+  };
+
+  // Define columns for báo cáo DataTable
+  const baoCaoColumns = [
+    {
+      header: 'STT',
+      accessor: 'stt',
+      width: '8%',
+      cellClassName: 'text-center',
+      render: (row, index) => index + 1
+    },
+    {
+      header: 'Tên đại lý',
+      accessor: 'tenDaiLy',
+      width: '30%'
+    },
+    {
+      header: 'Số lượng phiếu xuất',
+      accessor: 'soLuongPhieuXuat',
+      width: '20%',
+      cellClassName: 'text-center'
+    },
+    {
+      header: 'Tổng giá trị giao dịch trong tháng',
+      accessor: 'tongGiaTriGiaoDich',
+      width: '25%',
+      cellClassName: 'text-end'
+    },
+    {
+      header: 'Tỉ lệ',
+      accessor: 'tiLe',
+      width: '17%',
+      cellClassName: 'text-center'
+    }
+  ];
+
   return (
     <div className="container-fluid px-0 mt-4">
       <h1 className="ms-3">Lập báo cáo doanh số</h1>
@@ -174,103 +215,74 @@ export const LapBaoCaoDoanhSo = () => {
                   </Row>
                 </div>
               </Form>
+              <div className="d-flex flex-wrap gap-2 justify-content-center pt-3 border-top mt-4">
+            <Button
+              type="button"
+              variant="primary"
+              onClick={handleLapBaoCao}
+              disabled={loading}
+              className="px-4"
+            >
+              {loading ? 'Đang lập báo cáo...' : '📊 Lập báo cáo doanh số'}
+            </Button>
+            <Button
+              type="button"
+              variant="outline-secondary"
+              onClick={handleThoat}
+              className="px-4"
+            >
+              🗑️ Làm mới
+            </Button>
+            <Button
+              type="button"
+              variant="outline-secondary"
+              onClick={handleExitToHome}
+              className="px-4"
+            >
+              ❌ Thoát
+            </Button>
+          </div>
             </Card.Body>
           </Card>
         </div>
 
         <div className="container-fluid mt-4 mb-3">
           <Card>
-            <Card.Body>
-              <div className="bg-light rounded p-4 mb-4">
-                <h6 className="text-primary fw-semibold mb-3 border-bottom border-primary pb-2">Kết quả báo cáo</h6>
+            <Card.Header className="bg-primary text-white text-center py-3">
+              <h5 className="mb-0 text-white">📊 Kết quả báo cáo</h5>
+            </Card.Header>
+            <Card.Body className="p-4">
 
-                {/* Total sales row */}
-                <Row className="mb-3">
-                  <Col className="d-flex justify-content-center align-items-center gap-3">
-                    <span style={{ fontWeight: 'bold' }}>
-                      Tổng doanh số trong tháng của tất cả đại lý ({soLuongDaiLy} đại lý):
-                    </span>
-                    <Form.Control
-                      type="text"
-                      value={tongDoanhSo}
-                      readOnly
-                      style={{ width: '200px' }}
-                      className="text-center"
-                    />
-                  </Col>
-                </Row>
+              {/* Total sales row */}
+              <Row className="mb-3">
+                <Col className="d-flex justify-content-center align-items-center gap-3">
+                  <span style={{ fontWeight: 'bold' }}>
+                    Tổng doanh số trong tháng của tất cả đại lý ({soLuongDaiLy} đại lý):
+                  </span>
+                  <Form.Control
+                    type="text"
+                    value={tongDoanhSo}
+                    readOnly
+                    style={{ width: '200px' }}
+                    className="text-center"
+                  />
+                </Col>
+              </Row>
 
-                {/* Report table */}
-                <Row>
-                  <Col>
-                    <div className="table-responsive">
-                      <table className="table table-striped table-hover table-bordered">
-                        <thead className="table-light">
-                          <tr>
-                            <th width="8%">STT</th>
-                            <th width="30%">Tên đại lý</th>
-                            <th width="20%">Số lượng phiếu xuất</th>
-                            <th width="25%">Tổng giá trị giao dịch trong tháng</th>
-                            <th width="17%">Tỉ lệ</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {baoCaoData.length > 0 ? (
-                            baoCaoData.map((item, index) => (
-                              <tr key={index}>
-                                <td className="text-center">{index + 1}</td>
-                                <td>{item.tenDaiLy}</td>
-                                <td className="text-center">{item.soLuongPhieuXuat}</td>
-                                <td className="text-end">{item.tongGiaTriGiaoDich}</td>
-                                <td className="text-center">{item.tiLe}</td>
-                              </tr>
-                            ))
-                          ) : (
-                            <tr>
-                              <td colSpan="5" className="text-center text-muted">
-                                Chưa có dữ liệu báo cáo. Nhấn "Lập báo cáo doanh số" để tạo báo cáo.
-                              </td>
-                            </tr>
-                          )}
-                        </tbody>
-                      </table>
-                    </div>
-                  </Col>
-                </Row>
-              </div>
+              {/* Report table wrapper with Sprint 1 style */}
+              <DataTable
+                data={baoCaoData}
+                columns={baoCaoColumns}
+                pageSize={15}
+                searchable={false}
+                sortable={true}
+                bordered={true}
+              />
 
-              <div className="d-flex flex-wrap gap-2 justify-content-center pt-3 border-top">
-                <Button
-                  type="button"
-                  variant="primary"
-                  onClick={handleLapBaoCao}
-                  disabled={loading}
-                  className="px-4"
-                >
-                  {loading ? 'Đang lập báo cáo...' : '📊 Lập báo cáo doanh số'}
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline-secondary"
-                  onClick={handleThoat}
-                  className="px-4"
-                >
-                  🗑️ Làm mới
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline-secondary"
-                  onClick={handleExitToHome}
-                  className="px-4"
-                >
-                  ❌ Thoát
-                </Button>
-              </div>
+
             </Card.Body>
           </Card>
         </div>
-
-
       </div >
     </div >
   );

@@ -9,21 +9,13 @@ export const LapPhieuThuTien = () => {
   const { register, handleSubmit, setValue, reset, clearErrors, formState: { errors } } = useForm();
   const navigate = useNavigate();
 
-  const getCurrentDate = () => {
-    const today = new Date();
-    const day = String(today.getDate()).padStart(2, '0');
-    const month = String(today.getMonth() + 1).padStart(2, '0');
-    const year = today.getFullYear();
-    return `${day}/${month}/${year}`;
-  };
-
   const [formData, setFormData] = useState({
     tenDaiLy: '',
     noCuaDaiLy: '',
     dienThoai: '',
     email: '',
     diaChi: '',
-    ngayThuTien: getCurrentDate(),
+    ngayThuTien: new Date().toISOString().split("T")[0],
     soTienThu: ''
   });
 
@@ -39,8 +31,6 @@ export const LapPhieuThuTien = () => {
 
   useEffect(() => {
     fetchDaiLyList();
-    // Set default date
-    setValue("ngayThuTien", getCurrentDate());
   }, [setValue]);
 
   const fetchDaiLyList = async () => {
@@ -151,7 +141,6 @@ export const LapPhieuThuTien = () => {
   const handleThoat = () => {
     // Clear form or navigate back
     reset();
-    setValue("ngayThuTien", getCurrentDate());
   };
 
   const handleExitToHome = () => {
@@ -312,15 +301,11 @@ export const LapPhieuThuTien = () => {
                       <Form.Group>
                         <Form.Label className="fw-medium mb-2">Ngày thu tiền</Form.Label>
                         <Form.Control
-                          type="text"
+                          type="date"
+                          defaultValue={new Date().toISOString().split("T")[0]}
                           {...register("ngayThuTien", {
-                            required: "Ngày thu tiền là bắt buộc",
-                            pattern: {
-                              value: /^(0[1-9]|[12][0-9]|3[01])\/(0[1-9]|1[012])\/\d{4}$/,
-                              message: "Định dạng ngày không hợp lệ (dd/mm/yyyy)"
-                            }
+                            required: "Ngày thu tiền là bắt buộc"
                           })}
-                          placeholder="dd/mm/yyyy"
                         />
                         {errors.ngayThuTien && <div className="text-danger small mt-1">{errors.ngayThuTien.message}</div>}
                       </Form.Group>

@@ -280,3 +280,55 @@ body {
 .page-header small {
   opacity: 0.8;
 }
+
+/* DataTable Styles */
+.datatable-container {
+  /* Ensure proper spacing */
+}
+
+.datatable-container .table th {
+  user-select: none;
+  position: relative;
+}
+
+.datatable-container .table th[style*="cursor: pointer"]:hover {
+  background-color: var(--border-light);
+}
+
+.datatable-container .pagination {
+  margin-bottom: 0;
+}
+
+.datatable-container .pagination .page-item .page-link {
+  border-radius: var(--border-radius-sm);
+  margin: 0 2px;
+  border: 1px solid var(--border-color);
+  color: var(--primary-color);
+}
+
+.datatable-container .pagination .page-item.active .page-link {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+.datatable-container .pagination .page-item:hover .page-link {
+  background-color: var(--primary-light);
+  border-color: var(--primary-light);
+  color: var(--white);
+}
+
+/* Responsive table adjustments */
+@media (max-width: 768px) {
+  .datatable-container .table-responsive {
+    font-size: 0.875rem;
+  }
+  
+  .datatable-container .pagination {
+    justify-content: center !important;
+  }
+  
+  .datatable-container .pagination .page-item .page-link {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+  }
+}

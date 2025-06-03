@@ -47,16 +47,16 @@ class DaiLyService {
         md.tonggiatrigiaodich > 0
       ORDER BY 
         md.tonggiatrigiaodich DESC, md.madaily`;
-    
+
     const result = await query(queryString, [month, year]);
-    
+
     // Comprehensive Debug logging
     console.log('=== COMPREHENSIVE DEBUG OUTPUT ===');
     console.log('Query parameters:', { month, year });
     console.log('Result object keys:', Object.keys(result));
     console.log('Result rowCount:', result.rowCount);
     console.log('Result rows length:', result.rows?.length);
-    
+
     if (result.rows && result.rows.length > 0) {
       console.log('All rows raw data:');
       result.rows.forEach((row, index) => {
@@ -67,7 +67,7 @@ class DaiLyService {
           console.log(`  ${key}: ${value} (type: ${typeof value})`);
         });
       });
-      
+
       console.log('First row detailed analysis:');
       const firstRow = result.rows[0];
       console.log('madaily:', firstRow.madaily, typeof firstRow.madaily);
@@ -80,11 +80,11 @@ class DaiLyService {
       console.log('No rows returned from query');
     }
     console.log('=== END DEBUG OUTPUT ===');
-    
+
     // Calculate summary data
     const tongDoanhSo = result.rows.length > 0 ? parseInt(result.rows[0].tongdoanhso) : 0;
     const soLuongDaiLy = result.rows.length;
-    
+
     return {
       thang: month,
       nam: year,
@@ -128,9 +128,9 @@ class DaiLyService {
       ORDER BY 
         d.MaDaiLy`;
 
-      const result = await query(queryString);
-      return result.rows;
-    }
+    const result = await query(queryString);
+    return result.rows;
+  }
 
   async getDaiLy(madaily) {
     const queryString = `
@@ -166,20 +166,20 @@ class DaiLyService {
   async executeQuery(queryString) {
     try {
       const result = await query(queryString);
-      
+
       if (result.rows.length === 0) {
         return 'No records found.';
       }
-      
+
       // Get column names from the first row
       const columns = Object.keys(result.rows[0]);
-      
+
       // Format each row as a string
       const formattedRows = result.rows.map(row => {
         const values = columns.map(col => `${col}: ${row[col] || 'NULL'}`);
         return values.join(', ');
       });
-      
+
       return formattedRows.join('\n');
     } catch (error) {
       throw new Error(`Query execution failed: ${error.message}`);
@@ -198,7 +198,7 @@ class DaiLyService {
       throw new Error(`Insert execution failed: ${error.message}`);
     }
   }
-  
+
   validateRequiredFields(data, requiredFields) {
     const missingFields = [];
     for (const field of requiredFields) {
@@ -244,7 +244,7 @@ class DaiLyService {
         RETURNING 'DL' || LPAD(MaDaiLyCuoi::TEXT, 5, '0') AS formatted_ma_daily`;
       const idTrackerResult = await query(idTrackerQuery);
       madaily = idTrackerResult.rows[0].formatted_ma_daily;
-    }    
+    }
     const mergedQuery = `
     WITH validation_check AS (
       SELECT 
@@ -282,7 +282,7 @@ class DaiLyService {
       MaDaiLy as madaily, 
       'VALID' as validation_result,
       0 as current_agents,
-      0 as max_agents;`;    console.log('Executing query:', mergedQuery, [madaily, tendaily, sodienthoai, diachi, email, idLoaiDaiLy, idQuan, ngaytiepnhan]);
+      0 as max_agents;`; console.log('Executing query:', mergedQuery, [madaily, tendaily, sodienthoai, diachi, email, idLoaiDaiLy, idQuan, ngaytiepnhan]);
     const result = await query(mergedQuery, [madaily, tendaily, sodienthoai, diachi, email, idLoaiDaiLy, idQuan, ngaytiepnhan]);
 
     // Check if any rows were returned (insertion happened)
@@ -306,7 +306,7 @@ class DaiLyService {
           current_agents,
           max_agents
         FROM validation_check`;
-      
+
       const validationResult = await query(validationQuery, [idLoaiDaiLy, idQuan]);
       throw new Error(validationResult.rows[0].error_message);
     } else {
@@ -371,13 +371,13 @@ class DaiLyService {
     }
 
     values.push(idDaiLy);
-    
+
     let updateQuery;
-    
+
     // If district is changing, use the combined limit check + update query
     if (isQuanChanging) {
       console.log("Thay đổi quận từ " + currentQuan + " sang " + idQuan);
-      
+
       updateQuery = `
         WITH validation_check AS (
           SELECT 
@@ -438,8 +438,8 @@ class DaiLyService {
     }
 
     console.log('Update successful for madaily:', madaily);
-    return { 
-      madaily: result.rows[0].madaily 
+    return {
+      madaily: result.rows[0].madaily
     };
   }
 
@@ -470,15 +470,16 @@ class DaiLyService {
 
     console.log('Delete successful for madaily:', madaily);
     return { madaily };
-  }  async searchDaiLy({ 
-    madaily, 
-    tendaily, 
-    sodienthoai, 
-    email, 
-    diachi, 
-    maquan, 
+  }
+  async searchDaiLy({
+    madaily,
+    tendaily,
+    sodienthoai,
+    email,
+    diachi,
+    maquan,
     tenquan,
-    maloaidaily, 
+    maloaidaily,
     tenloaidaily,
     ngaytiepnhan_from,
     ngaytiepnhan_to,
@@ -493,7 +494,7 @@ class DaiLyService {
     tonggiatri_from,
     tonggiatri_to,
     // Product/item criteria
-    tenmathang,
+    mamathang,
     soluongxuat_from,
     soluongxuat_to,
     dongiaxuat_from,
@@ -502,15 +503,16 @@ class DaiLyService {
     thanhtien_to,
     soluongton_from,
     soluongton_to,
-    tendonvitinh
-  }) {    console.log('Inside searchDaiLy service with criteria:', { 
-      madaily, tendaily, sodienthoai, email, diachi, maquan, tenquan, 
-      maloaidaily, tenloaidaily, ngaytiepnhan_from, ngaytiepnhan_to, 
+    madonvitinh
+  }) {
+    console.log('Inside searchDaiLy service with criteria:', {
+      madaily, tendaily, sodienthoai, email, diachi, maquan, tenquan,
+      maloaidaily, tenloaidaily, ngaytiepnhan_from, ngaytiepnhan_to,
       congno_min, congno_max, has_debt,
       maphieuxuat_from, maphieuxuat_to, ngaylap_from, ngaylap_to,
-      tonggiatri_from, tonggiatri_to, tenmathang, soluongxuat_from,
+      tonggiatri_from, tonggiatri_to, mamathang, soluongxuat_from,
       soluongxuat_to, dongiaxuat_from, dongiaxuat_to, thanhtien_from,
-      thanhtien_to, soluongton_from, soluongton_to, tendonvitinh
+      thanhtien_to, soluongton_from, soluongton_to, madonvitinh
     });
 
     const conditions = [];
@@ -630,9 +632,9 @@ class DaiLyService {
     }
 
     // Product/item search criteria
-    if (tenmathang) {
-      conditions.push(`LOWER(mh.TenMatHang) LIKE LOWER($${paramIndex++})`);
-      values.push(`%${tenmathang}%`);
+    if (mamathang) {
+      conditions.push(`mh.MaMatHang LIKE $${paramIndex++}`);
+      values.push(`%${mamathang}%`);
     }
 
     if (soluongxuat_from !== undefined && soluongxuat_from !== null) {
@@ -675,15 +677,15 @@ class DaiLyService {
       values.push(soluongton_to);
     }
 
-    if (tendonvitinh) {
-      conditions.push(`LOWER(dvt.TenDonViTinh) LIKE LOWER($${paramIndex++})`);
-      values.push(`%${tendonvitinh}%`);
+    if (madonvitinh) {
+      conditions.push(`dvt.MaDonViTinh LIKE $${paramIndex++})`);
+      values.push(`%${madonvitinh}%`);
     }
 
     let whereClause = 'd.DeletedAt IS NULL';
     if (conditions.length > 0) {
       whereClause += ` AND ${conditions.join(' AND ')}`;
-    }    const queryString = `
+    } const queryString = `
       SELECT DISTINCT
         d.IDDaiLy as iddaily,
         d.MaDaiLy as madaily,
