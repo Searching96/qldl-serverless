@@ -201,7 +201,6 @@ export const TiepNhanDaiLy = () => {
                 const idToUse = formData.madaily;
                 result = await updateDaily(idToUse, formData);
                 setSuccessMessage('Đại lý được cập nhật thành công: ' + idToUse);
-                setSelectedDaily(null); // Only clear selection on success
                 operationSuccess = true;
             } else {
                 setInfoMessage('Đang tạo đại lý mới...');
@@ -216,15 +215,13 @@ export const TiepNhanDaiLy = () => {
             setDSDaiLy(updatedDaily || []);
             setInfoMessage('');
 
-            // Trigger form reset after successful submission
-            setResetFormTrigger(prev => prev + 1);
+            // Clear form state and disable form after successful submission
+            setSelectedDaily(null);
+            setEditId(null);
+            setNewId(null);
+            setCachedNextId(null);
+            resetForm();
 
-            // Only clear selectedDaily after successful operation
-            if (!selectedDaily) {
-                // For new creation, we need to clear the form by setting a fresh selected state
-                // that will be null but trigger the form to reset
-                setSelectedDaily(null);
-            }
         } catch (err) {
             console.error("Có lỗi xảy ra:", err);
             setErrorMessage(err.message || 'Có lỗi xảy ra khi xử lý đại lý');
@@ -368,6 +365,7 @@ export const TiepNhanDaiLy = () => {
                                                     type="text"
                                                     placeholder="Mã đại lý"
                                                     value={editId || newId || ""}
+                                                    {...register("madaily")}
                                                     readOnly />
                                                 {errors.madaily && <div className="text-danger small mt-1">{errors.madaily.message}</div>}
                                             </Form.Group>

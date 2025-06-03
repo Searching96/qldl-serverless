@@ -8,7 +8,7 @@ import { DaiLySelectionModal } from './DaiLySelectionModal';
 export const LapPhieuXuatHang = () => {
   const { register, handleSubmit, setValue, reset, clearErrors, formState: { errors } } = useForm();
   const navigate = useNavigate();
-  
+
   const getCurrentDate = () => {
     const today = new Date();
     const year = today.getFullYear();
@@ -60,15 +60,15 @@ export const LapPhieuXuatHang = () => {
     try {
       const phieuXuatList = await getAllPhieuXuat();
       console.log('Current phieu xuat list:', phieuXuatList);
-      
+
       // Get the count and add 1 for next ID
       const currentCount = Array.isArray(phieuXuatList) ? phieuXuatList.length : 0;
       const nextNumber = currentCount + 1;
-      
+
       // Format with leading zeros (5 digits total)
       const formattedNumber = nextNumber.toString().padStart(5, '0');
       const newMaPhieuXuat = `PX${formattedNumber}`;
-      
+
       console.log('Generated new MaPhieuXuat:', newMaPhieuXuat);
       setValue("maPhieuXuat", newMaPhieuXuat);
     } catch (error) {
@@ -81,9 +81,9 @@ export const LapPhieuXuatHang = () => {
   const handleDaiLyChange = (e) => {
     const selectedMaDaiLy = e.target.value;
     setValue("tenDaiLy", selectedMaDaiLy);
-    
+
     clearErrors("tenDaiLy");
-    
+
     if (selectedMaDaiLy) {
       loadDaiLyInfo(selectedMaDaiLy);
     } else {
@@ -95,7 +95,7 @@ export const LapPhieuXuatHang = () => {
   const loadDaiLyInfo = (maDaiLy) => {
     try {
       const selectedAgent = daiLyList.find(agent => agent.madaily === maDaiLy);
-      
+
       if (selectedAgent) {
         setValue("noDaiLy", selectedAgent.congno || '0');
         setValue("noToiDa", selectedAgent.notoida || '0');
@@ -108,7 +108,7 @@ export const LapPhieuXuatHang = () => {
   const handleMatHangChange = (index, selectedMatHang) => {
     const selectedProduct = matHangList.find(mh => mh.mamathang === selectedMatHang);
     const newChiTiet = [...chiTietPhieu];
-    
+
     if (selectedProduct) {
       newChiTiet[index] = {
         ...newChiTiet[index],
@@ -124,7 +124,7 @@ export const LapPhieuXuatHang = () => {
         soLuongTon: ''
       };
     }
-    
+
     setChiTietPhieu(newChiTiet);
     calculateThanhTien(index, newChiTiet);
   };
@@ -147,12 +147,12 @@ export const LapPhieuXuatHang = () => {
     const soLuong = parseFloat(chiTiet[index].soLuongXuat) || 0;
     const donGia = parseFloat(chiTiet[index].donGiaXuat) || 0;
     const thanhTien = soLuong * donGia;
-    
+
     // Store raw number value for calculation
     chiTiet[index].thanhTienValue = thanhTien;
     // Store as plain number without formatting
     chiTiet[index].thanhTien = thanhTien.toString();
-    
+
     // Calculate total from all items
     calculateTongTien(chiTiet);
   };
@@ -163,7 +163,7 @@ export const LapPhieuXuatHang = () => {
       const itemThanhTien = item.thanhTienValue || 0;
       return sum + itemThanhTien;
     }, 0);
-        
+
     setValue("tongTien", tongTien.toString());
   };
 
@@ -195,13 +195,13 @@ export const LapPhieuXuatHang = () => {
   const submitHandler = async (data) => {
     // Validation checks before submission
     const validationErrors = [];
-    
+
     // Check if no items are selected
     const hasSelectedItems = chiTietPhieu.some(item => item.tenMatHang);
     if (!hasSelectedItems) {
       validationErrors.push('Phải chọn ít nhất một mặt hàng để xuất');
     }
-    
+
     // Check for missing required fields in selected items
     chiTietPhieu.forEach((item, index) => {
       if (item.tenMatHang) {
@@ -211,7 +211,7 @@ export const LapPhieuXuatHang = () => {
           const tenMatHang = selectedProduct ? selectedProduct.tenmathang : item.tenMatHang;
           validationErrors.push(`Mặt hàng "${tenMatHang}" chưa nhập số lượng xuất`);
         }
-        
+
         if (!item.donGiaXuat || item.donGiaXuat === '0') {
           const selectedProduct = matHangList.find(mh => mh.mamathang === item.tenMatHang);
           const tenMatHang = selectedProduct ? selectedProduct.tenmathang : item.tenMatHang;
@@ -219,13 +219,13 @@ export const LapPhieuXuatHang = () => {
         }
       }
     });
-    
+
     // Check inventory for each item
     chiTietPhieu.forEach((item, index) => {
       if (item.tenMatHang && item.soLuongXuat) {
         const soLuongTon = parseInt(item.soLuongTon) || 0;
         const soLuongXuat = parseInt(item.soLuongXuat) || 0;
-        
+
         if (soLuongXuat > soLuongTon) {
           const selectedProduct = matHangList.find(mh => mh.mamathang === item.tenMatHang);
           const tenMatHang = selectedProduct ? selectedProduct.tenmathang : item.tenMatHang;
@@ -233,48 +233,48 @@ export const LapPhieuXuatHang = () => {
         }
       }
     });
-    
+
     // Check debt limit
     const noDaiLy = parseFloat(String(data.noDaiLy || '0').replace(/\./g, '').replace(/,/g, '')) || 0;
     const tongTien = parseFloat(String(data.tongTien || '0').replace(/\./g, '').replace(/,/g, '')) || 0;
     const noToiDa = parseFloat(String(data.noToiDa || '0').replace(/\./g, '').replace(/,/g, '')) || 0;
     const noSauGiaoDich = noDaiLy + tongTien;
-    
+
     // Debug logging
     console.log('=== DEBT VALIDATION DEBUG ===');
     console.log('Original data:', { noDaiLy: data.noDaiLy, tongTien: data.tongTien, noToiDa: data.noToiDa });
     console.log('Parsed values:', { noDaiLy, tongTien, noToiDa, noSauGiaoDich });
-    console.log('Types:', { 
-      noDaiLy: typeof noDaiLy, 
-      tongTien: typeof tongTien, 
-      noToiDa: typeof noToiDa, 
-      noSauGiaoDich: typeof noSauGiaoDich 
+    console.log('Types:', {
+      noDaiLy: typeof noDaiLy,
+      tongTien: typeof tongTien,
+      noToiDa: typeof noToiDa,
+      noSauGiaoDich: typeof noSauGiaoDich
     });
     console.log('Comparison: noSauGiaoDich > noToiDa:', noSauGiaoDich > noToiDa, `(${noSauGiaoDich} > ${noToiDa})`);
     console.log('=============================');
-    
+
     if (noSauGiaoDich > noToiDa) {
       validationErrors.push(`Nợ sau giao dịch (${noSauGiaoDich.toLocaleString('vi-VN')} VNĐ) vượt quá nợ tối đa (${noToiDa.toLocaleString('vi-VN')} VNĐ)`);
     }
-    
+
     // Show validation errors if any
     if (validationErrors.length > 0) {
       const errorMsg = `Không thể lập phiếu xuất:\n\n${validationErrors.join('\n')}`;
       setErrorMessage(errorMsg);
       setShowError(true);
-      
+
       setTimeout(() => {
         setShowError(false);
       }, 8000);
       return;
     }
-    
+
     setLoadingMessage("Đang lập phiếu xuất...");
     setShowLoading(true);
     try {
       // Use the date directly from the date picker (already in YYYY-MM-DD format)
       const formattedDate = data.ngayLap;
-      
+
       // Prepare chi tiết data
       const chitiet = chiTietPhieu
         .filter(item => item.tenMatHang && item.soLuongXuat && item.donGiaXuat)
@@ -284,7 +284,7 @@ export const LapPhieuXuatHang = () => {
           dongiaxuat: parseInt(parseFloat(item.donGiaXuat)), // Convert to integer
           thanhtien: parseInt(parseFloat(item.thanhTien.replace(/\./g, '').replace(/,/g, '')) || 0) // Remove dots and commas first
         }));
-      
+
       const phieuXuatData = {
         maphieuxuat: data.maPhieuXuat,
         madaily: data.tenDaiLy,
@@ -292,7 +292,7 @@ export const LapPhieuXuatHang = () => {
         tonggiatri: parseInt(parseFloat(data.tongTien.replace(/\./g, '').replace(/,/g, '')) || 0), // Remove dots (thousands separator) and commas
         chitiet: chitiet
       };
-      
+
       // Debug: Log the exact data being sent
       console.log('=== DEBUG: Data being sent to API ===');
       console.log('Form data received:', data);
@@ -306,19 +306,19 @@ export const LapPhieuXuatHang = () => {
       console.log('JSON string to be sent:');
       console.log(JSON.stringify(phieuXuatData, null, 2));
       console.log('=====================================');
-      
+
       const result = await createPhieuXuat(phieuXuatData);
       console.log('Lập phiếu xuất hàng thành công:', result);
-      
+
       // Display message from backend if available, otherwise default success message
       const message = result?.message || "Lập phiếu xuất thành công";
       setSuccessMessage(message);
       setShowSuccess(true);
-      
+
       setTimeout(() => {
         setShowSuccess(false);
       }, 5000);
-      
+
       await fetchDaiLyList();
       handleThoat();
     } catch (error) {
@@ -358,7 +358,7 @@ export const LapPhieuXuatHang = () => {
   return (
     <div className="container-fluid px-0 mt-4">
       <h1 className="ms-3">Lập phiếu xuất hàng</h1>
-      
+
       {/* Alert messages following TiepNhanDaiLy pattern */}
       {showSuccess && (
         <div className="alert alert-success mx-3" role="alert">
@@ -373,7 +373,7 @@ export const LapPhieuXuatHang = () => {
           </div>
         </div>
       )}
-      
+
       {showLoading && (
         <div className="alert alert-info mx-3" role="alert">
           <div className="d-flex justify-content-between align-items-center">
@@ -387,7 +387,7 @@ export const LapPhieuXuatHang = () => {
           </div>
         </div>
       )}
-      
+
       {showError && (
         <div className="alert alert-danger mx-3" role="alert">
           <div className="d-flex justify-content-between align-items-center">
@@ -412,7 +412,7 @@ export const LapPhieuXuatHang = () => {
               <Form onSubmit={handleSubmit(submitHandler)}>
                 <div className="bg-light rounded p-4 mb-4">
                   <h6 className="text-primary fw-semibold mb-3 border-bottom border-primary pb-2">Thông tin phiếu xuất</h6>
-                  
+
                   {/* Form fields in responsive rows */}
                   <Row className="g-3 mb-3">
                     <Col>
@@ -427,7 +427,7 @@ export const LapPhieuXuatHang = () => {
                         {errors.maPhieuXuat && <div className="text-danger small mt-1">{errors.maPhieuXuat.message}</div>}
                       </Form.Group>
                     </Col>
-                    
+
                     <Col>
                       <Form.Group>
                         <Form.Label className="fw-medium mb-2">Tên đại lý</Form.Label>
@@ -450,23 +450,21 @@ export const LapPhieuXuatHang = () => {
                         {errors.tenDaiLy && <div className="text-danger small mt-1">{errors.tenDaiLy.message}</div>}
                       </Form.Group>
                     </Col>
-                    
+
                     <Col>
                       <Form.Group>
                         <Form.Label className="fw-medium mb-2">Ngày lập</Form.Label>
                         <Form.Control
                           type="date"
-                          {...register("ngayLap", { 
+                          {...register("ngayLap", {
                             required: "Ngày lập là bắt buộc"
                           })}
                         />
                         {errors.ngayLap && <div className="text-danger small mt-1">{errors.ngayLap.message}</div>}
                       </Form.Group>
                     </Col>
-                  </Row>
 
-                  <Row className="g-3">
-                    <Col md={3}>
+                    <Col>
                       <Form.Group>
                         <Form.Label className="fw-medium mb-2">Nợ đại lý</Form.Label>
                         <Form.Control
@@ -477,7 +475,7 @@ export const LapPhieuXuatHang = () => {
                         />
                       </Form.Group>
                     </Col>
-                    
+
                     <Col>
                       <Form.Group>
                         <Form.Label className="fw-medium mb-2">Nợ tối đa</Form.Label>
@@ -489,20 +487,20 @@ export const LapPhieuXuatHang = () => {
                         />
                       </Form.Group>
                     </Col>
-                    
+
                     <Col>
                       <Form.Group>
                         <Form.Label className="fw-medium mb-2">Ngày lập</Form.Label>
                         <Form.Control
                           type="date"
-                          {...register("ngayLap", { 
+                          {...register("ngayLap", {
                             required: "Ngày lập là bắt buộc"
                           })}
                         />
                         {errors.ngayLap && <div className="text-danger small mt-1">{errors.ngayLap.message}</div>}
                       </Form.Group>
                     </Col>
-                    
+
                     <Col>
                       <Form.Group>
                         <Form.Label className="fw-medium mb-2">Tổng tiền</Form.Label>
@@ -618,7 +616,7 @@ export const LapPhieuXuatHang = () => {
                     </div>
                   </Card.Body>
                 </Card>
-                
+
                 <div className="d-flex flex-wrap gap-2 justify-content-center mt-4 pt-3 border-top">
                   <Button
                     type="submit"

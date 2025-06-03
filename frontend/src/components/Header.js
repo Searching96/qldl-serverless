@@ -10,7 +10,7 @@ export const Header = () => {
     <Navbar bg="primary" variant="dark" expand="lg">
       <Container>
         <Link className="navbar-brand" to="/">
-          QLDL
+          Quản lý đại lý
         </Link>
         <Navbar.Toggle aria-controls="basic-navbar-nav" />
         <Navbar.Collapse id="basic-navbar-nav">

@@ -97,13 +97,25 @@ export const exeinsert = async (event, context) => {
 export const createdl = async (event, context) => {
     context.callbackWaitsForEmptyEventLoop = false;
     try {
-        const { tendaily, diachi, sodienthoai, email, maquan, maloaidaily, ngaytiepnhan } = JSON.parse(event.body);
-        const madaily = await daiLyService.createDaiLy({ tendaily, diachi, sodienthoai, email, maquan, maloaidaily, ngaytiepnhan });
-        console.log('Đã tạo đại lý với ID:', madaily);
+        const {madaily, tendaily, diachi, sodienthoai, email, maquan, maloaidaily, ngaytiepnhan } = JSON.parse(event.body);
+        
+        // Call createDaiLy once with all parameters (including optional madaily)
+        const resultMadaily = await daiLyService.createDaiLy({
+            madaily, 
+            tendaily, 
+            diachi, 
+            sodienthoai, 
+            email, 
+            maquan, 
+            maloaidaily, 
+            ngaytiepnhan 
+        });
+        
+        console.log('Đã tạo đại lý với ID:', resultMadaily);
         return {
             statusCode: 201,
             headers,
-            body: JSON.stringify({ message: 'Đã tạo đại lý thành công.', madaily }),
+            body: JSON.stringify({ message: 'Đã tạo đại lý thành công.', madaily: resultMadaily }),
         };
     } catch (error) {
         console.error('Lỗi khi tạo đại lý: ', error);

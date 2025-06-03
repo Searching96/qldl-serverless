@@ -141,10 +141,10 @@ export const LapBaoCaoDoanhSo = () => {
               <Form>
                 <div className="bg-light rounded p-4 mb-4">
                   <h6 className="text-primary fw-semibold mb-3 border-bottom border-primary pb-2">Thông tin báo cáo</h6>
-                  <Row>
+                  <Row className="g-3" md={"auto"}>
                     <Col>
                       <Form.Group>
-                        <Form.Label>Năm lập báo cáo</Form.Label>
+                        <Form.Label className="fw-medium mb-2">Năm lập báo cáo</Form.Label>
                         <Form.Select
                           value={selectedYear}
                           onChange={(e) => setSelectedYear(parseInt(e.target.value))}
@@ -158,7 +158,7 @@ export const LapBaoCaoDoanhSo = () => {
 
                     <Col>
                       <Form.Group>
-                        <Form.Label>Tháng lập báo cáo</Form.Label>
+                        <Form.Label className="fw-medium mb-2">Tháng lập báo cáo</Form.Label>
                         <Form.Select
                           value={selectedMonth}
                           onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
@@ -170,18 +170,6 @@ export const LapBaoCaoDoanhSo = () => {
                           ))}
                         </Form.Select>
                       </Form.Group>
-                    </Col>
-
-                    <Col>
-                      {/* Placeholder for 3rd column */}
-                    </Col>
-
-                    <Col md={3}>
-                      {/* Placeholder for 4th column */}
-                    </Col>
-
-                    <Col md={3}>
-                      {/* Placeholder for 5th column */}
                     </Col>
                   </Row>
                 </div>

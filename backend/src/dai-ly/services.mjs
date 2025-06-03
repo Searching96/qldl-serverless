@@ -244,7 +244,8 @@ class DaiLyService {
         RETURNING 'DL' || LPAD(MaDaiLyCuoi::TEXT, 5, '0') AS formatted_ma_daily`;
       const idTrackerResult = await query(idTrackerQuery);
       madaily = idTrackerResult.rows[0].formatted_ma_daily;
-    }    const mergedQuery = `
+    }    
+    const mergedQuery = `
     WITH validation_check AS (
       SELECT 
         -- Validate agent type exists

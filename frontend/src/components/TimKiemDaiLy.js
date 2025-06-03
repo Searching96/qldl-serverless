@@ -267,9 +267,6 @@ export const TimKiemDaiLy = ({ isModal = false, onSelect = null, onClose = null 
                             {/* Search form content */}
                             <Accordion defaultActiveKey="0" className="mb-4">
                                 <Accordion.Item eventKey="0">
-                                    <Accordion.Header>
-                                        <i className="bi bi-funnel me-2"></i>Bộ lọc tìm kiếm
-                                    </Accordion.Header>
                                     <Accordion.Body className="bg-light">
                                         {/* Search form fields */}
                                         <Form onSubmit={handleSearch}>

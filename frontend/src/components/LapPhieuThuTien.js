@@ -231,9 +231,9 @@ export const LapPhieuThuTien = () => {
                 <div className="bg-light rounded p-4 mb-4">
                   <h6 className="text-primary fw-semibold mb-3 border-bottom border-primary pb-2">Thông tin phiếu thu</h6>
                   
-                  {/* First row */}
-                  <div className="row g-3 mb-3">
-                    <div className="col-md-6">
+                  {/* Responsive form layout */}
+                  <Row className="g-3 mb-3">
+                    <Col>
                       <Form.Group>
                         <Form.Label className="fw-medium mb-2">Tên đại lý</Form.Label>
                         <Form.Select
@@ -254,8 +254,8 @@ export const LapPhieuThuTien = () => {
                         </Form.Select>
                         {errors.tenDaiLy && <div className="text-danger small mt-1">{errors.tenDaiLy.message}</div>}
                       </Form.Group>
-                    </div>
-                    <div className="col-md-6">
+                    </Col>
+                    <Col>
                       <Form.Group>
                         <Form.Label className="fw-medium mb-2">Nợ của đại lý</Form.Label>
                         <Form.Control
@@ -265,12 +265,11 @@ export const LapPhieuThuTien = () => {
                           placeholder="Nợ hiện tại"
                         />
                       </Form.Group>
-                    </div>
-                  </div>
+                    </Col>
+                  </Row>
 
-                  {/* Second row */}
-                  <div className="row g-3 mb-3">
-                    <div className="col-md-6">
+                  <Row className="g-3 mb-3">
+                    <Col>
                       <Form.Group>
                         <Form.Label className="fw-medium mb-2">Số điện thoại</Form.Label>
                         <Form.Control
@@ -280,8 +279,8 @@ export const LapPhieuThuTien = () => {
                           readOnly
                         />
                       </Form.Group>
-                    </div>
-                    <div className="col-md-6">
+                    </Col>
+                    <Col>
                       <Form.Group>
                         <Form.Label className="fw-medium mb-2">Email</Form.Label>
                         <Form.Control
@@ -291,12 +290,11 @@ export const LapPhieuThuTien = () => {
                           readOnly
                         />
                       </Form.Group>
-                    </div>
-                  </div>
+                    </Col>
+                  </Row>
 
-                  {/* Third row */}
-                  <div className="row g-3 mb-3">
-                    <div className="col-12">
+                  <Row className="g-3 mb-3">
+                    <Col xs={12}>
                       <Form.Group>
                         <Form.Label className="fw-medium mb-2">Địa chỉ</Form.Label>
                         <Form.Control
@@ -306,12 +304,11 @@ export const LapPhieuThuTien = () => {
                           readOnly
                         />
                       </Form.Group>
-                    </div>
-                  </div>
+                    </Col>
+                  </Row>
 
-                  {/* Fourth row */}
-                  <div className="row g-3">
-                    <div className="col-md-6">
+                  <Row className="g-3">
+                    <Col>
                       <Form.Group>
                         <Form.Label className="fw-medium mb-2">Ngày thu tiền</Form.Label>
                         <Form.Control
@@ -327,8 +324,8 @@ export const LapPhieuThuTien = () => {
                         />
                         {errors.ngayThuTien && <div className="text-danger small mt-1">{errors.ngayThuTien.message}</div>}
                       </Form.Group>
-                    </div>
-                    <div className="col-md-6">
+                    </Col>
+                    <Col>
                       <Form.Group>
                         <Form.Label className="fw-medium mb-2">Số tiền thu</Form.Label>
                         <Form.Control
@@ -346,8 +343,8 @@ export const LapPhieuThuTien = () => {
                         />
                         {errors.soTienThu && <div className="text-danger small mt-1">{errors.soTienThu.message}</div>}
                       </Form.Group>
-                    </div>
-                  </div>
+                    </Col>
+                  </Row>
                 </div>
 
                 <div className="d-flex flex-wrap gap-2 justify-content-center pt-3 border-top">
