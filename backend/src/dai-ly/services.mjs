@@ -678,7 +678,7 @@ class DaiLyService {
     }
 
     if (madonvitinh) {
-      conditions.push(`dvt.MaDonViTinh LIKE $${paramIndex++})`);
+      conditions.push(`dvt.MaDonViTinh LIKE $${paramIndex++}`);
       values.push(`%${madonvitinh}%`);
     }
 

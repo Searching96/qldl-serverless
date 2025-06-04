@@ -221,14 +221,19 @@ export const DataTable = ({
                 </Table>
             </div>
 
+            
+            {/* Total Records Count - Always show */}
+            <Row className="mt-2">
+                <Col className="text-center">
+                    <small className="text-muted">
+                        Hiển thị {startItem} đến {endItem} trong tổng số {sortedData.length} bản ghi
+                    </small>
+                </Col>
+            </Row>
+
             {/* Pagination and Total Records */}
             {totalPages > 1 && (
                 <Row className="mt-3 align-items-center">
-                    <Col className="text-center">
-                        <small className="text-muted">
-                            Hiển thị {startItem} đến {endItem} trong tổng số {sortedData.length} bản ghi
-                        </small>
-                    </Col>
                     <Col>
                         <Pagination className="justify-content-end mb-0">
                             <Pagination.Prev

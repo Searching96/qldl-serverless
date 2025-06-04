@@ -4,6 +4,8 @@ import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { getAllDaily, createPhieuThu } from '../services/api';
 import { DaiLySelectionModal } from './DaiLySelectionModal';
+import { MoneyInput } from './MoneyInput';
+import { formatMoney, parseMoney } from '../utils/formatters';
 
 export const LapPhieuThuTien = () => {
   const { register, handleSubmit, setValue, reset, clearErrors, formState: { errors } } = useForm();
@@ -28,6 +30,8 @@ export const LapPhieuThuTien = () => {
   const [showError, setShowError] = useState(false);
   const [showDaiLyModal, setShowDaiLyModal] = useState(false);
   const [selectedDaiLy, setSelectedDaiLy] = useState(null);
+  const [soTienThuFormatted, setSoTienThuFormatted] = useState('0');
+  const [soTienThuRaw, setSoTienThuRaw] = useState(0);
 
   useEffect(() => {
     fetchDaiLyList();
@@ -75,7 +79,7 @@ export const LapPhieuThuTien = () => {
       const selectedAgent = daiLyList.find(agent => agent.madaily === maDaiLy);
 
       if (selectedAgent) {
-        setValue("noCuaDaiLy", selectedAgent.congno || '0');
+        setValue("noCuaDaiLy", formatMoney(selectedAgent.congno || '0'));
         setValue("dienThoai", selectedAgent.sodienthoai || '');
         setValue("email", selectedAgent.email || '');
         setValue("diaChi", selectedAgent.diachi || '');
@@ -85,22 +89,27 @@ export const LapPhieuThuTien = () => {
     }
   };
 
+  const handleSoTienThuChange = (e) => {
+    const inputValue = e.target.value;
+    // Remove non-digits
+    const cleanValue = inputValue.replace(/[^\d]/g, '');
+    const numValue = parseInt(cleanValue) || 0;
+    const formattedValue = formatMoney(numValue);
+    
+    setSoTienThuFormatted(formattedValue);
+    setSoTienThuRaw(numValue);
+    setValue("soTienThu", numValue); // Store raw value for form submission
+  };
+
   const submitHandler = async (data) => {
     setLoadingMessage("Đang lập phiếu thu...");
     setShowLoading(true);
     try {
-      // Convert date from dd/mm/yyyy to proper format for API
-      const dateParts = data.ngayThuTien.split('/');
-      const formattedDate = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`; // Convert to yyyy-mm-dd
-
-      // Find selected agent info for display
-      const selectedAgent = daiLyList.find(agent => agent.madaily === data.tenDaiLy);
-
       // Prepare data for API call
       const phieuThuData = {
         madaily: data.tenDaiLy,
-        ngaythutien: formattedDate,
-        sotienthu: parseInt(data.soTienThu)
+        ngaythutien: data.ngayThuTien,
+        sotienthu: soTienThuRaw // Use raw value
       };
 
       // API call to create payment receipt
@@ -141,6 +150,8 @@ export const LapPhieuThuTien = () => {
   const handleThoat = () => {
     // Clear form or navigate back
     reset();
+    setSoTienThuFormatted('0');
+    setSoTienThuRaw(0);
   };
 
   const handleExitToHome = () => {
@@ -150,7 +161,7 @@ export const LapPhieuThuTien = () => {
   const handleDaiLySelect = (daiLy) => {
     setSelectedDaiLy(daiLy);
     setValue("tenDaiLy", daiLy.madaily);
-    setValue("noCuaDaiLy", daiLy.congno || '0');
+    setValue("noCuaDaiLy", formatMoney(daiLy.congno || '0'));
     setValue("dienThoai", daiLy.sodienthoai || daiLy.dienthoai || '');
     setValue("email", daiLy.email || '');
     setValue("diaChi", daiLy.diachi || '');
@@ -197,8 +208,10 @@ export const LapPhieuThuTien = () => {
 
       {showError && (
         <div className="alert alert-danger mx-3" role="alert">
-          <div className="d-flex justify-content-between align-items-center">
-            <span>{errorMessage}</span>
+          <div className="d-flex justify-content-between align-items-start">
+            <div style={{ whiteSpace: 'pre-line', lineHeight: '1.5', flex: 1 }}>
+              {errorMessage}
+            </div>
             <button
               className="btn btn-outline-primary btn-sm ms-2"
               onClick={() => setShowError(false)}
@@ -314,17 +327,21 @@ export const LapPhieuThuTien = () => {
                       <Form.Group>
                         <Form.Label className="fw-medium mb-2">Số tiền thu</Form.Label>
                         <Form.Control
-                          type="number"
+                          type="text"
+                          value={soTienThuFormatted}
+                          onChange={handleSoTienThuChange}
+                          placeholder="Nhập số tiền thu"
+                        />
+                        {/* Hidden field for validation */}
+                        <input 
+                          type="hidden" 
                           {...register("soTienThu", {
                             required: "Số tiền thu là bắt buộc",
                             min: {
-                              value: 0,
-                              message: "Số tiền thu không được âm"
+                              value: 1,
+                              message: "Số tiền thu phải lớn hơn 0"
                             }
                           })}
-                          min="0"
-                          step="1"
-                          placeholder="Nhập số tiền thu"
                         />
                         {errors.soTienThu && <div className="text-danger small mt-1">{errors.soTienThu.message}</div>}
                       </Form.Group>

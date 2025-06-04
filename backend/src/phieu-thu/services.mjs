@@ -29,7 +29,7 @@ class PhieuThuService {
     const thamSoResult = await query(thamSoQuery);
     if (thamSoResult.rowCount > 0) {
       const quyDinhTienThuTienNo = thamSoResult.rows[0].quydinhtienthutienno;
-      
+
       if (quyDinhTienThuTienNo === 1) {
         if (sotienthu > congNo) {
           throw new Error(`Số tiền thu (${sotienthu}) không được lớn hơn công nợ hiện tại (${congNo}).`);
@@ -37,22 +37,15 @@ class PhieuThuService {
       }
     }
 
-    // Get the last MaPhieuThu and increment by 1
-    const lastMaPhieuThuQuery = `
-      SELECT MaPhieuThu 
-      FROM inventory.PHIEUTHU 
-      WHERE DeletedAt IS NULL 
-      ORDER BY CAST(MaPhieuThu AS INTEGER) DESC 
-      LIMIT 1`;
-    const lastMaPhieuThuResult = await query(lastMaPhieuThuQuery);
-    
-    let maphieuthu;
-    if (lastMaPhieuThuResult.rowCount === 0) {
-      maphieuthu = "1";
-    } else {
-      const lastMaPhieuThu = parseInt(lastMaPhieuThuResult.rows[0].maphieuthu);
-      maphieuthu = (lastMaPhieuThu + 1).toString();
-    }
+    // Generate new MaPhieuThu using ID_TRACKER
+    // Get the latest MaPhieuThu (e.g., 'PT00001')
+
+    const queryString = `
+      UPDATE inventory.ID_TRACKER
+      SET MaPhieuThuCuoi = MaPhieuThuCuoi + 1
+      RETURNING 'PT' || LPAD(MaPhieuThuCuoi::TEXT, 5, '0') AS formatted_ma_phieu_thu`;
+    const queryResult = await query(queryString);
+    const maphieuthu = queryResult.rows[0].formatted_ma_phieu_thu;
 
     const insertQuery = `
       INSERT INTO inventory.PHIEUTHU 
@@ -122,7 +115,7 @@ class PhieuThuService {
     }
     return result.rows[0];
   }
-  
+
   validateRequiredFields(data, requiredFields) {
     const missingFields = [];
     for (const field of requiredFields) {
@@ -161,17 +154,17 @@ class PhieuThuService {
     const values = [];
     let paramIndex = 1;
 
-    if (madaily && idDaiLy !== currentIdDaiLy) { 
-      updates.push(`IDDaiLy = $${paramIndex++}`); 
-      values.push(idDaiLy); 
+    if (madaily && idDaiLy !== currentIdDaiLy) {
+      updates.push(`IDDaiLy = $${paramIndex++}`);
+      values.push(idDaiLy);
     }
-    if (ngaythutien) { 
-      updates.push(`NgayThuTien = $${paramIndex++}`); 
-      values.push(ngaythutien); 
+    if (ngaythutien) {
+      updates.push(`NgayThuTien = $${paramIndex++}`);
+      values.push(ngaythutien);
     }
-    if (sotienthu !== undefined) { 
-      updates.push(`SoTienThu = $${paramIndex++}`); 
-      values.push(sotienthu); 
+    if (sotienthu !== undefined) {
+      updates.push(`SoTienThu = $${paramIndex++}`);
+      values.push(sotienthu);
     }
 
     if (updates.length === 0) {
@@ -199,15 +192,15 @@ class PhieuThuService {
       if (currentIdDaiLy) {
         await query('UPDATE inventory.DAILY SET CongNo = CongNo + $1 WHERE IDDaiLy = $2', [currentSoTienThu, currentIdDaiLy]);
       }
-      
+
       // Apply new amount to new daily
       const newAmount = sotienthu !== undefined ? sotienthu : currentSoTienThu;
       await query('UPDATE inventory.DAILY SET CongNo = CongNo - $1 WHERE IDDaiLy = $2', [newAmount, idDaiLy]);
     }
 
     console.log('Update successful for maphieuthu:', maphieuthu);
-    return { 
-      maphieuthu: result.rows[0].maphieuthu 
+    return {
+      maphieuthu: result.rows[0].maphieuthu
     };
   }
 

@@ -47,6 +47,29 @@ export const ThaoTacDb = () => {
     navigate("/");
   };
 
+  const formatCurrency = (value) => {
+    if (!value || value === '0') return '0';
+    return new Intl.NumberFormat('vi-VN').format(value);
+  };
+
+  const formatResultData = (data) => {
+    // Try to identify and format monetary fields
+    const monetaryFields = ['congno', 'notoida', 'tonggiatri', 'dongiaxuat', 'thanhtien', 'sotienthu', 'tongdoanhso'];
+    
+    if (Array.isArray(data)) {
+      return data.map(item => {
+        const formattedItem = { ...item };
+        monetaryFields.forEach(field => {
+          if (formattedItem[field] !== undefined && formattedItem[field] !== null) {
+            formattedItem[`${field}_formatted`] = formatCurrency(formattedItem[field]);
+          }
+        });
+        return formattedItem;
+      });
+    }
+    return data;
+  };
+
   const renderResults = () => {
     if (!results) return null;
 
@@ -73,14 +96,18 @@ export const ThaoTacDb = () => {
             return fields;
           });
           
+          // Format monetary values if present
+          const finalData = formatResultData(formattedData);
+          
           displayContent = JSON.stringify({
             message: parsedResults.message,
-            data: formattedData,
-            count: formattedData.length
+            data: finalData,
+            count: finalData.length
           }, null, 4);
         } else {
-          // Use 4 spaces for better readability
-          displayContent = JSON.stringify(parsedResults, null, 4);
+          // Format monetary values and use 4 spaces for better readability
+          const finalData = formatResultData(parsedResults);
+          displayContent = JSON.stringify(finalData, null, 4);
         }
       } catch (parseError) {
         // If parsing fails, display as is
@@ -132,7 +159,10 @@ export const ThaoTacDb = () => {
 
       {error && (
         <Alert variant="danger" className="mx-3" dismissible onClose={() => setError('')}>
-          <strong>Lỗi:</strong> {error}
+          <strong>Lỗi:</strong> 
+          <div style={{ whiteSpace: 'pre-line' }}>
+            {error}
+          </div>
         </Alert>
       )}
 

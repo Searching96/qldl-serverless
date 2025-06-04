@@ -307,7 +307,7 @@ export const TiepNhanDaiLy = () => {
         {
             header: 'Mã đại lý',
             accessor: 'madaily',
-            width: '12%',
+            width: '8%',
             cellClassName: 'fw-bold text-primary'
         },
         {
@@ -318,7 +318,7 @@ export const TiepNhanDaiLy = () => {
         {
             header: 'Số điện thoại',
             accessor: 'sodienthoai',
-            width: '12%',
+            width: '10%',
             render: (row) => row.sodienthoai || row.dienthoai
         },
         {
@@ -346,7 +346,7 @@ export const TiepNhanDaiLy = () => {
         {
             header: 'Ngày tiếp nhận',
             accessor: 'ngaytiepnhan',
-            width: '10%',
+            width: '12%',
             render: (row) => row.ngaytiepnhan ?
                 new Date(row.ngaytiepnhan).toLocaleDateString('vi-VN') : "N/A"
         },
@@ -395,8 +395,10 @@ export const TiepNhanDaiLy = () => {
             )}
             {errorMessage && (
                 <div className="alert alert-danger mx-3" role="alert">
-                    <div className="d-flex justify-content-between align-items-center">
-                        <span>{errorMessage}</span>
+                    <div className="d-flex justify-content-between align-items-start">
+                        <div style={{ whiteSpace: 'pre-line', lineHeight: '1.5', flex: 1 }}>
+                            {errorMessage}
+                        </div>
                         <button
                             className="btn btn-outline-primary btn-sm ms-2"
                             onClick={() => setErrorMessage('')}

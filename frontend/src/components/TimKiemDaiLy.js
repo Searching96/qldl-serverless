@@ -7,6 +7,8 @@ import {
 } from "../services/api.js";
 import { Quan, LoaiDaiLy } from "../models/index.js";
 import { DataTable } from './DataTable';
+import { MoneyInput } from './MoneyInput';
+import { formatMoney } from '../utils/formatters';
 
 export const TimKiemDaiLy = ({ isModal = false, onSelect = null, onClose = null }) => {
     const navigate = useNavigate();
@@ -53,6 +55,18 @@ export const TimKiemDaiLy = ({ isModal = false, onSelect = null, onClose = null 
         soluongton_from: '',
         soluongton_to: '',
         madonvitinh: ''
+    });
+
+    // Raw values for money fields
+    const [rawMoneyValues, setRawMoneyValues] = useState({
+        congno_min: 0,
+        congno_max: 0,
+        tonggiatri_from: 0,
+        tonggiatri_to: 0,
+        dongiaxuat_from: 0,
+        dongiaxuat_to: 0,
+        thanhtien_from: 0,
+        thanhtien_to: 0
     });
 
     const [searchResults, setSearchResults] = useState([]);
@@ -121,6 +135,17 @@ export const TimKiemDaiLy = ({ isModal = false, onSelect = null, onClose = null 
         }));
     };
 
+    const handleMoneyInputChange = (field, formattedValue, rawValue) => {
+        setSearchCriteria(prev => ({
+            ...prev,
+            [field]: formattedValue
+        }));
+        setRawMoneyValues(prev => ({
+            ...prev,
+            [field]: rawValue
+        }));
+    };
+
     const handleSearch = async (e) => {
         e.preventDefault();
         setIsLoading(true);
@@ -128,9 +153,16 @@ export const TimKiemDaiLy = ({ isModal = false, onSelect = null, onClose = null 
         setSearchPerformed(true);
 
         try {
+            // Prepare criteria with raw money values
             const filteredCriteria = Object.entries(searchCriteria)
                 .filter(([key, value]) => value !== '')
-                .reduce((obj, [key, value]) => ({ ...obj, [key]: value }), {});
+                .reduce((obj, [key, value]) => {
+                    // Use raw values for money fields
+                    if (rawMoneyValues.hasOwnProperty(key)) {
+                        return { ...obj, [key]: rawMoneyValues[key] };
+                    }
+                    return { ...obj, [key]: value };
+                }, {});
 
             console.log('Search criteria:', filteredCriteria);
 
@@ -178,6 +210,16 @@ export const TimKiemDaiLy = ({ isModal = false, onSelect = null, onClose = null 
             soluongton_to: '',
             madonvitinh: ''
         });
+        setRawMoneyValues({
+            congno_min: 0,
+            congno_max: 0,
+            tonggiatri_from: 0,
+            tonggiatri_to: 0,
+            dongiaxuat_from: 0,
+            dongiaxuat_to: 0,
+            thanhtien_from: 0,
+            thanhtien_to: 0
+        });
         setSearchResults([]);
         setErrorMessage('');
         setSearchPerformed(false);
@@ -213,10 +255,8 @@ export const TimKiemDaiLy = ({ isModal = false, onSelect = null, onClose = null 
     };
 
     const formatCurrency = (amount) => {
-        return new Intl.NumberFormat('vi-VN', {
-            style: 'currency',
-            currency: 'VND'
-        }).format(amount);
+        if (!amount || amount === '0') return '0';
+        return new Intl.NumberFormat('vi-VN').format(amount);
     };
 
     const formatDate = (dateString) => {
@@ -229,7 +269,7 @@ export const TimKiemDaiLy = ({ isModal = false, onSelect = null, onClose = null 
         {
             header: isModal ? 'Chọn' : 'STT',
             accessor: isModal ? 'select' : 'stt',
-            width: '8%',
+            width: '2%',
             sortable: false,
             cellClassName: 'text-center',
             render: (row, index) => isModal ? (
@@ -244,7 +284,7 @@ export const TimKiemDaiLy = ({ isModal = false, onSelect = null, onClose = null 
         {
             header: 'Mã đại lý',
             accessor: 'madaily',
-            width: '10%',
+            width: '8%',
             cellClassName: 'fw-bold text-primary'
         },
         {
@@ -255,12 +295,12 @@ export const TimKiemDaiLy = ({ isModal = false, onSelect = null, onClose = null 
         {
             header: 'Địa chỉ',
             accessor: 'diachi',
-            width: '18%'
+            width: '20%'
         },
         {
             header: 'Số điện thoại',
             accessor: 'sodienthoai',
-            width: '12%'
+            width: '10%'
         },
         {
             header: 'Email',
@@ -275,21 +315,16 @@ export const TimKiemDaiLy = ({ isModal = false, onSelect = null, onClose = null 
         {
             header: 'Ngày tiếp nhận',
             accessor: 'ngaytiepnhan',
-            width: '12%',
+            width: '10%',
             render: (row) => formatDate(row.ngaytiepnhan)
-        }
-    ];
-
-    // Add debt column if congno exists
-    if (searchResults.some(item => item.congno !== undefined)) {
-        searchColumns.splice(-1, 0, {
+        },
+        {
             header: 'Công nợ',
             accessor: 'congno',
-            width: '12%',
-            cellClassName: 'text-end',
-            render: (row) => formatCurrency(row.congno)
-        });
-    }
+            width: '8%',
+            render: (row) => formatMoney(row.congno)
+        }
+    ];
 
     return (
         <div className={`container-fluid ${isModal ? '' : 'px-0 mt-4'}`}>
@@ -304,7 +339,9 @@ export const TimKiemDaiLy = ({ isModal = false, onSelect = null, onClose = null 
 
             {errorMessage && (
                 <Alert variant="danger" className={isModal ? 'mx-0 mb-3' : 'mx-3'} dismissible onClose={() => setErrorMessage('')}>
-                    {errorMessage}
+                    <div style={{ whiteSpace: 'pre-line', lineHeight: '1.5' }}>
+                        {errorMessage}
+                    </div>
                 </Alert>
             )}
 
@@ -464,22 +501,22 @@ export const TimKiemDaiLy = ({ isModal = false, onSelect = null, onClose = null 
                                                                 <Col>
                                                                     <Form.Group>
                                                                         <Form.Label className="fw-medium mb-2">Công nợ (Từ)</Form.Label>
-                                                                        <Form.Control
-                                                                            type="number"
-                                                                            placeholder="Nhập công nợ từ"
+                                                                        <MoneyInput
                                                                             value={searchCriteria.congno_min}
-                                                                            onChange={(e) => handleInputChange('congno_min', e.target.value)}
+                                                                            onChange={(formatted, raw) => handleMoneyInputChange('congno_min', formatted, raw)}
+                                                                            placeholder="Nhập công nợ từ"
+                                                                            readOnly={false}
                                                                         />
                                                                     </Form.Group>
                                                                 </Col>
                                                                 <Col>
                                                                     <Form.Group>
                                                                         <Form.Label className="fw-medium mb-2">Công nợ (Đến)</Form.Label>
-                                                                        <Form.Control
-                                                                            type="number"
-                                                                            placeholder="Nhập công nợ đến"
+                                                                        <MoneyInput
                                                                             value={searchCriteria.congno_max}
-                                                                            onChange={(e) => handleInputChange('congno_max', e.target.value)}
+                                                                            onChange={(formatted, raw) => handleMoneyInputChange('congno_max', formatted, raw)}
+                                                                            placeholder="Nhập công nợ đến"
+                                                                            readOnly={false}
                                                                         />
                                                                     </Form.Group>
                                                                 </Col>
@@ -541,22 +578,22 @@ export const TimKiemDaiLy = ({ isModal = false, onSelect = null, onClose = null 
                                                                 <Col>
                                                                     <Form.Group>
                                                                         <Form.Label className="fw-medium mb-2">Tổng giá trị xuất (Từ)</Form.Label>
-                                                                        <Form.Control
-                                                                            type="number"
-                                                                            placeholder="Nhập tổng giá trị xuất từ"
+                                                                        <MoneyInput
                                                                             value={searchCriteria.tonggiatri_from}
-                                                                            onChange={(e) => handleInputChange('tonggiatri_from', e.target.value)}
+                                                                            onChange={(formatted, raw) => handleMoneyInputChange('tonggiatri_from', formatted, raw)}
+                                                                            placeholder="Nhập tổng giá trị xuất từ"
+                                                                            readOnly={false}
                                                                         />
                                                                     </Form.Group>
                                                                 </Col>
                                                                 <Col>
                                                                     <Form.Group>
                                                                         <Form.Label className="fw-medium mb-2">Tổng giá trị xuất (Đến)</Form.Label>
-                                                                        <Form.Control
-                                                                            type="number"
-                                                                            placeholder="Nhập tổng giá trị xuất đến"
+                                                                        <MoneyInput
                                                                             value={searchCriteria.tonggiatri_to}
-                                                                            onChange={(e) => handleInputChange('tonggiatri_to', e.target.value)}
+                                                                            onChange={(formatted, raw) => handleMoneyInputChange('tonggiatri_to', formatted, raw)}
+                                                                            placeholder="Nhập tổng giá trị xuất đến"
+                                                                            readOnly={false}
                                                                         />
                                                                     </Form.Group>
                                                                 </Col>
@@ -631,22 +668,22 @@ export const TimKiemDaiLy = ({ isModal = false, onSelect = null, onClose = null 
                                                                 <Col>
                                                                     <Form.Group>
                                                                         <Form.Label className="fw-medium mb-2">Đơn giá xuất (Từ)</Form.Label>
-                                                                        <Form.Control
-                                                                            type="number"
-                                                                            placeholder="Nhập đơn giá xuất từ"
+                                                                        <MoneyInput
                                                                             value={searchCriteria.dongiaxuat_from}
-                                                                            onChange={(e) => handleInputChange('dongiaxuat_from', e.target.value)}
+                                                                            onChange={(formatted, raw) => handleMoneyInputChange('dongiaxuat_from', formatted, raw)}
+                                                                            placeholder="Nhập đơn giá xuất từ"
+                                                                            readOnly={false}
                                                                         />
                                                                     </Form.Group>
                                                                 </Col>
                                                                 <Col>
                                                                     <Form.Group>
                                                                         <Form.Label className="fw-medium mb-2">Đơn giá xuất (Đến)</Form.Label>
-                                                                        <Form.Control
-                                                                            type="number"
-                                                                            placeholder="Nhập đơn giá xuất đến"
+                                                                        <MoneyInput
                                                                             value={searchCriteria.dongiaxuat_to}
-                                                                            onChange={(e) => handleInputChange('dongiaxuat_to', e.target.value)}
+                                                                            onChange={(formatted, raw) => handleMoneyInputChange('dongiaxuat_to', formatted, raw)}
+                                                                            placeholder="Nhập đơn giá xuất đến"
+                                                                            readOnly={false}
                                                                         />
                                                                     </Form.Group>
                                                                 </Col>
@@ -655,22 +692,22 @@ export const TimKiemDaiLy = ({ isModal = false, onSelect = null, onClose = null 
                                                                 <Col>
                                                                     <Form.Group>
                                                                         <Form.Label className="fw-medium mb-2">Thành tiền (Từ)</Form.Label>
-                                                                        <Form.Control
-                                                                            type="number"
-                                                                            placeholder="Nhập thành tiền từ"
+                                                                        <MoneyInput
                                                                             value={searchCriteria.thanhtien_from}
-                                                                            onChange={(e) => handleInputChange('thanhtien_from', e.target.value)}
+                                                                            onChange={(formatted, raw) => handleMoneyInputChange('thanhtien_from', formatted, raw)}
+                                                                            placeholder="Nhập thành tiền từ"
+                                                                            readOnly={false}
                                                                         />
                                                                     </Form.Group>
                                                                 </Col>
                                                                 <Col>
                                                                     <Form.Group>
                                                                         <Form.Label className="fw-medium mb-2">Thành tiền (Đến)</Form.Label>
-                                                                        <Form.Control
-                                                                            type="number"
-                                                                            placeholder="Nhập thành tiền đến"
+                                                                        <MoneyInput
                                                                             value={searchCriteria.thanhtien_to}
-                                                                            onChange={(e) => handleInputChange('thanhtien_to', e.target.value)}
+                                                                            onChange={(formatted, raw) => handleMoneyInputChange('thanhtien_to', formatted, raw)}
+                                                                            placeholder="Nhập thành tiền đến"
+                                                                            readOnly={false}
                                                                         />
                                                                     </Form.Group>
                                                                 </Col>

@@ -5,6 +5,8 @@ import { useNavigate } from "react-router-dom";
 import { getAllDaily, createPhieuXuat, getAllMatHang, getAllPhieuXuat } from '../services/api';
 import { DaiLySelectionModal } from './DaiLySelectionModal';
 import { DataTable } from './DataTable';
+import { formatMoney, parseMoney } from '../utils/formatters';
+import { MoneyInput } from './MoneyInput';
 
 export const LapPhieuXuatHang = () => {
   const { register, handleSubmit, setValue, reset, clearErrors, formState: { errors } } = useForm();
@@ -91,8 +93,15 @@ export const LapPhieuXuatHang = () => {
       const selectedAgent = daiLyList.find(agent => agent.madaily === maDaiLy);
 
       if (selectedAgent) {
-        setValue("noDaiLy", selectedAgent.congno || '0');
-        setValue("noToiDa", selectedAgent.notoida || '0');
+        const formattedNoDaiLy = formatMoney(selectedAgent.congno || '0');
+        const formattedNoToiDa = formatMoney(selectedAgent.notoida || '0');
+        
+        setValue("noDaiLy", formattedNoDaiLy);
+        setValue("noToiDa", formattedNoToiDa);
+        
+        // Also store raw values for calculations
+        setValue("noDaiLyRaw", selectedAgent.congno || 0);
+        setValue("noToiDaRaw", selectedAgent.notoida || 0);
       }
     } catch (error) {
       console.error('Error loading agent info:', error);
@@ -137,22 +146,23 @@ export const LapPhieuXuatHang = () => {
     calculateThanhTien(index, newChiTiet);
   };
 
-  const handleDonGiaXuatChange = (index, value) => {
+  const handleDonGiaXuatChange = (index, formattedValue, rawValue) => {
     const newChiTiet = [...chiTietPhieu];
-    newChiTiet[index].donGiaXuat = value;
+    newChiTiet[index].donGiaXuat = rawValue; // Store raw value for calculation
+    newChiTiet[index].donGiaXuatFormatted = formattedValue; // Store formatted value for display
     setChiTietPhieu(newChiTiet);
     calculateThanhTien(index, newChiTiet);
   };
 
   const calculateThanhTien = (index, chiTiet) => {
     const soLuong = parseFloat(chiTiet[index].soLuongXuat) || 0;
-    const donGia = parseFloat(chiTiet[index].donGiaXuat) || 0;
+    const donGia = parseFloat(chiTiet[index].donGiaXuat) || 0; // Use raw value
     const thanhTien = soLuong * donGia;
 
     // Store raw number value for calculation
     chiTiet[index].thanhTienValue = thanhTien;
-    // Store as plain number without formatting
-    chiTiet[index].thanhTien = thanhTien.toString();
+    // Store formatted value for display
+    chiTiet[index].thanhTien = formatMoney(thanhTien);
 
     // Calculate total from all items
     calculateTongTien(chiTiet);
@@ -160,12 +170,13 @@ export const LapPhieuXuatHang = () => {
 
   const calculateTongTien = (chiTiet) => {
     const tongTien = chiTiet.reduce((sum, item) => {
-      // Use the raw number value instead of parsing formatted string
       const itemThanhTien = item.thanhTienValue || 0;
       return sum + itemThanhTien;
     }, 0);
 
-    setValue("tongTien", tongTien.toString());
+    const formattedTongTien = formatMoney(tongTien);
+    setValue("tongTien", formattedTongTien);
+    setValue("tongTienRaw", tongTien); // Store raw value for calculations
   };
 
   const addRow = () => {
@@ -235,32 +246,26 @@ export const LapPhieuXuatHang = () => {
       }
     });
 
-    // Check debt limit
-    const noDaiLy = parseFloat(String(data.noDaiLy || '0').replace(/\./g, '').replace(/,/g, '')) || 0;
-    const tongTien = parseFloat(String(data.tongTien || '0').replace(/\./g, '').replace(/,/g, '')) || 0;
-    const noToiDa = parseFloat(String(data.noToiDa || '0').replace(/\./g, '').replace(/,/g, '')) || 0;
-    const noSauGiaoDich = noDaiLy + tongTien;
+    // Check debt limit - use raw values directly
+    const noDaiLy = data.noDaiLyRaw || 0;
+    const tongTienRaw = data.tongTienRaw || 0;
+    const noToiDa = data.noToiDaRaw || 0;
+    const noSauGiaoDich = noDaiLy + tongTienRaw;
 
-    // Debug logging
-    console.log('=== DEBT VALIDATION DEBUG ===');
-    console.log('Original data:', { noDaiLy: data.noDaiLy, tongTien: data.tongTien, noToiDa: data.noToiDa });
-    console.log('Parsed values:', { noDaiLy, tongTien, noToiDa, noSauGiaoDich });
-    console.log('Types:', {
-      noDaiLy: typeof noDaiLy,
-      tongTien: typeof tongTien,
-      noToiDa: typeof noToiDa,
-      noSauGiaoDich: typeof noSauGiaoDich
-    });
-    console.log('Comparison: noSauGiaoDich > noToiDa:', noSauGiaoDich > noToiDa, `(${noSauGiaoDich} > ${noToiDa})`);
-    console.log('=============================');
+    console.log('=== DEBT CALCULATION DEBUG ===');
+    console.log('noDaiLy (raw):', noDaiLy, typeof noDaiLy);
+    console.log('tongTienRaw:', tongTienRaw, typeof tongTienRaw);
+    console.log('noToiDa (raw):', noToiDa, typeof noToiDa);
+    console.log('noSauGiaoDich:', noSauGiaoDich);
+    console.log('===============================');
 
     if (noSauGiaoDich > noToiDa) {
-      validationErrors.push(`Nợ sau giao dịch (${noSauGiaoDich.toLocaleString('vi-VN')} VNĐ) vượt quá nợ tối đa (${noToiDa.toLocaleString('vi-VN')} VNĐ)`);
+      validationErrors.push(`Nợ sau giao dịch (${formatMoney(noSauGiaoDich)} VNĐ) vượt quá nợ tối đa (${formatMoney(noToiDa)} VNĐ)`);
     }
 
     // Show validation errors if any
     if (validationErrors.length > 0) {
-      const errorMsg = `Không thể lập phiếu xuất:\n\n${validationErrors.join('\n')}`;
+      const errorMsg = `Không thể lập phiếu xuất:\n${validationErrors.join('\n')}`;
       setErrorMessage(errorMsg);
       setShowError(true);
 
@@ -282,15 +287,15 @@ export const LapPhieuXuatHang = () => {
         .map(item => ({
           mamathang: item.tenMatHang,
           soluongxuat: parseInt(item.soLuongXuat),
-          dongiaxuat: parseInt(parseFloat(item.donGiaXuat)), // Convert to integer
-          thanhtien: parseInt(parseFloat(item.thanhTien.replace(/\./g, '').replace(/,/g, '')) || 0) // Remove dots and commas first
+          dongiaxuat: parseInt(parseFloat(item.donGiaXuat)), // Use raw value
+          thanhtien: parseInt(item.thanhTienValue || 0) // Use raw value
         }));
 
       const phieuXuatData = {
         maphieuxuat: data.maPhieuXuat,
         madaily: data.tenDaiLy,
         ngaylap: formattedDate,
-        tonggiatri: parseInt(parseFloat(data.tongTien.replace(/\./g, '').replace(/,/g, '')) || 0), // Remove dots (thousands separator) and commas
+        tonggiatri: parseInt(tongTienRaw), // Use raw value
         chitiet: chitiet
       };
 
@@ -321,6 +326,7 @@ export const LapPhieuXuatHang = () => {
       }, 5000);
 
       await fetchDaiLyList();
+      await fetchMatHangList();
       handleThoat();
     } catch (error) {
       console.error('Error creating export receipt:', error);
@@ -346,8 +352,17 @@ export const LapPhieuXuatHang = () => {
   const handleDaiLySelect = (daiLy) => {
     setSelectedDaiLy(daiLy);
     setValue("tenDaiLy", daiLy.madaily);
-    setValue("noDaiLy", daiLy.congno || '0');
-    setValue("noToiDa", daiLy.notoida || '0');
+    
+    const formattedNoDaiLy = formatMoney(daiLy.congno || '0');
+    const formattedNoToiDa = formatMoney(daiLy.notoida || '0');
+    
+    setValue("noDaiLy", formattedNoDaiLy);
+    setValue("noToiDa", formattedNoToiDa);
+    
+    // Store raw values
+    setValue("noDaiLyRaw", daiLy.congno || 0);
+    setValue("noToiDaRaw", daiLy.notoida || 0);
+    
     setShowDaiLyModal(false);
     clearErrors("tenDaiLy");
   };
@@ -430,11 +445,11 @@ export const LapPhieuXuatHang = () => {
       width: '15%',
       sortable: false,
       render: (row, index) => (
-        <Form.Control
-          type="number"
-          value={row.donGiaXuat}
-          onChange={(e) => handleDonGiaXuatChange(index, e.target.value)}
-          min="0"
+        <MoneyInput
+          value={row.donGiaXuatFormatted || formatMoney(row.donGiaXuat || 0)}
+          onChange={(formatted, raw) => handleDonGiaXuatChange(index, formatted, raw)}
+          placeholder="0"
+          readOnly={false}
         />
       )
     },
@@ -446,8 +461,9 @@ export const LapPhieuXuatHang = () => {
       render: (row) => (
         <Form.Control
           type="text"
-          value={row.thanhTien}
+          value={row.thanhTien || '0'}
           readOnly
+          className="text-end"
         />
       )
     },
@@ -523,8 +539,10 @@ export const LapPhieuXuatHang = () => {
 
       {showError && (
         <div className="alert alert-danger mx-3" role="alert">
-          <div className="d-flex justify-content-between align-items-center">
-            <span>{errorMessage}</span>
+          <div className="d-flex justify-content-between align-items-start">
+            <div style={{ whiteSpace: 'pre-line', flex: 1 }}>
+              {errorMessage}
+            </div>
             <button
               className="btn btn-outline-primary btn-sm ms-2"
               onClick={() => setShowError(false)}
@@ -593,6 +611,8 @@ export const LapPhieuXuatHang = () => {
                           readOnly
                           placeholder="Nợ hiện tại"
                         />
+                        {/* Hidden field for raw value */}
+                        <input type="hidden" {...register("noDaiLyRaw")} />
                       </Form.Group>
                     </Col>
 
@@ -605,6 +625,8 @@ export const LapPhieuXuatHang = () => {
                           readOnly
                           placeholder="Nợ tối đa"
                         />
+                        {/* Hidden field for raw value */}
+                        <input type="hidden" {...register("noToiDaRaw")} />
                       </Form.Group>
                     </Col>
 
@@ -628,8 +650,11 @@ export const LapPhieuXuatHang = () => {
                           type="text"
                           {...register("tongTien")}
                           readOnly
-                          placeholder="Tổng tiền"
+                          placeholder="0"
+                          className="text-end"
                         />
+                        {/* Hidden field for raw value */}
+                        <input type="hidden" {...register("tongTienRaw")} />
                       </Form.Group>
                     </Col>
                   </Row>

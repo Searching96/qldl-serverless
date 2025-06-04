@@ -140,7 +140,9 @@ export const ThayDoiQuyDinh = () => {
 
             {showError && (
                 <Alert variant="danger" className="mx-3" dismissible onClose={() => setShowError(false)}>
-                    {errorMessage}
+                    <div style={{ whiteSpace: 'pre-line' }}>
+                        {errorMessage}
+                    </div>
                 </Alert>
             )}
 

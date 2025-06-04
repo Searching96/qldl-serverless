@@ -3,6 +3,8 @@ import { Card, Form, Row, Col, Button, Alert } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import { getMonthlyRevenueReport } from '../services/api';
 import { DataTable } from './DataTable';
+import { formatMoney } from '../utils/formatters';
+import { MoneyInput } from './MoneyInput';
 
 export const LapBaoCaoDoanhSo = () => {
   const navigate = useNavigate();
@@ -64,15 +66,15 @@ export const LapBaoCaoDoanhSo = () => {
       }
       console.log('======================');
 
-      // Update state with received data - keep original values without formatting
-      setTongDoanhSo(reportData.tongdoanhso || '0');
+      // Update state with received data - format for display
+      setTongDoanhSo(formatMoney(reportData.tongdoanhso || '0'));
       setSoLuongDaiLy(reportData.soluongdaily || 0);
 
-      // Map the chitiet data to the expected format - keep original values
+      // Map the chitiet data to the expected format - format monetary values
       const formattedData = reportData.chitiet?.map(item => ({
         tenDaiLy: item.tendaily,
         soLuongPhieuXuat: item.soluongphieuxuat,
-        tongGiaTriGiaoDich: item.tonggiatrigiaodich || '0',
+        tongGiaTriGiaoDich: formatMoney(item.tonggiatrigiaodich || '0'),
         tiLe: `${item.tilephantramdoanhso}%`
       })) || [];
 
@@ -157,7 +159,10 @@ export const LapBaoCaoDoanhSo = () => {
 
       {error && (
         <Alert variant="danger" className="mx-3" dismissible onClose={() => setError('')}>
-          <strong>Lỗi:</strong> {error}
+          <strong>Lỗi:</strong> 
+          <div style={{ whiteSpace: 'pre-line', lineHeight: '1.5' }}>
+            {error}
+          </div>
         </Alert>
       )}
 
@@ -259,10 +264,9 @@ export const LapBaoCaoDoanhSo = () => {
                   <span style={{ fontWeight: 'bold' }}>
                     Tổng doanh số trong tháng của tất cả đại lý ({soLuongDaiLy} đại lý):
                   </span>
-                  <Form.Control
-                    type="text"
+                  <MoneyInput
                     value={tongDoanhSo}
-                    readOnly
+                    readOnly={true}
                     style={{ width: '200px' }}
                     className="text-center"
                   />
