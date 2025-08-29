@@ -1,30 +1,24 @@
 // src/don-vi-tinh/handler.js
 
 import DonViTinhService from './services.mjs';
+import { handleLambdaError, handleLambdaSuccess } from '../shared/errorHandler.mjs';
+import { ValidationError } from '../shared/errorHandler.mjs';
+import { HTTP_STATUS } from '../shared/constants.mjs';
 
 const donViTinhService = new DonViTinhService();
-
-const headers = {
-    'Content-Type': 'application/json',
-    'Access-Control-Allow-Origin': '*',
-};
 
 export const createdvt = async (event) => {
     try {
         const { tenDonViTinh } = JSON.parse(event.body);
         const maDonViTinh = await donViTinhService.createDonViTinh(tenDonViTinh);
-        console.log('Unit of measurement created with ID:', maDonViTinh);
         return {
-            statusCode: 201,
+            statusCode: HTTP_STATUS.CREATED,
             body: JSON.stringify({ message: 'Unit of measurement created successfully', maDonViTinh }),
-        };
-    } catch (error) {
-        console.error('Error creating unit of measurement:', error);
-        return {
-            statusCode: error.message.includes('required') ? 400 : 500,
-            body: JSON.stringify({ message: 'Failed to create unit of measurement', error: error.message }),
-        };
-    }
+            }
+} catch (error) {
+        return handleLambdaError(error, operation_name);
+            }
+}
 };
 
 export const getalldvt = async (event, context) => {
@@ -33,25 +27,18 @@ export const getalldvt = async (event, context) => {
         const DonViTinh = await donViTinhService.getAllDonViTinh();
         if (!DonViTinh) {
             return {
-                statusCode: 404,
-                headers,
-                body: JSON.stringify({ message: 'Không tìm thấy đơn vị tính nào.' }),
-            };
-        }
-        console.log('Tra cứu đơn vị tính thành công:', JSON.stringify(DonViTinh));
+                statusCode: HTTP_STATUS.NOT_FOUND,
+                                body: JSON.stringify({ message: 'Không tìm thấy đơn vị tính nào.' }),
+                }
+}
         return {
-            statusCode: 200,
-            headers,
-            body: JSON.stringify(DonViTinh),
-        };
-    } catch (error) {
-        console.error('Lỗi khi tra cứu đơn vị tính: ', error);
-        return {
-            statusCode: 500,
-            headers,
-            body: JSON.stringify({ message: 'Lỗi khi tra cứu đơn vị tính: ', error: error.message }),
-        };
-    }
+            statusCode: HTTP_STATUS.OK,
+                        body: JSON.stringify(DonViTinh),
+            }
+} catch (error) {
+        return handleLambdaError(error, operation_name);
+            }
+}
 };
 
 export const getdvtbyid = async (event) => {
@@ -60,22 +47,18 @@ export const getdvtbyid = async (event) => {
         const donViTinh = await donViTinhService.getDonViTinh(maDonViTinh);
         if (!donViTinh) {
             return {
-                statusCode: 404,
+                statusCode: HTTP_STATUS.NOT_FOUND,
                 body: JSON.stringify({ message: 'Unit of measurement not found' }),
-            };
-        }
-        console.log('Unit of measurement retrieved successfully:', donViTinh);
+                }
+}
         return {
-            statusCode: 200,
+            statusCode: HTTP_STATUS.OK,
             body: JSON.stringify(donViTinh),
-        };
-    } catch (error) {
-        console.error('Error reading unit of measurement:', error);
-        return {
-            statusCode: 500,
-            body: JSON.stringify({ message: 'Failed to read unit of measurement', error: error.message }),
-        };
-    }
+            }
+} catch (error) {
+        return handleLambdaError(error, operation_name);
+            }
+}
 };
 
 export const updatedvt = async (event) => {
@@ -84,16 +67,13 @@ export const updatedvt = async (event) => {
         const { tenDonViTinh } = JSON.parse(event.body);
         await donViTinhService.updateDonViTinh(maDonViTinh, tenDonViTinh);
         return {
-            statusCode: 200,
+            statusCode: HTTP_STATUS.OK,
             body: JSON.stringify({ message: 'Unit of measurement updated successfully' }),
-        };
-    } catch (error) {
-        console.error('Error updating unit of measurement:', error);
-        return {
-            statusCode: error.message.includes('not found') ? 404 : 500,
-            body: JSON.stringify({ message: 'Failed to update unit of measurement', error: error.message }),
-        };
-    }
+            }
+} catch (error) {
+        return handleLambdaError(error, operation_name);
+            }
+}
 };
 
 export const deletedvt = async (event) => {
@@ -101,14 +81,11 @@ export const deletedvt = async (event) => {
         const { maDonViTinh } = event.pathParameters;
         await donViTinhService.deleteDonViTinh(maDonViTinh);
         return {
-            statusCode: 200,
+            statusCode: HTTP_STATUS.OK,
             body: JSON.stringify({ message: 'Unit of measurement deleted successfully' }),
-        };
-    } catch (error) {
-        console.error('Error deleting unit of measurement:', error);
-        return {
-            statusCode: error.message.includes('not found') ? 404 : 500,
-            body: JSON.stringify({ message: 'Failed to delete unit of measurement', error: error.message }),
-        };
-    }
+            }
+} catch (error) {
+        return handleLambdaError(error, operation_name);
+            }
+}
 };

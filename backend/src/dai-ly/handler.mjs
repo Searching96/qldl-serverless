@@ -1,13 +1,9 @@
 // src/dai-ly/handler.js
 
 import DaiLyService from './services.mjs';
+import { handleLambdaError, handleLambdaSuccess } from '../shared/errorHandler.mjs';
 
 const daiLyService = new DaiLyService();
-
-const headers = {
-    'Content-Type': 'application/json',
-    'Access-Control-Allow-Origin': '*',
-};
 
 export const exequery = async (event, context) => {
     context.callbackWaitsForEmptyEventLoop = false;
@@ -23,31 +19,16 @@ export const exequery = async (event, context) => {
         }
         
         if (!queryString) {
-            return {
-                statusCode: 400,
-                headers,
-                body: JSON.stringify({ message: 'Query string is required.' }),
-            };
+            return handleLambdaError(new Error('Query string is required.'), 'Query execution');
         }
 
         const result = await daiLyService.executeQuery(queryString);
-        console.log('Query executed successfully');
-        
-        return {
-            statusCode: 200,
-            headers,
-            body: JSON.stringify({ 
-                message: 'Query executed successfully.', 
-                result: result 
-            }),
-        };
+        return handleLambdaSuccess({ 
+            message: 'Query executed successfully.', 
+            result: result 
+        });
     } catch (error) {
-        console.error('Error executing query: ', error);
-        return {
-            statusCode: 500,
-            headers,
-            body: JSON.stringify({ message: 'Error executing query: ', error: error.message }),
-        };
+        return handleLambdaError(error, 'Query execution');
     }
 };
 
@@ -65,32 +46,17 @@ export const exeinsert = async (event, context) => {
         }
         
         if (!insertString) {
-            return {
-                statusCode: 400,
-                headers,
-                body: JSON.stringify({ message: 'Insert string is required.' }),
-            };
+            return handleLambdaError(new Error('Insert string is required.'), 'Insert execution');
         }
 
         const result = await daiLyService.executeInsert(insertString);
-        console.log('Insert executed successfully, rows affected:', result.rowCount);
-        
-        return {
-            statusCode: 201,
-            headers,
-            body: JSON.stringify({ 
-                message: 'Insert executed successfully.', 
-                rowCount: result.rowCount,
-                data: result.rows 
-            }),
-        };
+        return handleLambdaSuccess({ 
+            message: 'Insert executed successfully.', 
+            rowCount: result.rowCount,
+            data: result.rows 
+        }, 201);
     } catch (error) {
-        console.error('Error executing insert: ', error);
-        return {
-            statusCode: 500,
-            headers,
-            body: JSON.stringify({ message: 'Error executing insert: ', error: error.message }),
-        };
+        return handleLambdaError(error, 'Insert execution');
     }
 };
 
@@ -111,19 +77,12 @@ export const createdl = async (event, context) => {
             ngaytiepnhan 
         });
         
-        console.log('Đã tạo đại lý với ID:', resultMadaily);
-        return {
-            statusCode: 201,
-            headers,
-            body: JSON.stringify({ message: 'Đã tạo đại lý thành công.', madaily: resultMadaily }),
-        };
+        return handleLambdaSuccess({ 
+            message: 'Đã tạo đại lý thành công.', 
+            madaily: resultMadaily 
+        }, 201);
     } catch (error) {
-        console.error('Lỗi khi tạo đại lý: ', error);
-        return {
-            statusCode: error.message.includes('required') ? 400 : 500,
-            headers,
-            body: JSON.stringify({ message: 'Lỗi khi tạo đại lý: ', error: error.message }),
-        };
+        return handleLambdaError(error, 'Tạo đại lý');
     }
 };
 
@@ -131,26 +90,12 @@ export const getalldl = async (event, context) => {
     context.callbackWaitsForEmptyEventLoop = false;
     try {
         const DaiLy = await daiLyService.getAllDaiLy();
-        if (!DaiLy) {
-            return {
-                statusCode: 404,
-                headers,
-                body: JSON.stringify({ message: 'Không tìm thấy đại lý nào.' }),
-            };
+        if (!DaiLy || DaiLy.length === 0) {
+            return handleLambdaError(new Error('Không tìm thấy đại lý nào.'), 'Tra cứu đại lý');
         }
-        console.log('Tra cứu đại lý thành công:', JSON.stringify(DaiLy));
-        return {
-            statusCode: 200,
-            headers,
-            body: JSON.stringify(DaiLy),
-        };
+        return handleLambdaSuccess(DaiLy);
     } catch (error) {
-        console.error('Lỗi khi tra cứu đại lý: ', error);
-        return {
-            statusCode: 500,
-            headers,
-            body: JSON.stringify({ message: 'Lỗi khi tra cứu đại lý: ', error: error.message }),
-        };
+        return handleLambdaError(error, 'Tra cứu đại lý');
     }
 };
 
@@ -161,24 +106,16 @@ export const getdlbyid = async (event, context) => {
         const DaiLy = await daiLyService.getDaiLy(maDaiLy);
         if (!DaiLy) {
             return {
-                statusCode: 404,
-                headers,
-                body: JSON.stringify({ message: 'Không tìm thấy đại lý.' }),
-            };
-        }
-        console.log('Tra cứu đại lý thành công:', DaiLy);
+                statusCode: HTTP_STATUS.NOT_FOUND,
+                                body: JSON.stringify({ message: 'Không tìm thấy đại lý.' }),
+                }
+}
         return {
-            statusCode: 200,
-            headers,
-            body: JSON.stringify(DaiLy),
-        };
-    } catch (error) {
-        console.error('Lỗi khi tra cứu đại lý: ', error);
-        return {
-            statusCode: 500,
-            headers,
-            body: JSON.stringify({ message: 'Lỗi khi tra cứu đại lý: ', error: error.message }),
-        };
+            statusCode: HTTP_STATUS.OK,
+                        body: JSON.stringify(DaiLy),
+            }
+} catch (error) {
+        return handleLambdaError(error, operation_name);
     }
 };
 
@@ -188,41 +125,23 @@ export const updatedl = async (event, context) => {
         const { maDaiLy } = event.pathParameters; // Changed from madaily to maDaiLy
         const { tendaily, diachi, sodienthoai, email, maquan, maloaidaily, ngaytiepnhan } = JSON.parse(event.body);
         await daiLyService.updateDaiLy(maDaiLy, { tendaily, diachi, sodienthoai, email, maquan, maloaidaily, ngaytiepnhan });
-        console.log('Cập nhật đại lý thành công:', maDaiLy);
         return {
-            statusCode: 200,
-            headers,
-            body: JSON.stringify({ message: 'Cập nhật đại lý thành công.' }),
-        };
-    } catch (error) {
-        console.error('Lỗi khi cập nhật đại lý: ', error);
-        return {
-            statusCode: error.message.includes('Không tìm thấy') ? 404 : 500,
-            headers,
-            body: JSON.stringify({ message: 'Lỗi khi cập nhật đại lý: ', error: error.message }),
-        };
-    }
+            statusCode: HTTP_STATUS.OK,
+                        body: JSON.stringify({ message: 'Cập nhật đại lý thành công.' }),
+            }
+} catch (error) {
+        return handleLambdaError(error, operation_name);
+            }
 };
 
 export const deletedl = async (event, context) => {
     context.callbackWaitsForEmptyEventLoop = false;
     try {
         const { maDaiLy } = event.pathParameters; // Changed from madaily to maDaiLy to match API Gateway
-        console.log('Event object:', JSON.stringify(event, null, 2));
-        console.log('Xóa đại lý với ID:', maDaiLy);
         await daiLyService.deleteDaiLy(maDaiLy);
-        return {
-            statusCode: 200,
-            headers,
-            body: JSON.stringify({ message: 'Xóa đại lý thành công.' }),
-        };
+        return handleLambdaSuccess({ message: 'Xóa đại lý thành công.' });
     } catch (error) {
-        console.error('Lỗi khi xóa đại lý: ', error);
-        return {
-            statusCode: error.message.includes('Không tìm thấy') ? 404 : 500,
-            headers,
-            body: JSON.stringify({ message: 'Lỗi khi xóa đại lý: ', error: error.message }),
-        };
+        return handleLambdaError(error, 'Xóa đại lý');
     }
 };
 
@@ -234,26 +153,18 @@ export const searchdl = async (event, context) => {
 
         if (!results || results.length === 0) {
             return {
-                statusCode: 200,
-                headers,
-                body: JSON.stringify({ message: 'Không tìm thấy đại lý nào phù hợp với tiêu chí tìm kiếm.', data: [] }),
-            };
-        }
+                statusCode: HTTP_STATUS.OK,
+                                body: JSON.stringify({ message: 'Không tìm thấy đại lý nào phù hợp với tiêu chí tìm kiếm.', data: [] }),
+                }
+}
 
-        console.log('Tìm kiếm đại lý thành công, số kết quả:', results.length);
         return {
-            statusCode: 200,
-            headers,
-            body: JSON.stringify(results),
-        };
-    } catch (error) {
-        console.error('Lỗi khi tìm kiếm đại lý: ', error);
-        return {
-            statusCode: 500,
-            headers,
-            body: JSON.stringify({ message: 'Lỗi khi tìm kiếm đại lý: ', error: error.message }),
-        };
-    }
+            statusCode: HTTP_STATUS.OK,
+                        body: JSON.stringify(results),
+            }
+} catch (error) {
+        return handleLambdaError(error, operation_name);
+            }
 };
 
 export const getmrr = async (event, context) => {
@@ -263,45 +174,35 @@ export const getmrr = async (event, context) => {
         
         if (!month || !year) {
             return {
-                statusCode: 400,
-                headers,
-                body: JSON.stringify({ message: 'Thiếu tham số month và year.' }),
-            };
-        }
+                statusCode: HTTP_STATUS.BAD_REQUEST,
+                                body: JSON.stringify({ message: 'Thiếu tham số month và year.' }),
+                }
+}
 
         const monthNum = parseInt(month);
         const yearNum = parseInt(year);
 
         if (monthNum < 1 || monthNum > 12) {
             return {
-                statusCode: 400,
-                headers,
-                body: JSON.stringify({ message: 'Tháng phải từ 1 đến 12.' }),
-            };
-        }
+                statusCode: HTTP_STATUS.BAD_REQUEST,
+                                body: JSON.stringify({ message: 'Tháng phải từ 1 đến 12.' }),
+                }
+}
 
         if (yearNum < 1900 || yearNum > 2100) {
             return {
-                statusCode: 400,
-                headers,
-                body: JSON.stringify({ message: 'Năm không hợp lệ.' }),
-            };
-        }
+                statusCode: HTTP_STATUS.BAD_REQUEST,
+                                body: JSON.stringify({ message: 'Năm không hợp lệ.' }),
+                }
+}
 
         const report = await daiLyService.getMonthlyRevenueReport(monthNum, yearNum);
         
-        console.log('Tạo báo cáo doanh thu tháng thành công:', monthNum, '/', yearNum);
         return {
-            statusCode: 200,
-            headers,
-            body: JSON.stringify(report),
-        };
-    } catch (error) {
-        console.error('Lỗi khi tạo báo cáo doanh thu tháng: ', error);
-        return {
-            statusCode: 500,
-            headers,
-            body: JSON.stringify({ message: 'Lỗi khi tạo báo cáo doanh thu tháng: ', error: error.message }),
-        };
-    }
+            statusCode: HTTP_STATUS.OK,
+                        body: JSON.stringify(report),
+            }
+} catch (error) {
+        return handleLambdaError(error, operation_name);
+            }
 };

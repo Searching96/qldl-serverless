@@ -1,6 +1,9 @@
 // src/dai-ly/service.js
 
-import { query } from './database.mjs';
+import { query } from '../shared/database.mjs';
+import { validateRequiredFields } from '../shared/validation.mjs';
+import { ERROR_MESSAGES } from '../shared/constants.mjs';
+import { ValidationError, NotFoundError } from '../shared/errorHandler.mjs';
 
 class DaiLyService {
   async getMonthlyRevenueReport(month, year) {
@@ -49,37 +52,6 @@ class DaiLyService {
         md.tonggiatrigiaodich DESC, md.madaily`;
 
     const result = await query(queryString, [month, year]);
-
-    // Comprehensive Debug logging
-    console.log('=== COMPREHENSIVE DEBUG OUTPUT ===');
-    console.log('Query parameters:', { month, year });
-    console.log('Result object keys:', Object.keys(result));
-    console.log('Result rowCount:', result.rowCount);
-    console.log('Result rows length:', result.rows?.length);
-
-    if (result.rows && result.rows.length > 0) {
-      console.log('All rows raw data:');
-      result.rows.forEach((row, index) => {
-        console.log(`Row ${index}:`, JSON.stringify(row, null, 2));
-        console.log(`Row ${index} keys:`, Object.keys(row));
-        console.log(`Row ${index} values with types:`);
-        Object.entries(row).forEach(([key, value]) => {
-          console.log(`  ${key}: ${value} (type: ${typeof value})`);
-        });
-      });
-
-      console.log('First row detailed analysis:');
-      const firstRow = result.rows[0];
-      console.log('madaily:', firstRow.madaily, typeof firstRow.madaily);
-      console.log('tendaily:', firstRow.tendaily, typeof firstRow.tendaily);
-      console.log('soluongphieuxuat:', firstRow.soluongphieuxuat, typeof firstRow.soluongphieuxuat);
-      console.log('tonggiatrigiaodich:', firstRow.tonggiatrigiaodich, typeof firstRow.tonggiatrigiaodich);
-      console.log('tongdoanhso:', firstRow.tongdoanhso, typeof firstRow.tongdoanhso);
-      console.log('tile_phantram:', firstRow.tile_phantram, typeof firstRow.tile_phantram);
-    } else {
-      console.log('No rows returned from query');
-    }
-    console.log('=== END DEBUG OUTPUT ===');
 
     // Calculate summary data
     const tongDoanhSo = result.rows.length > 0 ? parseInt(result.rows[0].tongdoanhso) : 0;
@@ -158,7 +130,7 @@ class DaiLyService {
         d.MaDaiLy = $1 AND d.DeletedAt IS NULL`;
     const result = await query(queryString, [madaily]);
     if (result.rowCount === 0) {
-      throw new Error('Không tìm thấy đại lý.');
+      throw new NotFoundError(ERROR_MESSAGES.DAILY_NOT_FOUND);
     }
     return result.rows[0];
   }
@@ -182,7 +154,7 @@ class DaiLyService {
 
       return formattedRows.join('\n');
     } catch (error) {
-      throw new Error(`Query execution failed: ${error.message}`);
+      throw new Error(`${ERROR_MESSAGES.QUERY_EXECUTION_FAILED}: ${error.message}`);
     }
   }
 
@@ -195,29 +167,21 @@ class DaiLyService {
         success: true
       };
     } catch (error) {
-      throw new Error(`Insert execution failed: ${error.message}`);
+      throw new Error(`${ERROR_MESSAGES.INSERT_EXECUTION_FAILED}: ${error.message}`);
     }
   }
 
   validateRequiredFields(data, requiredFields) {
-    const missingFields = [];
-    for (const field of requiredFields) {
-      if (!data[field]) {
-        missingFields.push(field);
-      }
-    }
-    return missingFields;
+    return validateRequiredFields(data, requiredFields);
   }
 
   async createDaiLy({ madaily, tendaily, sodienthoai, diachi, email, maloaidaily, maquan, ngaytiepnhan }) {
-    console.log('Inside createDaiLy service with data:', { madaily, tendaily, sodienthoai, diachi, email, maloaidaily, maquan, ngaytiepnhan });
-
     const requiredFields = ['tendaily', 'sodienthoai', 'diachi', 'email', 'maloaidaily', 'maquan', 'ngaytiepnhan'];
     const data = { tendaily, sodienthoai, diachi, email, maloaidaily, maquan, ngaytiepnhan };
     const missingFields = this.validateRequiredFields(data, requiredFields);
 
     if (missingFields.length > 0) {
-      throw new Error(`Thiếu các trường bắt buộc: ${missingFields.join(', ')}`);
+      throw new ValidationError(`${ERROR_MESSAGES.MISSING_REQUIRED_FIELDS}: ${missingFields.join(', ')}`);
     }
 
     // Get IDLoaiDaiLy from MaLoaiDaiLy
@@ -282,7 +246,8 @@ class DaiLyService {
       MaDaiLy as madaily, 
       'VALID' as validation_result,
       0 as current_agents,
-      0 as max_agents;`; console.log('Executing query:', mergedQuery, [madaily, tendaily, sodienthoai, diachi, email, idLoaiDaiLy, idQuan, ngaytiepnhan]);
+      0 as max_agents;`;
+      
     const result = await query(mergedQuery, [madaily, tendaily, sodienthoai, diachi, email, idLoaiDaiLy, idQuan, ngaytiepnhan]);
 
     // Check if any rows were returned (insertion happened)
@@ -309,18 +274,12 @@ class DaiLyService {
 
       const validationResult = await query(validationQuery, [idLoaiDaiLy, idQuan]);
       throw new Error(validationResult.rows[0].error_message);
-    } else {
-      console.log('Query executed successfully, result:', {
-        iddaily: result.rows[0].iddaily,
-        madaily: result.rows[0].madaily
-      });
-      return result.rows[0].madaily;
     }
+
+    return result.rows[0].madaily;
   }
 
   async updateDaiLy(madaily, { tendaily, sodienthoai, diachi, email, maloaidaily, maquan, ngaytiepnhan }) {
-    console.log('Inside updateDaiLy service with madaily:', madaily, 'and data:', { tendaily, sodienthoai, diachi, email, maloaidaily, maquan, ngaytiepnhan });
-
     // Get IDDaiLy from MaDaiLy
     const dailyCheckQuery = 'SELECT IDDaiLy, IDQuan FROM inventory.DAILY WHERE MaDaiLy = $1 AND DeletedAt IS NULL';
     const dailyCheck = await query(dailyCheckQuery, [madaily]);
@@ -376,8 +335,6 @@ class DaiLyService {
 
     // If district is changing, use the combined limit check + update query
     if (isQuanChanging) {
-      console.log("Thay đổi quận từ " + currentQuan + " sang " + idQuan);
-
       updateQuery = `
         WITH validation_check AS (
           SELECT 
@@ -423,7 +380,6 @@ class DaiLyService {
       `;
     }
 
-    console.log('Executing query:', updateQuery, values);
     const result = await query(updateQuery, values);
 
     if (result.rowCount === 0 || (result.rows[0].validation_result && result.rows[0].validation_result !== 'VALID')) {
@@ -437,15 +393,12 @@ class DaiLyService {
       }
     }
 
-    console.log('Update successful for madaily:', madaily);
     return {
       madaily: result.rows[0].madaily
     };
   }
 
   async deleteDaiLy(madaily) {
-    console.log('Inside deleteDaiLy service with madaily:', madaily);
-
     // Get IDDaiLy from MaDaiLy
     const dailyCheckQuery = 'SELECT IDDaiLy, CongNo FROM inventory.DAILY WHERE MaDaiLy = $1 AND DeletedAt IS NULL';
     const dailyCheck = await query(dailyCheckQuery, [madaily]);
@@ -461,14 +414,11 @@ class DaiLyService {
     }
 
     const queryString = 'UPDATE inventory.DAILY SET DeletedAt = NOW() WHERE IDDaiLy = $1 AND DeletedAt IS NULL';
-    console.log('Executing query:', queryString, [idDaiLy]);
-
     const result = await query(queryString, [idDaiLy]);
     if (result.rowCount === 0) {
       throw new Error('Không tìm thấy đại lý.');
     }
 
-    console.log('Delete successful for madaily:', madaily);
     return { madaily };
   }
   async searchDaiLy({
@@ -505,16 +455,6 @@ class DaiLyService {
     soluongton_to,
     madonvitinh
   }) {
-    console.log('Inside searchDaiLy service with criteria:', {
-      madaily, tendaily, sodienthoai, email, diachi, maquan, tenquan,
-      maloaidaily, tenloaidaily, ngaytiepnhan_from, ngaytiepnhan_to,
-      congno_min, congno_max, has_debt,
-      maphieuxuat_from, maphieuxuat_to, ngaylap_from, ngaylap_to,
-      tonggiatri_from, tonggiatri_to, mamathang, soluongxuat_from,
-      soluongxuat_to, dongiaxuat_from, dongiaxuat_to, thanhtien_from,
-      thanhtien_to, soluongton_from, soluongton_to, madonvitinh
-    });
-
     const conditions = [];
     const values = [];
     let paramIndex = 1;
@@ -731,7 +671,6 @@ class DaiLyService {
       ORDER BY 
         d.TenDaiLy, d.MaDaiLy`;
 
-    console.log('Executing search query with values:', values);
     const result = await query(queryString, values);
     return result.rows; // Return all matching rows, not just the first one
   }

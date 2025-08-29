@@ -1,11 +1,12 @@
 // src/phieu-xuat/service.js
 
-import { query } from './database.mjs';
+import { query } from '../shared/database.mjs';
+import { validateRequiredFields, isNonNegativeInteger, isPositiveInteger } from '../shared/validation.mjs';
+import { ValidationError, NotFoundError } from '../shared/errorHandler.mjs';
+import { ERROR_MESSAGES } from '../shared/constants.mjs';
 
 class PhieuXuatService {
   async createPhieuXuat({ maphieuxuat, madaily, ngaylap, chitiet, tongtien }) {
-    console.log('Inside createPhieuXuat service with data:', { maphieuxuat, madaily, ngaylap, tongtien, chitiet });
-
     const requiredFields = ['madaily', 'ngaylap', 'chitiet'];
     const data = { madaily, ngaylap, chitiet };
     const missingFields = this.validateRequiredFields(data, requiredFields);
@@ -107,7 +108,6 @@ class PhieuXuatService {
           ($1, $2, $3, $4)
         RETURNING IDPhieuXuat as idphieuxuat, MaPhieuXuat as maphieuxuat`;
 
-      console.log('Executing PhieuXuat query:', insertPhieuXuatQuery, [finalMaPhieuXuat, idDaiLy, ngaylap, finalTongGiaTri]);
       const phieuXuatResult = await query(insertPhieuXuatQuery, [finalMaPhieuXuat, idDaiLy, ngaylap, finalTongGiaTri]);
       const idPhieuXuat = phieuXuatResult.rows[0].idphieuxuat;
 
@@ -145,11 +145,6 @@ class PhieuXuatService {
       // Commit transaction
       await query('COMMIT');
 
-      console.log('PhieuXuat created successfully:', {
-        maphieuxuat: phieuXuatResult.rows[0].maphieuxuat,
-        tongGiaTri
-      });
-      
       return phieuXuatResult.rows[0].maphieuxuat;
 
     } catch (error) {

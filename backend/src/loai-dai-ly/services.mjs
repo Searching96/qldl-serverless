@@ -1,23 +1,20 @@
 // src/loai-dai-ly/service.js
 
-import { query } from './database.mjs';
+import { query } from '../shared/database.mjs';
 import { v4 as uuidv4 } from 'uuid';
+import { validateRequiredFields, isNonNegativeInteger, isPositiveInteger } from '../shared/validation.mjs';
+import { ValidationError, NotFoundError } from '../shared/errorHandler.mjs';
+import { ERROR_MESSAGES } from '../shared/constants.mjs';
 
 class LoaiDaiLyService {
   async createLoaiDaiLy(maLoaiDaiLy, tenLoaiDaiLy, noToiDa = 10000000) {
-    console.log('Inside createLoaiDaiLy service with tenLoaiDaiLy:', tenLoaiDaiLy, noToiDa);
-    
     if (!tenLoaiDaiLy) {
       throw new Error('Cần nhập tên loại đại lý.');
     }
     
     // Use the generated MaLoaiDaiLy and store with UUID internally
     const queryString = 'INSERT INTO inventory.LoaiDaiLy (MaLoaiDaiLy, TenLoaiDaiLy, NoToiDa) VALUES ($1, $2, $3) RETURNING IDLoaiDaiLy as idloaidaily, MaLoaiDaiLy as maloaidaily';
-    console.log('Executing query:', queryString, [maLoaiDaiLy, tenLoaiDaiLy, noToiDa]);
-    
     const result = await query(queryString, [maLoaiDaiLy, tenLoaiDaiLy, noToiDa]);
-    console.log('Query executed successfully, result:', result.rows[0]);
-    
     // Return the user-facing ID (MaLoaiDaiLy)
     return { maloaidaily: result.rows[0].maloaidaily };
   }

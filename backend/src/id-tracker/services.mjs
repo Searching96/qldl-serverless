@@ -1,6 +1,9 @@
 // src/id-tracker/service.js
 
-import { query } from './database.mjs';
+import { query } from '../shared/database.mjs';
+import { validateRequiredFields, isNonNegativeInteger, isPositiveInteger } from '../shared/validation.mjs';
+import { ValidationError, NotFoundError } from '../shared/errorHandler.mjs';
+import { ERROR_MESSAGES } from '../shared/constants.mjs';
 
 class IdTrackerService {
   // Get the latest MaDaiLy (e.g., 'DL00001')

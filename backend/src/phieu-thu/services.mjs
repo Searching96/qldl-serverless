@@ -1,12 +1,13 @@
 // src/phieu-thu/service.js
 
-import { query } from './database.mjs';
+import { query } from '../shared/database.mjs';
 import { v4 as uuidv4 } from 'uuid';
+import { validateRequiredFields, isNonNegativeInteger, isPositiveInteger } from '../shared/validation.mjs';
+import { ValidationError, NotFoundError } from '../shared/errorHandler.mjs';
+import { ERROR_MESSAGES } from '../shared/constants.mjs';
 
 class PhieuThuService {
   async createPhieuThu({ madaily, ngaythutien, sotienthu }) {
-    console.log('Inside createPhieuThu service with data:', { madaily, ngaythutien, sotienthu });
-
     const requiredFields = ['madaily', 'ngaythutien', 'sotienthu'];
     const data = { madaily, ngaythutien, sotienthu };
     const missingFields = this.validateRequiredFields(data, requiredFields);
@@ -54,7 +55,6 @@ class PhieuThuService {
         ($1, $2, $3, $4)
       RETURNING MaPhieuThu as maphieuthu`;
 
-    console.log('Executing query:', insertQuery, [maphieuthu, idDaiLy, ngaythutien, sotienthu]);
     const result = await query(insertQuery, [maphieuthu, idDaiLy, ngaythutien, sotienthu]);
 
     // Update DaiLy CongNo (subtract the payment amount)
@@ -64,9 +64,6 @@ class PhieuThuService {
       WHERE IDDaiLy = $2 AND DeletedAt IS NULL`;
     await query(updateCongNoQuery, [sotienthu, idDaiLy]);
 
-    console.log('Query executed successfully, result:', {
-      maphieuthu: result.rows[0].maphieuthu
-    });
     return result.rows[0].maphieuthu;
   }
 
@@ -127,8 +124,6 @@ class PhieuThuService {
   }
 
   async updatePhieuThu(maphieuthu, { madaily, ngaythutien, sotienthu }) {
-    console.log('Inside updatePhieuThu service with maphieuthu:', maphieuthu, 'and data:', { madaily, ngaythutien, sotienthu });
-
     // Get current PhieuThu info
     const phieuThuCheckQuery = 'SELECT IDPhieuThu, IDDaiLy, SoTienThu FROM inventory.PHIEUTHU WHERE MaPhieuThu = $1 AND DeletedAt IS NULL';
     const phieuThuCheck = await query(phieuThuCheckQuery, [maphieuthu]);
@@ -179,7 +174,6 @@ class PhieuThuService {
       WHERE IDPhieuThu = $${paramIndex} AND DeletedAt IS NULL
       RETURNING MaPhieuThu as maphieuthu`;
 
-    console.log('Executing query:', updateQuery, values);
     const result = await query(updateQuery, values);
 
     if (result.rowCount === 0) {
@@ -198,15 +192,12 @@ class PhieuThuService {
       await query('UPDATE inventory.DAILY SET CongNo = CongNo - $1 WHERE IDDaiLy = $2', [newAmount, idDaiLy]);
     }
 
-    console.log('Update successful for maphieuthu:', maphieuthu);
     return {
       maphieuthu: result.rows[0].maphieuthu
     };
   }
 
   async deletePhieuThu(maphieuthu) {
-    console.log('Inside deletePhieuThu service with maphieuthu:', maphieuthu);
-
     // Get PhieuThu info before deletion
     const phieuThuCheckQuery = 'SELECT IDPhieuThu, IDDaiLy, SoTienThu FROM inventory.PHIEUTHU WHERE MaPhieuThu = $1 AND DeletedAt IS NULL';
     const phieuThuCheck = await query(phieuThuCheckQuery, [maphieuthu]);
@@ -219,8 +210,6 @@ class PhieuThuService {
     const sotienthu = phieuThuCheck.rows[0].sotienthu;
 
     const queryString = 'UPDATE inventory.PHIEUTHU SET DeletedAt = NOW() WHERE IDPhieuThu = $1 AND DeletedAt IS NULL';
-    console.log('Executing query:', queryString, [idPhieuThu]);
-
     const result = await query(queryString, [idPhieuThu]);
     if (result.rowCount === 0) {
       throw new Error('Không tìm thấy phiếu thu.');
@@ -233,13 +222,10 @@ class PhieuThuService {
       WHERE IDDaiLy = $2 AND DeletedAt IS NULL`;
     await query(updateCongNoQuery, [sotienthu, idDaiLy]);
 
-    console.log('Delete successful for maphieuthu:', maphieuthu);
     return { maphieuthu };
   }
 
   async searchPhieuThu({ maphieuthu, madaily, ngaythutien }) {
-    console.log('Inside searchPhieuThu service with criteria:', { maphieuthu, madaily, ngaythutien });
-
     const conditions = [];
     const values = [];
     let paramIndex = 1;
@@ -280,7 +266,6 @@ class PhieuThuService {
       ORDER BY 
         pt.NgayThuTien DESC, pt.MaPhieuThu`;
 
-    console.log('Executing search query with values:', values);
     const result = await query(queryString, values);
     return result.rows;
   }

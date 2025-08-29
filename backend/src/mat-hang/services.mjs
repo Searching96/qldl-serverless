@@ -1,6 +1,9 @@
 // src/mat-hang/service.js
 
-import { query } from './database.mjs';
+import { query } from '../shared/database.mjs';
+import { validateRequiredFields, isNonNegativeInteger } from '../shared/validation.mjs';
+import { ERROR_MESSAGES } from '../shared/constants.mjs';
+import { ValidationError, NotFoundError } from '../shared/errorHandler.mjs';
 import { v4 as uuidv4 } from 'uuid';
 
 class MatHangService {
@@ -45,7 +48,7 @@ class MatHangService {
         mh.MaMatHang = $1 AND mh.DeletedAt IS NULL`;
     const result = await query(queryString, [mamathang]);
     if (result.rowCount === 0) {
-      throw new Error('Không tìm thấy mặt hàng.');
+      throw new NotFoundError('Không tìm thấy mặt hàng.');
     }
     return result.rows[0];
   }
@@ -82,34 +85,26 @@ class MatHangService {
         success: true
       };
     } catch (error) {
-      throw new Error(`Insert execution failed: ${error.message}`);
+      throw new Error(`${ERROR_MESSAGES.INSERT_EXECUTION_FAILED}: ${error.message}`);
     }
   }
   
   validateRequiredFields(data, requiredFields) {
-    const missingFields = [];
-    for (const field of requiredFields) {
-      if (!data[field]) {
-        missingFields.push(field);
-      }
-    }
-    return missingFields;
+    return validateRequiredFields(data, requiredFields);
   }
 
   async createMatHang({ mamathang, tenmathang, madonvitinh, soluongton }) {
-    console.log('Inside createMatHang service with data:', { mamathang, tenmathang, madonvitinh, soluongton });
-
     const requiredFields = ['tenmathang', 'madonvitinh', 'soluongton'];
     const data = { tenmathang, madonvitinh, soluongton };
     const missingFields = this.validateRequiredFields(data, requiredFields);
 
     if (missingFields.length > 0) {
-      throw new Error(`Thiếu các trường bắt buộc: ${missingFields.join(', ')}`);
+      throw new ValidationError(`${ERROR_MESSAGES.MISSING_REQUIRED_FIELDS}: ${missingFields.join(', ')}`);
     }
 
     // Validate soluongton is non-negative integer
-    if (!Number.isInteger(soluongton) || soluongton < 0) {
-      throw new Error('Số lượng tồn phải là số nguyên không âm.');
+    if (!isNonNegativeInteger(soluongton)) {
+      throw new ValidationError('Số lượng tồn phải là số nguyên không âm.');
     }
 
     // Get IDDonViTinh from MaDonViTinh
@@ -137,18 +132,12 @@ class MatHangService {
         ($1, $2, $3, $4)
       RETURNING MaMatHang as mamathang`;
 
-    console.log('Executing query:', insertQuery, [mamathang, tenmathang, idDonViTinh, soluongton]);
     const result = await query(insertQuery, [mamathang, tenmathang, idDonViTinh, soluongton]);
 
-    console.log('Query executed successfully, result:', {
-      mamathang: result.rows[0].mamathang
-    });
     return result.rows[0].mamathang;
   }
 
   async updateMatHang(mamathang, { tenmathang, madonvitinh, soluongton }) {
-    console.log('Inside updateMatHang service with mamathang:', mamathang, 'and data:', { tenmathang, madonvitinh, soluongton });
-
     // Get IDMatHang from MaMatHang
     const matHangCheckQuery = 'SELECT IDMatHang FROM inventory.MATHANG WHERE MaMatHang = $1 AND DeletedAt IS NULL';
     const matHangCheck = await query(matHangCheckQuery, [mamathang]);
@@ -195,22 +184,18 @@ class MatHangService {
       WHERE IDMatHang = $${paramIndex} AND DeletedAt IS NULL
       RETURNING MaMatHang as mamathang`;
 
-    console.log('Executing query:', updateQuery, values);
     const result = await query(updateQuery, values);
 
     if (result.rowCount === 0) {
       throw new Error('Không tìm thấy mặt hàng hoặc không thể cập nhật.');
     }
 
-    console.log('Update successful for mamathang:', mamathang);
     return { 
       mamathang: result.rows[0].mamathang 
     };
   }
 
   async deleteMatHang(mamathang) {
-    console.log('Inside deleteMatHang service with mamathang:', mamathang);
-
     // Get IDMatHang from MaMatHang
     const matHangCheckQuery = 'SELECT IDMatHang FROM inventory.MATHANG WHERE MaMatHang = $1 AND DeletedAt IS NULL';
     const matHangCheck = await query(matHangCheckQuery, [mamathang]);
@@ -221,20 +206,15 @@ class MatHangService {
     const idMatHang = matHangCheck.rows[0].idmathang;
 
     const queryString = 'UPDATE inventory.MATHANG SET DeletedAt = NOW() WHERE IDMatHang = $1 AND DeletedAt IS NULL';
-    console.log('Executing query:', queryString, [idMatHang]);
-
     const result = await query(queryString, [idMatHang]);
     if (result.rowCount === 0) {
       throw new Error('Không tìm thấy mặt hàng.');
     }
 
-    console.log('Delete successful for mamathang:', mamathang);
     return { mamathang };
   }
 
   async searchMatHang({ mamathang, tenmathang, madonvitinh }) {
-    console.log('Inside searchMatHang service with criteria:', { mamathang, tenmathang, madonvitinh });
-
     const conditions = [];
     const values = [];
     let paramIndex = 1;
@@ -275,7 +255,6 @@ class MatHangService {
       ORDER BY 
         mh.TenMatHang`;
 
-    console.log('Executing search query with values:', values);
     const result = await query(queryString, values);
     return result.rows;
   }

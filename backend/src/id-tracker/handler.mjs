@@ -1,13 +1,9 @@
 // src/id-tracker/handler.mjs
 
 import IdTrackerService from './services.mjs';
+import { handleLambdaError, handleLambdaSuccess } from '../shared/errorHandler.mjs';
 
 const idTrackerService = new IdTrackerService();
-
-const headers = {
-    'Content-Type': 'application/json',
-    'Access-Control-Allow-Origin': '*',
-};
 
 // Generic response handler to reduce code duplication
 const handleResponse = (statusCode, body) => ({
@@ -30,7 +26,6 @@ export const getlatestmadl = async (event, context) => {
     context.callbackWaitsForEmptyEventLoop = false;
     try {
         const madaily = await idTrackerService.getLatestMaDaiLy();
-        console.log('Latest MaDaiLy generated:', madaily);
         return handleResponse(200, { madaily });
     } catch (error) {
         return handleError(error, 'generating MaDaiLy');
@@ -42,7 +37,6 @@ export const getlatestmadvt = async (event, context) => {
     context.callbackWaitsForEmptyEventLoop = false;
     try {
         const madonvitinh = await idTrackerService.getLatestMaDonViTinh();
-        console.log('Latest MaDonViTinh generated:', madonvitinh);
         return handleResponse(200, { madonvitinh });
     } catch (error) {
         return handleError(error, 'generating MaDonViTinh');
@@ -54,7 +48,6 @@ export const getlatestmaldl = async (event, context) => {
     context.callbackWaitsForEmptyEventLoop = false;
     try {
         const maloaidaily = await idTrackerService.getLatestMaLoaiDaiLy();
-        console.log('Latest MaLoaiDaiLy generated:', maloaidaily);
         return handleResponse(200, { maloaidaily });
     } catch (error) {
         return handleError(error, 'generating MaLoaiDaiLy');
@@ -66,7 +59,6 @@ export const getlatestmaquan = async (event, context) => {
     context.callbackWaitsForEmptyEventLoop = false;
     try {
         const maquan = await idTrackerService.getLatestMaQuan();
-        console.log('Latest MaQuan generated:', maquan);
         return handleResponse(200, { maquan });
     } catch (error) {
         return handleError(error, 'generating MaQuan');
@@ -78,7 +70,6 @@ export const getlatestmamh = async (event, context) => {
     context.callbackWaitsForEmptyEventLoop = false;
     try {
         const mamathang = await idTrackerService.getLatestMaMatHang();
-        console.log('Latest MaMatHang generated:', mamathang);
         return handleResponse(200, { mamathang });
     } catch (error) {
         return handleError(error, 'generating MaMatHang');
@@ -90,7 +81,6 @@ export const getlatestmapt = async (event, context) => {
     context.callbackWaitsForEmptyEventLoop = false;
     try {
         const maphieuthu = await idTrackerService.getLatestMaPhieuThu();
-        console.log('Latest MaPhieuThu generated:', maphieuthu);
         return handleResponse(200, { maphieuthu });
     } catch (error) {
         return handleError(error, 'generating MaPhieuThu');
@@ -102,7 +92,6 @@ export const getlatestmapx = async (event, context) => {
     context.callbackWaitsForEmptyEventLoop = false;
     try {
         const maphieuxuat = await idTrackerService.getLatestMaPhieuXuat();
-        console.log('Latest MaPhieuXuat generated:', maphieuxuat);
         return handleResponse(200, { maphieuxuat });
     } catch (error) {
         return handleError(error, 'generating MaPhieuXuat');

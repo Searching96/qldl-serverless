@@ -1,10 +1,12 @@
 // src/tham-so/service.js
 
-import { query } from './database.mjs';
+import { query } from '../shared/database.mjs';
+import { validateRequiredFields, isNonNegativeInteger, isPositiveInteger } from '../shared/validation.mjs';
+import { ValidationError, NotFoundError } from '../shared/errorHandler.mjs';
+import { ERROR_MESSAGES } from '../shared/constants.mjs';
 
 class ThamSoService {
   async createThamSo(mathamso, soluongdailytoida, quydinhtienthutienno) {
-    console.log('Inside createThamSo service with data:', { mathamso, soluongdailytoida, quydinhtienthutienno });
     const requiredFields = ['mathamso', 'soluongdailytoida', 'quydinhtienthutienno'];
     const data = { mathamso, soluongdailytoida, quydinhtienthutienno };
     const missingFields = this.validateRequiredFields(data, requiredFields);
@@ -13,9 +15,7 @@ class ThamSoService {
       throw new Error(`Thiếu các trường bắt buộc: ${missingFields.join(', ')}`);
     }
     const queryString = 'INSERT INTO inventory.ThamSo (MaThamSo, SoLuongDaiLyToiDa, QuyDinhTienThuTienNo) VALUES ($1, $2, $3)';
-    console.log('Executing query:', queryString, [mathamso, soluongdailytoida, quydinhtienthutienno]);
     await query(queryString, [mathamso, soluongdailytoida, quydinhtienthutienno]);
-    console.log('Query executed successfully, maThamSo:', mathamso);
     return { mathamso };
   }
 
@@ -26,18 +26,14 @@ class ThamSoService {
   }
 
   async updateThamSo(soluongdailytoida, quydinhtienthutienno) {
-    console.log('Inside updateThamSo service with data:', { soluongdailytoida, quydinhtienthutienno });
-
     // Update the latest record (since there's only one active record)
     const queryString = 'UPDATE inventory.ThamSo SET SoLuongDaiLyToiDa = $1, QuyDinhTienThuTienNo = $2 WHERE DeletedAt IS NULL';
-    console.log('Executing update query:', queryString, [soluongdailytoida, quydinhtienthutienno]);
     const result = await query(queryString, [soluongdailytoida, quydinhtienthutienno]);
     
     if (result.rowCount === 0) {
       throw new Error('Không tìm thấy tham số để cập nhật.');
     }
     
-    console.log('Update query executed successfully');
     return { success: true };
   }
 

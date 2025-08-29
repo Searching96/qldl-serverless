@@ -1,20 +1,20 @@
 // src/quan/service.js
 
-import { query } from './database.mjs';
+import { query } from '../shared/database.mjs';
 import { v4 as uuidv4 } from 'uuid';
+import { validateRequiredFields, isNonNegativeInteger, isPositiveInteger } from '../shared/validation.mjs';
+import { ValidationError, NotFoundError } from '../shared/errorHandler.mjs';
+import { ERROR_MESSAGES } from '../shared/constants.mjs';
 
 
 class QuanService {
   async createQuan(tenQuan) {
-    console.log('Inside createQuan service with tenQuan:', tenQuan);
     if (!tenQuan) {
       throw new Error('Cần nhập tên quận.');
     }
     const maQuan = uuidv4();
     const queryString = 'INSERT INTO inventory.Quan (MaQuan, TenQuan) VALUES ($1, $2)';
-    console.log('Executing query:', queryString, [maQuan, tenQuan]);
     await query(queryString, [maQuan, tenQuan]);
-    console.log('Query executed successfully, maQuan:', maQuan);
     return { maquan: maQuan };
   }
 
