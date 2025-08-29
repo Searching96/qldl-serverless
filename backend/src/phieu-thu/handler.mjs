@@ -1,7 +1,6 @@
-// src/phieu-thu/handler.js
-
 import PhieuThuService from './services.mjs';
 import { handleLambdaError, handleLambdaSuccess } from '../shared/errorHandler.mjs';
+import { HTTP_STATUS } from '../shared/constants.mjs';
 
 const phieuThuService = new PhieuThuService();
 

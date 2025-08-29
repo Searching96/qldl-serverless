@@ -1,7 +1,6 @@
-// src/quan/handler.js
-
 import QuanService from './services.mjs';
 import { handleLambdaError, handleLambdaSuccess } from '../shared/errorHandler.mjs';
+import { HTTP_STATUS } from '../shared/constants.mjs';
 
 const quanService = new QuanService();
 

@@ -1,5 +1,3 @@
-// src/loai-dai-ly/handler.js
-
 import LoaiDaiLyService from './services.mjs';
 import { handleLambdaError, handleLambdaSuccess } from '../shared/errorHandler.mjs';
 import { ValidationError } from '../shared/errorHandler.mjs';

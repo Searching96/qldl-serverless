@@ -1,5 +1,3 @@
-// src/id-tracker/handler.mjs
-
 import IdTrackerService from './services.mjs';
 import { handleLambdaError, handleLambdaSuccess } from '../shared/errorHandler.mjs';
 

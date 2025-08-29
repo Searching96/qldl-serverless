@@ -1,7 +1,6 @@
-// src/loai-dai-ly/handler.js
-
 import PhieuXuatService from './services.mjs';
 import { handleLambdaError, handleLambdaSuccess } from '../shared/errorHandler.mjs';
+import { HTTP_STATUS } from '../shared/constants.mjs';
 
 const phieuXuatService = new PhieuXuatService();
 

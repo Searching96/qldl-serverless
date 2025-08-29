@@ -1,7 +1,6 @@
-// src/mat-hang/handler.js
-
 import MatHangService from './services.mjs';
 import { handleLambdaError, handleLambdaSuccess } from '../shared/errorHandler.mjs';
+import { HTTP_STATUS } from '../shared/constants.mjs';
 
 const matHangService = new MatHangService();
 

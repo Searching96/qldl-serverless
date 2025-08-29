@@ -1,8 +1,5 @@
-// src/don-vi-tinh/handler.js
-
 import DonViTinhService from './services.mjs';
 import { handleLambdaError, handleLambdaSuccess } from '../shared/errorHandler.mjs';
-import { ValidationError } from '../shared/errorHandler.mjs';
 import { HTTP_STATUS } from '../shared/constants.mjs';
 
 const donViTinhService = new DonViTinhService();
@@ -14,11 +11,10 @@ export const createdvt = async (event) => {
         return {
             statusCode: HTTP_STATUS.CREATED,
             body: JSON.stringify({ message: 'Unit of measurement created successfully', maDonViTinh }),
-            }
-} catch (error) {
+        }
+    } catch (error) {
         return handleLambdaError(error, operation_name);
-            }
-}
+    }
 };
 
 export const getalldvt = async (event, context) => {
@@ -28,17 +24,16 @@ export const getalldvt = async (event, context) => {
         if (!DonViTinh) {
             return {
                 statusCode: HTTP_STATUS.NOT_FOUND,
-                                body: JSON.stringify({ message: 'Không tìm thấy đơn vị tính nào.' }),
-                }
-}
+                body: JSON.stringify({ message: 'Không tìm thấy đơn vị tính nào.' }),
+            }
+        }
         return {
             statusCode: HTTP_STATUS.OK,
-                        body: JSON.stringify(DonViTinh),
-            }
-} catch (error) {
+            body: JSON.stringify(DonViTinh),
+        }
+    } catch (error) {
         return handleLambdaError(error, operation_name);
-            }
-}
+    }
 };
 
 export const getdvtbyid = async (event) => {
@@ -49,16 +44,15 @@ export const getdvtbyid = async (event) => {
             return {
                 statusCode: HTTP_STATUS.NOT_FOUND,
                 body: JSON.stringify({ message: 'Unit of measurement not found' }),
-                }
-}
+            }
+        }
         return {
             statusCode: HTTP_STATUS.OK,
             body: JSON.stringify(donViTinh),
-            }
-} catch (error) {
+        }
+    } catch (error) {
         return handleLambdaError(error, operation_name);
-            }
-}
+    }
 };
 
 export const updatedvt = async (event) => {
@@ -69,11 +63,10 @@ export const updatedvt = async (event) => {
         return {
             statusCode: HTTP_STATUS.OK,
             body: JSON.stringify({ message: 'Unit of measurement updated successfully' }),
-            }
-} catch (error) {
+        }
+    } catch (error) {
         return handleLambdaError(error, operation_name);
-            }
-}
+    }
 };
 
 export const deletedvt = async (event) => {
@@ -83,9 +76,8 @@ export const deletedvt = async (event) => {
         return {
             statusCode: HTTP_STATUS.OK,
             body: JSON.stringify({ message: 'Unit of measurement deleted successfully' }),
-            }
-} catch (error) {
+        }
+    } catch (error) {
         return handleLambdaError(error, operation_name);
-            }
-}
+    }
 };
