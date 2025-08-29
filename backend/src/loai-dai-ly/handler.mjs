@@ -14,12 +14,11 @@ export const createldl = async (event, context) => {
         const maLoaiDaiLy = await loaiDaiLyService.createLoaiDaiLy(tenLoaiDaiLy);
         return {
             statusCode: HTTP_STATUS.CREATED,
-                        body: JSON.stringify({ message: 'Đã tạo loại đại lý thành công.', maLoaiDaiLy }),
-            }
-} catch (error) {
+            body: JSON.stringify({ message: 'Đã tạo loại đại lý thành công.', maLoaiDaiLy }),
+        }
+    } catch (error) {
         return handleLambdaError(error, operation_name);
-            }
-}
+    }
 };
 
 export const getallldl = async (event, context) => {
@@ -29,17 +28,16 @@ export const getallldl = async (event, context) => {
         if (!LoaiDaiLy) {
             return {
                 statusCode: HTTP_STATUS.NOT_FOUND,
-                                body: JSON.stringify({ message: 'Không tìm thấy loại đại lý nào.' }),
-                }
-}
+                body: JSON.stringify({ message: 'Không tìm thấy loại đại lý nào.' }),
+            }
+        }
         return {
             statusCode: HTTP_STATUS.OK,
-                        body: JSON.stringify(LoaiDaiLy),
-            }
-} catch (error) {
+            body: JSON.stringify(LoaiDaiLy),
+        }
+    } catch (error) {
         return handleLambdaError(error, operation_name);
-            }
-}
+    }
 };
 
 export const getldlbyid = async (event, context) => {
@@ -50,17 +48,16 @@ export const getldlbyid = async (event, context) => {
         if (!LoaiDaiLy) {
             return {
                 statusCode: HTTP_STATUS.NOT_FOUND,
-                                body: JSON.stringify({ message: 'Không tìm thấy loại đại lý.' }),
-                }
-}
+                body: JSON.stringify({ message: 'Không tìm thấy loại đại lý.' }),
+            }
+        }
         return {
             statusCode: HTTP_STATUS.OK,
-                        body: JSON.stringify(LoaiDaiLy),
-            }
-} catch (error) {
+            body: JSON.stringify(LoaiDaiLy),
+        }
+    } catch (error) {
         return handleLambdaError(error, operation_name);
-            }
-}
+    }
 };
 
 export const updateldl = async (event, context) => {
@@ -71,12 +68,11 @@ export const updateldl = async (event, context) => {
         await loaiDaiLyService.updateLoaiDaiLy(maLoaiDaiLy, tenLoaiDaiLy);
         return {
             statusCode: HTTP_STATUS.OK,
-                        body: JSON.stringify({ message: 'Cập nhật loại đại lý thành công.' }),
-            }
-} catch (error) {
+            body: JSON.stringify({ message: 'Cập nhật loại đại lý thành công.' }),
+        }
+    } catch (error) {
         return handleLambdaError(error, operation_name);
-            }
-}
+    }
 };
 
 export const deleteldl = async (event, context) => {
@@ -86,10 +82,9 @@ export const deleteldl = async (event, context) => {
         await loaiDaiLyService.deleteLoaiDaiLy(maLoaiDaiLy);
         return {
             statusCode: HTTP_STATUS.OK,
-                        body: JSON.stringify({ message: 'Xóa loại đại lý thành công.' }),
-            }
-} catch (error) {
+            body: JSON.stringify({ message: 'Xóa loại đại lý thành công.' }),
+        }
+    } catch (error) {
         return handleLambdaError(error, operation_name);
-            }
-}
+    }
 };

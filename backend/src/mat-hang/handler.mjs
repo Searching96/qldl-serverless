@@ -12,12 +12,11 @@ export const createmh = async (event, context) => {
         const maMatHang = await matHangService.createMatHang({ mamathang, tenmathang, donvitinh, giaban });
         return {
             statusCode: HTTP_STATUS.CREATED,
-                        body: JSON.stringify({ message: 'Đã tạo mặt hàng thành công.', mamathang: maMatHang }),
-            }
-} catch (error) {
+            body: JSON.stringify({ message: 'Đã tạo mặt hàng thành công.', mamathang: maMatHang }),
+        }
+    } catch (error) {
         return handleLambdaError(error, operation_name);
-            }
-}
+    }
 };
 
 export const getallmh = async (event, context) => {
@@ -27,17 +26,16 @@ export const getallmh = async (event, context) => {
         if (!matHang || matHang.length === 0) {
             return {
                 statusCode: HTTP_STATUS.NOT_FOUND,
-                                body: JSON.stringify({ message: 'Không tìm thấy mặt hàng nào.' }),
-                }
-}
+                body: JSON.stringify({ message: 'Không tìm thấy mặt hàng nào.' }),
+            }
+        }
         return {
             statusCode: HTTP_STATUS.OK,
-                        body: JSON.stringify(matHang),
-            }
-} catch (error) {
+            body: JSON.stringify(matHang),
+        }
+    } catch (error) {
         return handleLambdaError(error, operation_name);
-            }
-}
+    }
 };
 
 export const getmhbyid = async (event, context) => {
@@ -48,17 +46,16 @@ export const getmhbyid = async (event, context) => {
         if (!matHang) {
             return {
                 statusCode: HTTP_STATUS.NOT_FOUND,
-                                body: JSON.stringify({ message: 'Không tìm thấy mặt hàng.' }),
-                }
-}
+                body: JSON.stringify({ message: 'Không tìm thấy mặt hàng.' }),
+            }
+        }
         return {
             statusCode: HTTP_STATUS.OK,
-                        body: JSON.stringify(matHang),
-            }
-} catch (error) {
+            body: JSON.stringify(matHang),
+        }
+    } catch (error) {
         return handleLambdaError(error, operation_name);
-            }
-}
+    }
 };
 
 export const updatemh = async (event, context) => {
@@ -69,12 +66,11 @@ export const updatemh = async (event, context) => {
         await matHangService.updateMatHang(maMatHang, { tenmathang, donvitinh, giaban });
         return {
             statusCode: HTTP_STATUS.OK,
-                        body: JSON.stringify({ message: 'Cập nhật mặt hàng thành công.' }),
-            }
-} catch (error) {
+            body: JSON.stringify({ message: 'Cập nhật mặt hàng thành công.' }),
+        }
+    } catch (error) {
         return handleLambdaError(error, operation_name);
-            }
-}
+    }
 };
 
 export const deletemh = async (event, context) => {
@@ -84,12 +80,11 @@ export const deletemh = async (event, context) => {
         await matHangService.deleteMatHang(maMatHang);
         return {
             statusCode: HTTP_STATUS.OK,
-                        body: JSON.stringify({ message: 'Xóa mặt hàng thành công.' }),
-            }
-} catch (error) {
+            body: JSON.stringify({ message: 'Xóa mặt hàng thành công.' }),
+        }
+    } catch (error) {
         return handleLambdaError(error, operation_name);
-            }
-}
+    }
 };
 
 export const searchmh = async (event, context) => {
@@ -101,16 +96,15 @@ export const searchmh = async (event, context) => {
         if (!results || results.length === 0) {
             return {
                 statusCode: HTTP_STATUS.OK,
-                                body: JSON.stringify({ message: 'Không tìm thấy mặt hàng nào phù hợp với tiêu chí tìm kiếm.', data: [] }),
-                }
-}
+                body: JSON.stringify({ message: 'Không tìm thấy mặt hàng nào phù hợp với tiêu chí tìm kiếm.', data: [] }),
+            }
+        }
 
         return {
             statusCode: HTTP_STATUS.OK,
-                        body: JSON.stringify(results),
-            }
-} catch (error) {
+            body: JSON.stringify(results),
+        }
+    } catch (error) {
         return handleLambdaError(error, operation_name);
-            }
-}
+    }
 };

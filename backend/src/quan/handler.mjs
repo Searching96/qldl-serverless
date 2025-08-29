@@ -9,9 +9,9 @@ export const createquan = async (event) => {
     try {
         const { tenQuan } = JSON.parse(event.body);
         const maQuan = await quanService.createQuan(tenQuan);
-        return handleLambdaSuccess({ 
-            message: 'Đã tạo quận thành công.', 
-            maQuan 
+        return handleLambdaSuccess({
+            message: 'Đã tạo quận thành công.',
+            maQuan
         }, 201);
     } catch (error) {
         return handleLambdaError(error, 'Tạo quận');
@@ -39,16 +39,16 @@ export const getquanbyid = async (event, context) => {
         if (!Quan) {
             return {
                 statusCode: HTTP_STATUS.NOT_FOUND,
-                            body: JSON.stringify({ message: 'Không tìm thấy quận.' }),
-                }
-}
+                body: JSON.stringify({ message: 'Không tìm thấy quận.' }),
+            }
+        }
         return {
             statusCode: HTTP_STATUS.OK,
-                        body: JSON.stringify(Quan),
-            }
-} catch (error) {
+            body: JSON.stringify(Quan),
+        }
+    } catch (error) {
         return handleLambdaError(error, operation_name);
-            }
+    }
 };
 
 export const updatequan = async (event) => {
@@ -59,10 +59,10 @@ export const updatequan = async (event) => {
         return {
             statusCode: HTTP_STATUS.OK,
             body: JSON.stringify({ message: 'Cập nhật quận thành công.' }),
-            }
-} catch (error) {
+        }
+    } catch (error) {
         return handleLambdaError(error, operation_name);
-            }
+    }
 };
 
 export const deletequan = async (event) => {
@@ -72,8 +72,8 @@ export const deletequan = async (event) => {
         return {
             statusCode: HTTP_STATUS.OK,
             body: JSON.stringify({ message: 'Xóa quận thành công.' }),
-            }
-} catch (error) {
+        }
+    } catch (error) {
         return handleLambdaError(error, operation_name);
-            }
+    }
 };
